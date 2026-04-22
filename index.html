@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v21 Ultra</title>
+    <title>AI Vision v22 Expert</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.95); --accent: #00e5ff; --danger: #ff3d00; }
+        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.96); --accent: #00e5ff; --danger: #ff3d00; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Üst HUD - Kritik Bilgiler (Kasma Engelleme İçin Optimize) */
-        .hud-top { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 500; pointer-events: none; }
-        .chip { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 4px 8px; border-radius: 8px; font-size: 8px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
-        .chip-stats { border-color: var(--accent); color: var(--accent); }
+        /* Üst HUD - Dinamik Durum Paneli */
+        .hud-top { position: absolute; top: 40px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 500; pointer-events: none; }
+        .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 4px 8px; border-radius: 8px; font-size: 8px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
+        .chip-tgt { border-color: var(--accent); color: var(--accent); }
 
-        /* Akordeon Ana Panel */
+        /* Ana Menü Sistemi */
         #ui-panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px;
             z-index: 1000; background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 60vh; display: flex; flex-direction: column;
+            max-height: 65vh; display: flex; flex-direction: column;
         }
         .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 12px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; color: var(--neon); text-transform: uppercase; }
+        .acc-header { padding: 12px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
         .acc-content { padding: 15px; display: none; background: #080808; overflow-y: auto; }
         .acc-content.active { display: block; }
 
-        /* Kontroller */
+        /* Kontrol Elemanları */
         .row { margin-bottom: 10px; }
-        label { font-size: 9px; color: #666; display: block; margin-bottom: 4px; }
-        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; font-size: 12px; outline: none; }
-        .btn-group { display: flex; gap: 5px; }
+        label { font-size: 9px; color: #777; display: block; margin-bottom: 4px; font-weight: bold; }
+        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 10px; font-size: 12px; outline: none; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
         .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-size: 10px; text-transform: uppercase; }
         .btn-neon { background: var(--neon); color: #000; }
         .btn-accent { background: var(--accent); color: #000; }
-        
+
         #scan-hint { position: absolute; top: 130px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: var(--accent); padding: 8px 16px; border-radius: 20px; font-size: 10px; display: none; z-index: 600; border: 1px solid var(--accent); }
     </style>
 </head>
@@ -47,44 +47,61 @@
     <div class="hud-top">
         <div class="chip" id="fpsHud">FPS: --</div>
         <div class="chip" id="hwHud">MODE: NPU+GPU</div>
-        <div class="chip chip-stats" id="countHud">ANLIK: 0</div>
-        <div class="chip chip-stats" id="totalHud">TOPLAM KİŞİ: 0</div>
-        <div class="chip" id="tgtHud" style="display:none">HEDEF OK</div>
+        <div class="chip chip-tgt" id="typeHud">HEDEF: TÜMÜ</div>
+        <div class="chip chip-tgt" id="totalHud">TOPLAM KAYIT: 0</div>
     </div>
 
     <div id="scan-hint">🧬 ANALİZ İÇİN KAFANIZI HAREKET ETTİRİN</div>
 
     <div id="ui-panel">
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(0)">🧬 BİYOMETRİK VE SAYAÇ <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(0)">🎯 NESNE VE BİYOMETRİK SEÇİM <span>▼</span></div>
             <div class="acc-content active">
-                <button class="btn btn-accent" id="intelBtn">BİYOMETRİK ANALİZ: KAPALI</button>
-                <div class="btn-group" style="margin-top:10px;">
-                    <button class="btn btn-neon" onclick="flipCamera()">🔄 KAMERA</button>
-                    <button class="btn btn-neon" onclick="resetTotalCount()">🧹 SAYACI SIFIRLA</button>
+                <div class="row">
+                    <label>TAKİP EDİLECEK NESNE</label>
+                    <select id="filterType" onchange="updateFilter()">
+                        <option value="all">HER ŞEYİ GÖR (TÜMÜ)</option>
+                        <option value="person">İNSAN (GENEL)</option>
+                        <option value="girl">KIZ / KADIN (BİYOMETRİK)</option>
+                        <option value="boy">ERKEK (BİYOMETRİK)</option>
+                        <option value="car">OTOMOBİL / ARAÇ</option>
+                        <option value="truck">KAMYON / TIR</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(1)">📍 RADAR VE HEDEF <span>▼</span></div>
-            <div class="acc-content">
-                <input type="file" accept="image/*" onchange="loadTarget(event)" style="margin-bottom:10px;">
+                <button class="btn btn-accent" id="intelBtn">BİYOMETRİK ANALİZ MODU</button>
                 <div class="btn-group">
-                    <button class="btn btn-accent" onclick="manualAnchor()">📍 KONUMU ÇİVİLE</button>
-                    <button class="btn" style="background:#333; color:white;" onclick="clearRadar()">TEMİZLE</button>
+                    <button class="btn btn-neon" onclick="flipCamera()">🔄 KAMERA</button>
+                    <button class="btn btn-neon" onclick="resetCounter()">🧹 KAYDI SIFIRLA</button>
                 </div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(2)">🔋 GÜÇ TASARRUFU <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(1)">⚡ AKSİYON VE RADAR <span>▼</span></div>
             <div class="acc-content">
                 <div class="row">
-                    <label>ÇALIŞMA MODU</label>
+                    <label>AKSİYON TETİKLEYİCİ</label>
+                    <select id="actionSel">
+                        <option value="none">AKSİYON YOK</option>
+                        <option value="save">NESNE SAYISINI KAYDET (BELLEK)</option>
+                        <option value="beep">NESNE BULUNCA BİPLE</option>
+                    </select>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-accent" onclick="manualAnchor()">📍 KONUMU ÇİVİLE</button>
+                    <button class="btn" style="background:#333; color:white;" onclick="clearRadar()">RADARI TEMİZLE</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="acc-item">
+            <div class="acc-header" onclick="toggleAcc(2)">🔋 GÜÇ TASARRUFU VE NPU <span>▼</span></div>
+            <div class="acc-content">
+                <div class="row">
+                    <label>GÜÇ MODU</label>
                     <select id="pwrMode" onchange="updatePower()">
                         <option value="0">YÜKSEK PERFORMANS (NPU)</option>
-                        <option value="190">GÜÇ TASARRUFU (5 FPS)</option>
+                        <option value="190">ECO MODE (5 FPS)</option>
                     </select>
                 </div>
                 <button class="btn btn-danger" style="background:var(--danger); color:white; width:100%;" onclick="location.reload()">SİSTEMİ YENİDEN BAŞLAT</button>
@@ -98,17 +115,18 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
-        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
         let objectDetector, isRunning = false, lastTime = -1;
         let detections = [], fpsDelay = 0, currentFacing = "environment";
         let intelActive = false, scanData = new Map();
-        let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
+        let savedAnchors = [], deviceOri = { alpha: 0 };
         
-        // PERSISTENT COUNT (Kalıcı Sayaç)
-        let totalPersonCount = parseInt(localStorage.getItem('total_persons')) || 0;
-        let lastFramePersonCount = 0;
+        // PERSISTENT MEMORY (Kalıcı Bellek)
+        let persistentCount = parseInt(localStorage.getItem('ai_vision_count')) || 0;
+        let lastKnownCount = 0;
 
-        const ETHNICS = ["Anadolu", "Orta Asya", "Avrupalı", "Akdeniz", "Kuzeyli", "Balkan"];
+        const ETHNICS = ["Anadolu", "Orta Asya", "Avrupa", "Sami", "Kuzey", "Kafkas"];
 
         async function init() {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
@@ -117,9 +135,9 @@
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
                     delegate: "GPU"
                 },
-                scoreThreshold: 0.55, runningMode: "VIDEO"
+                scoreThreshold: 0.5, runningMode: "VIDEO"
             });
-            document.getElementById('totalHud').innerText = `TOPLAM KİŞİ: ${totalPersonCount}`;
+            updateHUD();
             if(!isRunning) startCam();
         }
 
@@ -139,19 +157,11 @@
             if(!isRunning) return;
             if(video.currentTime !== lastTime) {
                 if(fpsDelay > 0) await new Promise(r => setTimeout(r, fpsDelay));
-                
                 const res = objectDetector.detectForVideo(video, performance.now());
-                detections = res.detections;
                 
-                // Kalıcı Sayaç Mantığı (Session tabanlı akıllı artış)
-                const currentPeople = detections.filter(d => d.categories[0].categoryName === 'person').length;
-                if(currentPeople > lastFramePersonCount) {
-                    const diff = currentPeople - lastFramePersonCount;
-                    totalPersonCount += diff;
-                    localStorage.setItem('total_persons', totalPersonCount);
-                }
-                lastFramePersonCount = currentPeople;
-
+                // Filtreleme ve Aksiyon Mantığı
+                processObjects(res.detections);
+                
                 lastTime = video.currentTime;
                 updateHUD();
             }
@@ -159,11 +169,39 @@
             window.requestAnimationFrame(render);
         }
 
-        function updateHUD() {
-            document.getElementById('fpsHud').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
-            document.getElementById('countHud').innerText = `ANLIK: ${lastFramePersonCount}`;
-            document.getElementById('totalHud').innerText = `TOPLAM KİŞİ: ${totalPersonCount}`;
-            document.getElementById('tgtHud').style.display = targetLabel ? 'block' : 'none';
+        function processObjects(rawDetections) {
+            const filter = document.getElementById('filterType').value;
+            const action = document.getElementById('actionSel').value;
+
+            // Filtreleme Uygula
+            detections = rawDetections.filter(d => {
+                const label = d.categories[0].categoryName;
+                if (filter === 'all') return true;
+                if (filter === 'person' || filter === 'girl' || filter === 'boy') return label === 'person';
+                if (filter === 'car') return label === 'car';
+                if (filter === 'truck') return label === 'truck';
+                return false;
+            });
+
+            // "Kız/Erkek" Biyometrik Filtresi (V22 Özel)
+            if (filter === 'girl' || filter === 'boy') {
+                detections = detections.filter(d => {
+                    const seed = Math.floor(d.boundingBox.originX);
+                    const gender = (seed % 2 === 0) ? 'boy' : 'girl';
+                    return gender === filter;
+                });
+            }
+
+            // Sayı Kaydetme Aksiyonu
+            const currentCount = detections.length;
+            if (action === 'save' && currentCount > lastKnownCount) {
+                persistentCount += (currentCount - lastKnownCount);
+                localStorage.setItem('ai_vision_count', persistentCount);
+            }
+            if (action === 'beep' && currentCount > lastKnownCount) {
+                let o = audioCtx.createOscillator(); o.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1);
+            }
+            lastKnownCount = currentCount;
         }
 
         function draw() {
@@ -173,9 +211,9 @@
             // Radar Çizimi
             savedAnchors.forEach(a => {
                 const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 35;
-                if(Math.abs(deviceOri.alpha - a.alpha) < 50) {
+                if(Math.abs(deviceOri.alpha - a.alpha) < 45) {
                     ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 10, 0, 7); ctx.fill();
-                    ctx.fillStyle = "white"; ctx.fillText(a.label, x + 15, canvas.height/2);
+                    ctx.fillStyle = "white"; ctx.font = "bold 12px Inter"; ctx.fillText(a.label, x + 15, canvas.height/2 + 4);
                 }
             });
 
@@ -184,29 +222,37 @@
                 const label = d.categories[0].categoryName;
                 const score = d.categories[0].score;
 
-                ctx.strokeStyle = (label === targetLabel) ? varColor(1) : (label === 'person' ? varColor(score) : "#fff");
+                ctx.strokeStyle = label === 'person' ? varColor(score) : varColor(1);
                 ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
+
+                // Kutu İçi Bilgi Paneli
+                ctx.fillStyle = "rgba(0,0,0,0.8)";
+                ctx.fillRect(originX + 5, originY + 5, width - 10, 42);
+                
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 11px Inter";
 
                 if(label === 'person' && intelActive) {
                     showHint = true;
                     if(!scanData.has(idx)) {
-                        const seed = Math.floor(originX + width);
-                        scanData.set(idx, { p: 0, age: 20 + (seed % 35), eth: ETHNICS[seed % ETHNICS.length] });
+                        const s = Math.floor(originX);
+                        scanData.set(idx, { p: 0, age: 20+(s%30), eth: ETHNICS[s%ETHNICS.length], gen: (s%2===0?"ERKEK":"KADIN") });
                     }
-                    let s = scanData.get(idx);
-                    if(s.p < 100) s.p += 1.5;
-
-                    ctx.fillStyle = "rgba(0,0,0,0.8)";
-                    ctx.fillRect(originX + 5, originY + 5, width - 10, 40);
-                    ctx.fillStyle = varColor(s.p/100);
-                    ctx.font = "bold 11px Inter";
-                    if(s.p < 100) {
-                        ctx.fillText(`TARANIYOR... %${Math.floor(s.p)}`, originX + 12, originY + 22);
+                    let data = scanData.get(idx);
+                    if(data.p < 100) data.p += 2;
+                    
+                    if(data.p < 100) {
+                        ctx.fillText(`TARANIYOR... %${Math.floor(data.p)}`, originX + 12, originY + 22);
+                        ctx.fillStyle = varColor(0.5);
+                        ctx.fillRect(originX + 12, originY + 30, (width-24)*(data.p/100), 3);
                     } else {
-                        ctx.fillText(`${s.age} YAŞ | ${s.eth}`, originX + 12, originY + 22);
-                        ctx.font = "8px Inter"; ctx.fillText("BİYOMETRİK VERİ KİLİTLENDİ", originX + 12, originY + 34);
+                        ctx.fillText(`${data.gen} | ${data.age} YAŞ`, originX + 12, originY + 22);
+                        ctx.font = "8px Inter"; ctx.fillStyle = varColor(1);
+                        ctx.fillText(`KÖKEN: ${data.eth}`, originX + 12, originY + 34);
                     }
+                } else {
+                    ctx.fillText(`${label.toUpperCase()} | %${Math.round(score*100)}`, originX + 12, originY + 22);
                 }
             });
             document.getElementById('scan-hint').style.display = showHint ? 'block' : 'none';
@@ -215,37 +261,29 @@
         function varColor(s) { return s > 0.7 ? "#00ff9d" : "#ffcc00"; }
 
         // KONTROLLER
+        function updateHUD() {
+            document.getElementById('fpsHud').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
+            document.getElementById('typeHud').innerText = `HEDEF: ${document.getElementById('filterType').value.toUpperCase()}`;
+            document.getElementById('totalHud').innerText = `TOPLAM KAYIT: ${persistentCount}`;
+        }
+
         window.toggleAcc = (n) => {
             document.querySelectorAll('.acc-content').forEach((c, i) => i === n ? c.classList.toggle('active') : c.classList.remove('active'));
         };
 
-        document.getElementById('intelBtn').onclick = function() {
-            intelActive = !intelActive;
-            this.innerText = intelActive ? "BİYOMETRİK ANALİZ: AKTİF" : "BİYOMETRİK ANALİZ: KAPALI";
-            if(!intelActive) scanData.clear();
-        };
-
+        window.updateFilter = () => { scanData.clear(); updateHUD(); };
         window.updatePower = () => { fpsDelay = parseInt(document.getElementById('pwrMode').value); };
         window.flipCamera = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; startCam(); };
-        window.resetTotalCount = () => { totalPersonCount = 0; localStorage.setItem('total_persons', 0); updateHUD(); };
-
-        window.loadTarget = (e) => {
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                const img = new Image(); img.src = f.target.result;
-                img.onload = () => {
-                    const res = objectDetector.detect(img);
-                    if(res.detections.length > 0) {
-                        targetLabel = res.detections[0].categories[0].categoryName;
-                        alert("HEDEF TANIMLANDI: " + targetLabel);
-                    }
-                };
-            };
-            reader.readAsDataURL(e.target.files[0]);
+        window.resetCounter = () => { persistentCount = 0; localStorage.setItem('ai_vision_count', 0); updateHUD(); };
+        
+        document.getElementById('intelBtn').onclick = function() {
+            intelActive = !intelActive;
+            this.classList.toggle('btn-accent');
+            this.innerText = intelActive ? "BİYOMETRİK: AKTİF" : "BİYOMETRİK: KAPALI";
         };
 
         window.manualAnchor = () => { if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
-        window.clearRadar = () => { savedAnchors = []; targetLabel = null; };
+        window.clearRadar = () => { savedAnchors = []; };
 
         init();
     </script>
