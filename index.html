@@ -3,80 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poco X7 Pro NPU Test</title>
+    <title>Gelişmiş NPU Analizi - COCO SSD</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
-        #video-container { position: relative; margin: 20px auto; width: 320px; height: 320px; border: 3px solid #00ff00; border-radius: 15px; overflow: hidden; background: #000; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        button { background: #00ff00; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        #status { margin: 15px; color: #ffcc00; font-size: 14px; }
-        #results { font-size: 20px; margin-top: 20px; color: #00ff00; min-height: 50px; }
+        :root {
+            --primary: #00e5ff;
+            --bg: #0a0a0a;
+            --panel: #1a1a1a;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            background: var(--panel);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        #media-container {
+            position: relative;
+            width: 90vw;
+            max-width: 640px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+            background: #000;
+        }
+
+        /* Video ve Canvas üst üste binecek */
+        video {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Tıklamaların videoya geçmesini sağlar */
+        }
+
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            width: 90vw;
+            max-width: 640px;
+        }
+
+        #statusBox {
+            background: var(--panel);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
+            border-left: 4px solid var(--primary);
+        }
+
+        button {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
 
-    <h2>NPU Görüntü Analizi</h2>
-    
-    <div id="video-container">
-        <video id="webcam" autoplay playsinline muted></video>
+    <div class="header">
+        <h1>NPU NESNE TESPİTİ (COCO-SSD)</h1>
     </div>
 
-    <div id="status">Sistem hazır. Butona basın.</div>
-    <div id="results"></div>
-    <button id="startBtn">ANALİZİ BAŞLAT</button>
+    <div id="media-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div id="statusBox">Sistem bekleniyor...</div>
+        <button id="actionBtn">KAMERAYI VE YAPAY ZEKAYI BAŞLAT</button>
+    </div>
 
     <script>
         const video = document.getElementById('webcam');
-        const status = document.getElementById('status');
-        const results = document.getElementById('results');
-        const startBtn = document.getElementById('startBtn');
-        let model;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusBox = document.getElementById('statusBox');
+        const actionBtn = document.getElementById('actionBtn');
 
-        async function init() {
-            startBtn.disabled = true;
-            status.innerText = "1/2 Model yükleniyor (Lütfen bekleyin)...";
-            
+        let model = null;
+        let isDetecting = false;
+
+        // Modelden gelen İngilizce etiketleri Türkçe'ye çevirmek için sözlük
+        const turkceCeviri = {
+            'person': 'İnsan', 'bicycle': 'Bisiklet', 'car': 'Araba', 'motorcycle': 'Motosiklet',
+            'airplane': 'Uçak', 'bus': 'Otobüs', 'train': 'Tren', 'truck': 'Kamyon',
+            'bird': 'Kuş', 'cat': 'Kedi', 'dog': 'Köpek', 'horse': 'At', 'sheep': 'Koyun',
+            'cow': 'İnek', 'elephant': 'Fil', 'bear': 'Ayı', 'zebra': 'Zebra', 'giraffe': 'Zürafa',
+            'backpack': 'Sırt Çantası', 'umbrella': 'Şemsiye', 'handbag': 'El Çantası', 'tie': 'Kravat',
+            'suitcase': 'Bavul', 'bottle': 'Şişe', 'wine glass': 'Kadeh', 'cup': 'Fincan',
+            'fork': 'Çatal', 'knife': 'Bıçak', 'spoon': 'Kaşık', 'bowl': 'Kase', 'banana': 'Muz',
+            'apple': 'Elma', 'sandwich': 'Sandviç', 'orange': 'Portakal', 'broccoli': 'Brokoli',
+            'carrot': 'Havuç', 'hot dog': 'Sosisli', 'pizza': 'Pizza', 'donut': 'Donut', 'cake': 'Kek',
+            'chair': 'Sandalye', 'couch': 'Koltuk', 'potted plant': 'Saksı Bitkisi', 'bed': 'Yatak',
+            'dining table': 'Masa', 'toilet': 'Tuvalet', 'tv': 'Televizyon', 'laptop': 'Dizüstü Bilgisayar',
+            'mouse': 'Fare', 'remote': 'Kumanda', 'keyboard': 'Klavye', 'cell phone': 'Cep Telefonu',
+            'microwave': 'Mikrodalga', 'oven': 'Fırın', 'toaster': 'Tost Makinesi', 'sink': 'Lavabo',
+            'refrigerator': 'Buzdolabı', 'book': 'Kitap', 'clock': 'Saat', 'vase': 'Vazo',
+            'scissors': 'Makas', 'teddy bear': 'Oyuncak Ayı', 'hair drier': 'Saç Kurutma Makinesi',
+            'toothbrush': 'Diş Fırçası'
+        };
+
+        // Sistemi Başlatma Fonksiyonu
+        actionBtn.addEventListener('click', async () => {
+            actionBtn.disabled = true;
+            statusBox.innerText = "Yapay Zeka Modeli (COCO-SSD) İndiriliyor... Lütfen Bekleyin.";
+
             try {
-                // Modeli yükle
-                model = await mobilenet.load();
-                status.innerText = "2/2 Kamera açılıyor...";
+                // Modeli yükle (Daha hızlı olması için lite_mobilenet_v2 tabanlı)
+                model = await cocoSsd.load({ base: 'lite_mobilenet_v2' });
+                statusBox.innerText = "Model yüklendi. Kamera başlatılıyor...";
 
-                // Kamerayı başlat
+                // Kamerayı aç
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" }, // Arka kamera
+                    video: { facingMode: 'environment' }, // Arka kamera
                     audio: false
                 });
+                
                 video.srcObject = stream;
-
-                video.onloadedmetadata = () => {
-                    status.innerText = "ANALİZ AKTİF (NPU ÇALIŞIYOR)";
-                    startBtn.style.display = "none";
-                    predictLoop();
+                
+                // Video başladığında analiz döngüsünü tetikle
+                video.onloadeddata = () => {
+                    // Canvas boyutlarını video boyutlarına eşitle
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    statusBox.innerHTML = "<span style='color: var(--primary);'>✔ NPU Analizi Aktif. Ekranda nesneler aranıyor...</span>";
+                    actionBtn.style.display = 'none'; // Butonu gizle
+                    isDetecting = true;
+                    detectFrame(); // Analiz döngüsünü başlat
                 };
-            } catch (err) {
-                status.style.color = "red";
-                status.innerText = "HATA: " + err.message + "\n(Kamera izni verdiğinizden emin olun)";
-                console.error(err);
+
+            } catch (error) {
+                statusBox.innerHTML = `<span style="color: #ff4444;">HATA: ${error.message}</span>`;
+                actionBtn.disabled = false;
             }
+        });
+
+        // Sürekli Analiz Döngüsü
+        async function detectFrame() {
+            if (!isDetecting) return;
+
+            // Model videodaki nesneleri bulur
+            const predictions = await model.detect(video);
+
+            // Önceki çizimleri temizle
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Bulunan her nesne için kutu ve yazı çiz
+            predictions.forEach(prediction => {
+                const [x, y, width, height] = prediction.bbox;
+                const engLabel = prediction.class;
+                // Sözlükte varsa Türkçe yap, yoksa İngilizce kalsın
+                const trLabel = turkceCeviri[engLabel] || engLabel; 
+                const score = Math.round(prediction.score * 100);
+
+                // Kutuyu Çiz
+                ctx.strokeStyle = '#00e5ff'; // Turkuaz renk
+                ctx.lineWidth = 4;
+                ctx.strokeRect(x, y, width, height);
+
+                // Yazı Arka Planını Çiz
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillRect(x, y - 25, width, 25);
+
+                // Yazıyı Çiz
+                ctx.fillStyle = '#000000'; // Siyah yazı
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText(`${trLabel} (%${score})`, x + 5, y - 7);
+            });
+
+            // Döngüyü tekrarla (NPU'nun hızına göre tarayıcı burayı optimize eder)
+            requestAnimationFrame(detectFrame);
         }
-
-        async function predictLoop() {
-            // Analiz yap
-            const predictions = await model.classify(video);
-            
-            // Sonucu ekrana yaz (En yüksek olasılıklı ilk sonucu al)
-            if (predictions.length > 0) {
-                results.innerText = predictions[0].className.split(',')[0].toUpperCase() + 
-                                  " (% " + (predictions[0].probability * 100).toFixed(0) + ")";
-            }
-
-            // Döngüye devam et
-            requestAnimationFrame(predictLoop);
-        }
-
-        startBtn.onclick = init;
     </script>
 </body>
 </html>
