@@ -3,44 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poco X7 Pro - Hyper AI Vision</title>
+    <title>AI Vision Pro</title>
     <style>
-        :root { --neon: #00ff9d; --bg: #050505; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        :root { --neon: #00ff9d; --danger: #ff4444; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: sans-serif; overflow: hidden; }
         
-        #main-container { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Kamera Alanı */
-        #camera-wrapper { position: relative; flex-grow: 1; background: #000; overflow: hidden; }
+        /* Video Tam Ekran */
+        #camera-container { position: relative; width: 100vw; height: 100vh; }
         video { width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        /* Arayüz Paneli */
-        .ui-panel { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); padding: 20px 0; border-top: 1px solid var(--neon); display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        
-        .btn-group { display: flex; gap: 10px; width: 90%; }
-        button { flex: 1; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        
-        #startBtn { background: var(--neon); color: black; }
-        #captureBtn { background: #ffffff; color: black; display: none; }
-        
-        .info-bar { font-size: 11px; color: var(--neon); font-family: monospace; }
+        /* Üst Bilgi Paneli */
+        .top-hud {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; justify-content: space-between;
+            background: rgba(0,0,0,0.6); padding: 10px; border-radius: 10px;
+            border: 1px solid rgba(0, 255, 157, 0.3); z-index: 20;
+        }
+        .status-item { color: var(--neon); font-size: 11px; font-family: monospace; font-weight: bold; }
+
+        /* Alt Kontrol Paneli (Yüzer Tasarım) */
+        .bottom-ui {
+            position: absolute; bottom: 30px; left: 0; width: 100%;
+            display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 20;
+        }
+
+        /* Deklanşör Butonu */
+        #captureBtn {
+            width: 70px; height: 70px; background: white; border: 5px solid var(--neon);
+            border-radius: 50%; box-shadow: 0 0 20px rgba(0,255,157,0.5);
+            display: none; cursor: pointer;
+        }
+        #captureBtn:active { transform: scale(0.9); background: var(--neon); }
+
+        #startBtn {
+            background: var(--neon); color: black; border: none;
+            padding: 15px 40px; border-radius: 30px; font-weight: bold;
+            font-size: 16px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,255,157,0.4);
+        }
+
+        /* Bildirim Baloncuğu */
+        #toast {
+            position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+            background: var(--neon); color: black; padding: 8px 20px;
+            border-radius: 20px; font-weight: bold; display: none; z-index: 100;
+        }
     </style>
 </head>
 <body>
 
-    <div id="main-container">
-        <div id="camera-wrapper">
-            <video id="webcam" autoplay playsinline muted></video>
-            <canvas id="output_canvas"></canvas>
+    <div id="toast">FOTOĞRAF KAYDEDİLDİ</div>
+
+    <div id="camera-container">
+        <div class="top-hud">
+            <div class="status-item" id="fps">FPS: --</div>
+            <div class="status-item">POCO X7 PRO NPU</div>
+            <div class="status-item" id="objCount">NESNE: 0</div>
         </div>
 
-        <div class="ui-panel">
-            <div class="info-bar" id="status">SİSTEM: HAZIR | MODEL: EFFICIENTDET-L2</div>
-            <div class="btn-group">
-                <button id="startBtn">SİSTEMİ BAŞLAT</button>
-                <button id="captureBtn">FOTOĞRAF ÇEK VE KAYDET</button>
-            </div>
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="output_canvas"></canvas>
+
+        <div class="bottom-ui">
+            <button id="startBtn">KAMERAYI BAŞLAT</button>
+            <div id="captureBtn"></div>
         </div>
     </div>
 
@@ -50,37 +76,47 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
-        const status = document.getElementById('status');
         const startBtn = document.getElementById('startBtn');
         const captureBtn = document.getElementById('captureBtn');
+        const fpsDisplay = document.getElementById('fps');
+        const objCountDisplay = document.getElementById('objCount');
+        const toast = document.getElementById('toast');
 
         let objectDetector;
         let lastVideoTime = -1;
         let currentDetections = [];
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
 
-        // --- TÜRKÇE NESNE SÖZLÜĞÜ (Genişletilmiş) ---
+        // --- DEV TÜRKÇE SÖZLÜK ---
         const labelsTR = {
-            'person': 'İNSAN', 'chair': 'SANDALYE/KOLTUK', 'couch': 'KOLTUK/KANEPE',
-            'dining table': 'YEMEK MASASI', 'bed': 'YATAK', 'potted plant': 'SAKSI BİTKİSİ',
-            'tv': 'TELEVİZYON/MONİTÖR', 'laptop': 'BİLGİSAYAR', 'cell phone': 'CEP TELEFONU',
-            'bottle': 'ŞİŞE', 'cup': 'BARDAK', 'backpack': 'ÇANTA', 'handbag': 'EL ÇANTASI',
-            'book': 'KİTAP', 'clock': 'SAAT', 'vase': 'VAZO', 'scissors': 'MAKAS',
-            'mouse': 'FARE', 'keyboard': 'KLAVYE', 'remote': 'KUMANDA'
+            'person': 'İNSAN', 'bicycle': 'BİSİKLET', 'car': 'ARABA', 'motorcycle': 'MOTOSİKLET',
+            'airplane': 'UÇAK', 'bus': 'OTOBÜS', 'train': 'TREN', 'truck': 'KAMYON', 'boat': 'TEKNE',
+            'traffic light': 'TRAFİK IŞIĞI', 'stop sign': 'DUR LEVHASI', 'bird': 'KUŞ', 'cat': 'KEDİ',
+            'dog': 'KÖPEK', 'horse': 'AT', 'sheep': 'KOYUN', 'cow': 'İNEK', 'elephant': 'FİL',
+            'bear': 'AYI', 'zebra': 'ZEBRA', 'giraffe': 'ZÜRAFA', 'backpack': 'ÇANTA', 'umbrella': 'ŞEMSİYE',
+            'handbag': 'EL ÇANTASI', 'tie': 'KRAVAT', 'suitcase': 'BAVUL', 'bottle': 'ŞİŞE',
+            'cup': 'BARDAK', 'fork': 'ÇATAL', 'knife': 'BIÇAK', 'spoon': 'KAŞIK', 'bowl': 'KASE',
+            'banana': 'MUZ', 'apple': 'ELMA', 'sandwich': 'SANDVİÇ', 'orange': 'PORTAKAL',
+            'broccoli': 'BROKOLİ', 'carrot': 'HAVUÇ', 'pizza': 'PİZZA', 'donut': 'DONUT', 'cake': 'KEK',
+            'chair': 'SANDALYE', 'couch': 'KOLTUK', 'potted plant': 'SAKSI', 'bed': 'YATAK',
+            'dining table': 'MASA', 'tv': 'TELEVİZYON', 'laptop': 'BİLGİSAYAR', 'mouse': 'FARE',
+            'remote': 'KUMANDA', 'keyboard': 'KLAVYE', 'cell phone': 'TELEFON', 'microwave': 'MİKRODALGA',
+            'oven': 'FIRIN', 'toaster': 'EKMEK KIZARTMA', 'sink': 'LAVABO', 'refrigerator': 'BUZDOLABI',
+            'book': 'KİTAP', 'clock': 'SAAT', 'vase': 'VAZO', 'scissors': 'MAKAS', 'toothbrush': 'DİŞ FIRÇASI'
         };
 
-        async function init() {
-            status.innerText = "YAPAY ZEKA YÜKLENİYOR...";
+        async function initAI() {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            
             objectDetector = await ObjectDetector.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
                     delegate: "GPU"
                 },
-                scoreThreshold: 0.5, // Doğruluk için eşik değer
+                scoreThreshold: 0.45,
                 runningMode: "VIDEO"
             });
-            status.innerText = "SİSTEM: AKTİF | MODEL: ÇEVRİMİÇİ";
+            startBtn.innerText = "SİSTEM HAZIR";
         }
 
         startBtn.onclick = async () => {
@@ -100,67 +136,72 @@
         async function predict() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
-                const detections = objectDetector.detectForVideo(video, performance.now());
+                const startTime = performance.now();
+                const detections = objectDetector.detectForVideo(video, startTime);
                 currentDetections = detections.detections;
-                draw(currentDetections);
+                render(currentDetections);
+                
+                // FPS Update
+                frameCount++;
+                if (startTime - lastFpsUpdate > 1000) {
+                    fpsDisplay.innerText = "FPS: " + frameCount;
+                    frameCount = 0; lastFpsUpdate = startTime;
+                }
             }
             window.requestAnimationFrame(predict);
         }
 
-        function draw(detections) {
+        function render(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            objCountDisplay.innerText = `NESNE: ${detections.length}`;
+
             detections.forEach(det => {
                 const { originX, originY, width, height } = det.boundingBox;
                 const label = labelsTR[det.categories[0].categoryName] || det.categories[0].categoryName.toUpperCase();
                 const score = Math.round(det.categories[0].score * 100);
 
-                // Görsel Tasarım
+                // HUD Çizimi
                 ctx.strokeStyle = "#00ff9d";
-                ctx.lineWidth = 5;
+                ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
 
-                ctx.fillStyle = "#00ff9d";
-                ctx.font = "bold 24px Arial";
-                ctx.fillText(`${label} %${score}`, originX, originY - 10);
+                // Etiket
+                ctx.fillStyle = "rgba(0, 255, 157, 0.85)";
+                ctx.fillRect(originX, originY - 30, label.length * 15 + 60, 30);
+                ctx.fillStyle = "black";
+                ctx.font = "bold 18px Arial";
+                ctx.fillText(`${label} %${score}`, originX + 5, originY - 8);
             });
         }
 
-        // --- FOTOĞRAF ÇEKME VE DIŞARI AKTARMA ---
         captureBtn.onclick = () => {
-            // Geçici bir canvas oluştur (Video + İşaretlemeler birleşecek)
-            const exportCanvas = document.createElement('canvas');
-            exportCanvas.width = video.videoWidth;
-            exportCanvas.height = video.videoHeight;
-            const eCtx = exportCanvas.getContext('2d');
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth;
+            tempCanvas.height = video.videoHeight;
+            const tCtx = tempCanvas.getContext('2d');
 
-            // 1. Videodaki anlık görüntüyü çiz
-            eCtx.drawImage(video, 0, 0);
-
-            // 2. Yapay zeka kutularını üzerine çiz
+            tCtx.drawImage(video, 0, 0);
+            
+            // Analiz verilerini resme işle
             currentDetections.forEach(det => {
                 const { originX, originY, width, height } = det.boundingBox;
                 const label = labelsTR[det.categories[0].categoryName] || det.categories[0].categoryName.toUpperCase();
-                
-                eCtx.strokeStyle = "red";
-                eCtx.lineWidth = 6;
-                eCtx.strokeRect(originX, originY, width, height);
-                
-                eCtx.fillStyle = "red";
-                eCtx.font = "bold 30px Arial";
-                eCtx.fillText(label, originX, originY - 15);
+                tCtx.strokeStyle = "red"; tCtx.lineWidth = 6;
+                tCtx.strokeRect(originX, originY, width, height);
+                tCtx.fillStyle = "red"; tCtx.font = "bold 30px Arial";
+                tCtx.fillText(label, originX, originY - 10);
             });
 
-            // 3. Dosya olarak indir
             const link = document.createElement('a');
-            link.download = `AI_Analiz_${Date.now()}.png`;
-            link.href = exportCanvas.toDataURL('image/png');
+            link.download = `AI_Poco_${Date.now()}.png`;
+            link.href = tempCanvas.toDataURL();
             link.click();
-            
-            status.innerText = "FOTOĞRAF GALERİYE KAYDEDİLDİ!";
-            setTimeout(() => status.innerText = "SİSTEM: AKTİF", 2000);
+
+            toast.style.display = "block";
+            setTimeout(() => toast.style.display = "none", 2000);
         };
 
-        init();
+        initAI();
     </script>
 </body>
 </html>
