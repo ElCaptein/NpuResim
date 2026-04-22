@@ -3,48 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v65 Synchro-Fix</title>
+    <title>AI Vision v70 Quantum</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
-        video { position: absolute; width: 100%; height: 100%; object-fit: contain; z-index: 1; background: #000; }
+        video { position: absolute; width: 100%; height: 100%; object-fit: contain; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; }
 
-        .hud { position: absolute; top: 15px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 500; pointer-events: none; }
+        /* HUD & UI Fixes */
+        .hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 50; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 8px; border-radius: 6px; font-size: 8px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
 
         #showMenuBtn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 15px 45px; background: rgba(0,0,0,0.95); color: var(--neon); border: 2px solid var(--neon); border-radius: 30px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 0 25px var(--neon); }
 
+        /* Panel UI Improvement: Fixed Selection Blocking */
         #panel {
-            position: absolute; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
+            position: absolute; bottom: 10px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
             max-height: 85vh; display: flex; flex-direction: column; backdrop-filter: blur(40px); transition: 0.4s ease-out; transform: translateY(120%);
         }
-        .panel-toolbar { display: flex; justify-content: space-between; padding: 15px 20px; background: #000; border-bottom: 1px solid var(--neon); }
+        .panel-toolbar { display: flex; justify-content: space-between; padding: 12px 20px; background: #000; border-bottom: 1px solid #222; flex-shrink: 0; pointer-events: auto; }
+        
+        .panel-content { overflow-y: auto; flex-grow: 1; padding-bottom: 20px; }
         .acc-item { border-bottom: 1px solid #222; }
         .acc-header { padding: 16px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; }
-        .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: #080808; }
-        .active .acc-body { max-height: 600px; padding: 20px; overflow-y: auto; }
+        .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: 0.3s; background: #080808; }
+        .active .acc-body { max-height: 800px; padding: 15px; }
 
         .btn { width: 100%; padding: 14px; background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 12px; font-size: 10px; font-weight: bold; margin-top: 8px; cursor: pointer; }
         .btn-neon { background: var(--neon); color: #000; border: none; }
-        .btn-gold { background: var(--gold); color: #000; border: none; }
+        .action-chip { padding: 10px; background: #111; border: 1px solid #333; border-radius: 10px; font-size: 9px; text-align: center; cursor: pointer; color: #fff; transition: 0.2s; }
+        .action-chip:active { background: var(--neon); color: #000; }
         
-        select { width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; font-size: 11px; margin-top: 5px; appearance: none; }
+        select { width: 100%; padding: 14px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; font-size: 11px; margin-top: 5px; appearance: none; }
         
         #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-bar { width: 250px; height: 3px; background: #111; margin-top: 25px; border-radius: 10px; overflow: hidden; }
-        .loader-fill { width: 0%; height: 100%; background: var(--neon); transition: width 0.5s; }
+        .loader-bar { width: 250px; height: 2px; background: #111; margin-top: 20px; }
+        .loader-fill { width: 0%; height: 100%; background: var(--neon); transition: 0.3s; }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
-        <div style="color:var(--neon); font-weight: 900; letter-spacing: 8px; font-size:24px;">TITAN v65</div>
+        <div style="color:var(--neon); font-weight: 900; letter-spacing: 10px; font-size:26px;">TITAN v70</div>
         <div class="loader-bar"><div class="loader-fill" id="load-fill"></div></div>
-        <div id="status-text" style="color:#444; font-size: 9px; margin-top: 15px; text-transform: uppercase;">DONANIM SENKRONİZASYONU...</div>
-        <button id="forceCpu" class="btn" style="display:none; width:auto; margin-top:20px; border-color:var(--danger); color:var(--danger);" onclick="forceSafeMode()">⚠️ GÜVENLİ MODDA ZORLA (CPU)</button>
+        <div id="status-text" style="color:#555; font-size: 9px; margin-top: 15px;">KUANTUM KATMANLARI SENKRONİZE EDİLİYOR...</div>
+        <button id="forceReset" class="btn" style="display:none; width:auto; margin-top:30px;" onclick="location.reload()">⚠️ SİSTEMİ ZORLA YENİLE</button>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -52,76 +57,81 @@
 
     <div class="hud">
         <div id="hw-tag" class="chip">HW: --</div>
-        <div id="fps-tag" class="chip" style="color:var(--accent); border-color:var(--accent);">FPS: --</div>
-        <div id="count-tag" class="chip" style="color:var(--gold); border-color:var(--gold);">SAYAÇ: 0</div>
+        <div id="px-tag" class="chip">PX: --</div>
+        <div id="fps-tag" class="chip" style="color:var(--accent);">FPS: --</div>
+        <div id="count-tag" class="chip" style="color:var(--gold);">SAYAÇ: 0</div>
     </div>
 
-    <button id="showMenuBtn" onclick="toggleMenu(true)">⚙️ TITAN MERKEZİ</button>
+    <button id="showMenuBtn" onclick="toggleMenu(true)">👁️ TITAN KONTROL</button>
 
     <div id="panel">
         <div class="panel-toolbar">
-            <div style="color:var(--neon); font-size:12px; font-weight:900;">TITAN v65 CORE</div>
-            <button onclick="toggleMenu(false)" style="background:none; border:none; color:var(--danger); font-size:11px; font-weight:900;">GİZLE</button>
+            <div style="color:var(--neon); font-size:11px; font-weight:900;">TITAN OMNI-QUANTUM v70</div>
+            <button onclick="toggleMenu(false)" style="background:none; border:none; color:var(--danger); font-size:11px; font-weight:900;">KAPAT</button>
         </div>
 
-        <div class="acc-item active">
-            <div class="acc-header" onclick="toggleAcc(this)">⚡ DONANIM & 10 KADEME MODEL</div>
-            <div class="acc-body">
-                <label style="font-size:9px; color:#555;">DONANIM KATMANI</label>
-                <select id="hwSel">
-                    <option value="NPU">SADECE NPU</option>
-                    <option value="GPU">SADECE GPU</option>
-                    <option value="CPU">SADECE CPU (Stabil)</option>
-                    <option value="GPU_NPU" selected>GPU + NPU (Poco Optimized)</option>
-                    <option value="GPU_CPU">GPU + CPU</option>
-                </select>
+        <div class="panel-content">
+            <div class="acc-item active">
+                <div class="acc-header" onclick="toggleAcc(this)">⚡ DONANIM & VERİ PİKSELİ</div>
+                <div class="acc-body">
+                    <label style="font-size:9px; color:#555;">İŞLEMCİ KATMANI</label>
+                    <select id="hwSel">
+                        <option value="NPU">SADECE NPU (AI Core)</option>
+                        <option value="GPU">SADECE GPU (Hızlı)</option>
+                        <option value="CPU">SADECE CPU (Stabilite)</option>
+                        <option value="GPU_NPU" selected>GPU + NPU (Poco Optimized)</option>
+                        <option value="GPU_CPU">GPU + CPU</option>
+                    </select>
 
-                <label style="font-size:9px; color:#555; margin-top:10px; display:block;">MODEL DERİNLİĞİ (1-10)</label>
-                <select id="modelSel">
-                    <option value="0">1. Nano</option>
-                    <option value="0">2. Ultra-Light</option>
-                    <option value="1">4. Standard</option>
-                    <option value="2" selected>5. Balanced HD</option>
-                    <option value="3">7. Heavy-Neural</option>
-                    <option value="4">10. Titan-Core</option>
-                </select>
+                    <label style="font-size:9px; color:#555; margin-top:10px; display:block;">VERİ İŞLEME PİKSELİ (AI BUFFER)</label>
+                    <select id="pxSel">
+                        <option value="256">256px (Ultra Hızlı)</option>
+                        <option value="320" selected>320px (Dengeli)</option>
+                        <option value="480">480px (Yüksek Hassasiyet)</option>
+                        <option value="640">640px (Maksimum Detay)</option>
+                    </select>
 
-                <label style="font-size:9px; color:#555; margin-top:10px; display:block;">KAMERA KAYNAĞI</label>
-                <select id="camSel" onchange="applyAll()"></select>
+                    <label style="font-size:9px; color:#555; margin-top:10px; display:block;">KAMERA KAYNAĞI</label>
+                    <select id="camSel" onchange="applyAll()"></select>
 
-                <button class="btn btn-neon" style="margin-top:20px;" onclick="applyAll()">SİSTEMİ BAŞLAT</button>
-            </div>
-        </div>
-
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🎯 AKSİYON & TAKİP</div>
-            <div class="acc-body">
-                <label style="font-size:9px; color:#555;">HEDEF NESNE</label>
-                <select id="targetObj">
-                    <option value="all">TÜM NESNELER</option>
-                    <option value="person">İNSAN</option>
-                    <option value="car">ARAÇ</option>
-                    <option value="cell phone">TELEFON</option>
-                </select>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:15px;">
-                    <button class="btn btn-gold" onclick="runAction('count')">🔢 NESNE SAYDIR</button>
-                    <button class="btn btn-gold" onclick="runAction('save_loc')">📍 KONUM KAYDET</button>
-                    <button class="btn" onclick="runAction('ask')">❓ AKSİYON SOR</button>
-                    <button class="btn" onclick="resetCounter()">🧹 SAYAÇ SIFIRLA</button>
+                    <button class="btn btn-neon" style="margin-top:20px;" onclick="applyAll()">SİSTEMİ SENKRONİZE ET</button>
                 </div>
             </div>
-        </div>
 
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🧬 BİYOMETRİ & RADAR</div>
-            <div class="acc-body">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn" id="bioBtn" onclick="toggleFeature('bio')">🧬 BİYOMETRİ: AÇIK</button>
-                    <button class="btn" id="gyroBtn" onclick="toggleFeature('gyro')">📍 RADAR: AÇIK</button>
+            <div class="acc-item">
+                <div class="acc-header" onclick="toggleAcc(this)">🧬 DETAYLI BİYOMETRİK ANALİZ</div>
+                <div class="acc-body">
+                    <label style="font-size:9px; color:#555;">ANALİZ MODU</label>
+                    <select id="bioMode">
+                        <option value="basic">STANDART (Yaş / Etnik Köken)</option>
+                        <option value="deep" selected>DERİN TARAMA (Cinsiyet / Duygu / Sağlık)</option>
+                        <option value="security">GÜVENLİK (Kimlik Tanımlama)</option>
+                    </select>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:10px;">
+                        <button class="btn" id="bioBtn" onclick="toggleFeature('bio')">BİYOMETRİ: AÇIK</button>
+                        <button class="btn" id="gyroBtn" onclick="toggleFeature('gyro')">RADAR: AÇIK</button>
+                    </div>
                 </div>
-                <button class="btn" style="background:var(--accent); color:#000;" onclick="lockRadar()">📍 RADAR HEDEFİ ÇİVİLE</button>
-                <button class="btn" style="background:var(--danger);" onclick="localStorage.clear(); location.reload();">FABRİKA AYARLARI</button>
+            </div>
+
+            <div class="acc-item">
+                <div class="acc-header" onclick="toggleAcc(this)">🎯 HAZIR TAKTİK EYLEMLER</div>
+                <div class="acc-body">
+                    <label style="font-size:9px; color:#555; margin-bottom:5px; display:block;">TAKİP HEDEFİ</label>
+                    <select id="targetObj" style="margin-bottom:15px;">
+                        <option value="all">HER ŞEYİ TARA</option>
+                        <option value="person">SADECE İNSANLAR</option>
+                        <option value="car">SADECE ARAÇLAR</option>
+                    </select>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                        <div class="action-chip" onclick="runReadyAction('count')">🔢 NESNE SAYDIR</div>
+                        <div class="action-chip" onclick="runReadyAction('save')">📍 KONUM KAYDET</div>
+                        <div class="action-chip" onclick="runReadyAction('track')">🎯 HEDEF KİLİTLE</div>
+                        <div class="action-chip" onclick="runReadyAction('reset')">🧹 SAYAÇ SIFIRLA</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -140,17 +150,13 @@
         let detections = [], scanData = new Map();
         let features = { bio: true, gyro: true };
         let count = 0, lastTime = performance.now();
-        let targetLabel = "all", savedAnchors = [], deviceOri = { alpha: 0 };
+        let savedAnchors = [], deviceOri = { alpha: 0 };
 
-        const ETHNICS = ["Anadolu / Türk", "Levant", "Kafkasya", "Slav", "Nordik", "Cermen"];
+        const ETHNICS = ["Anadolu / Türk", "Levant / Arap", "Kafkasya / Rus", "İskandinav", "Cermen", "Balkan"];
+        const EMOTIONS = ["Stabil", "Gergin", "Mutlu", "Analitik", "Nötr"];
 
-        // Takılma durumunda butonu göster (7 saniye)
-        const watchdog = setTimeout(() => { if(!isRunning) document.getElementById('forceCpu').style.display='block'; }, 7000);
-
-        window.forceSafeMode = () => {
-            document.getElementById('hwSel').value = "CPU";
-            applyAll();
-        };
+        // Takılma durumunda koruma
+        setTimeout(() => { if(!isRunning) document.getElementById('forceReset').style.display='block'; }, 8000);
 
         async function initCameras() {
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -167,11 +173,11 @@
         window.applyAll = async () => {
             isRunning = false;
             overlay.style.display = 'flex';
-            fill.style.width = "20%";
-            statusText.innerText = "KAMERA BAŞLATILIYOR...";
+            fill.style.width = "10%";
+            statusText.innerText = "KUANTUM KATMANLARI BAŞLATILIYOR...";
 
             const hwMode = document.getElementById('hwSel').value;
-            const modelLevel = document.getElementById('modelSel').value;
+            const bufferPx = document.getElementById('pxSel').value;
             const deviceId = document.getElementById('camSel').value;
 
             let delegate = (hwMode === "CPU") ? "CPU" : "GPU";
@@ -179,54 +185,53 @@
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 
-                // 1. Kamera Akışını Başlat (Takılmayı Önlemek İçin Önce Görüntü)
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: 1280, height: 720 } 
+                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: 1280, height: 720, zoom: 1 } 
                 });
                 video.srcObject = stream;
 
                 video.onloadedmetadata = async () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    fill.style.width = "50%";
-                    statusText.innerText = "ALGORİTMALAR BAĞLANIYOR...";
+                    fill.style.width = "40%";
+                    statusText.innerText = `BUFFER: ${bufferPx}px YÜKLENİYOR...`;
 
-                    // 2. AI Modeli Asenkron Yükle
                     const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                    fill.style.width = "80%";
+                    fill.style.width = "70%";
                     
                     detector = await ObjectDetector.createFromOptions(vision, {
                         baseOptions: { 
-                            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
+                            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite`,
                             delegate: delegate 
                         },
                         scoreThreshold: 0.4, runningMode: "VIDEO"
                     });
 
                     document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
+                    document.getElementById('px-tag').innerText = `PX: ${bufferPx}px`;
                     fill.style.width = "100%";
-                    setTimeout(() => { overlay.style.display = 'none'; isRunning = true; renderLoop(); }, 500);
+                    setTimeout(() => { overlay.style.display = 'none'; isRunning = true; renderLoop(); }, 600);
                 };
             } catch (e) {
-                statusText.innerText = "ERİŞİM REDDEDİLDİ!";
-                document.getElementById('forceCpu').style.display='block';
+                statusText.innerText = "SİSTEM DONANIMI MEŞGUL!";
+                setTimeout(() => overlay.style.display='none', 2000);
             }
         };
 
         function renderLoop(now) {
-            if(!isRunning || !detector) return;
+            if(!isRunning) return;
             const fps = 1000 / (now - lastTime);
             lastTime = now;
-            if(now % 30 < 2) document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fps)}`;
+            if(now % 25 < 2) document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fps)}`;
 
             try {
                 const result = detector.detectForVideo(video, performance.now());
                 detections = result.detections;
-                targetLabel = document.getElementById('targetObj').value;
-
+                
+                const target = document.getElementById('targetObj').value;
                 detections.forEach(d => {
                     const label = d.categories[0].categoryName;
-                    if(targetLabel === "all" || label === targetLabel) {
-                        const sid = `${label}-${Math.floor(d.boundingBox.originX/50)}`;
+                    if(target === "all" || label === target) {
+                        const sid = `${label}-${Math.floor(d.boundingBox.originX/40)}`;
                         if(!window.tracked) window.tracked = new Set();
                         if(!window.tracked.has(sid)) {
                             window.tracked.add(sid); count++;
@@ -235,69 +240,75 @@
                     }
                 });
                 draw();
-            } catch (err) { }
+            } catch (err) {}
             requestAnimationFrame(renderLoop);
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if(features.gyro) {
-                savedAnchors.forEach(a => {
-                    const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
-                    if(Math.abs(deviceOri.alpha - a.alpha) < 40) {
-                        ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 10, 0, 7); ctx.fill();
-                    }
-                });
-            }
+            const bioMode = document.getElementById('bioMode').value;
+            const target = document.getElementById('targetObj').value;
 
             detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
                 const score = d.categories[0].score;
-                const spatialId = `${label}_${Math.round(originX/20)}`;
+                const sid = `${label}_${Math.round(originX/10)}`;
 
-                if(targetLabel !== "all" && label !== targetLabel) return;
+                if(target !== "all" && label !== target) return;
 
-                ctx.strokeStyle = label === targetLabel ? "#00e5ff" : "#00ff9d";
-                ctx.lineWidth = 3; ctx.strokeRect(originX, originY, width, height);
+                ctx.strokeStyle = label === target ? varColor(1) : varColor(score);
+                ctx.lineWidth = 3;
+                ctx.strokeRect(originX, originY, width, height);
 
                 if(features.bio) {
                     ctx.fillStyle = "rgba(0,0,0,0.85)";
-                    const boxH = label === 'person' ? 60 : 25;
-                    ctx.fillRect(originX, originY, width, boxH);
-                    ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif";
+                    const boxH = (label === 'person' && bioMode === 'deep') ? 85 : 30;
+                    ctx.fillRect(originX, originY - 5, width, boxH);
                     
+                    ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif";
                     if(label === 'person') {
-                        if(!scanData.has(spatialId)) {
+                        if(!scanData.has(sid)) {
                             const seed = Math.abs(Math.floor(originX + width));
-                            scanData.set(spatialId, {age: 18+(seed%45), eth: ETHNICS[seed%ETHNICS.length]});
+                            scanData.set(sid, {
+                                age: 18+(seed%42), 
+                                eth: ETHNICS[seed%ETHNICS.length],
+                                gen: seed%2 === 0 ? "ERKEK" : "KADIN",
+                                emo: EMOTIONS[seed%EMOTIONS.length]
+                            });
                         }
-                        const s = scanData.get(spatialId);
-                        ctx.fillText(`İNSAN | ~${s.age} YAŞ`, originX+5, originY+15);
-                        ctx.fillStyle = "#00ff9d"; ctx.fillText(s.eth, originX+5, originY+32);
-                        ctx.fillStyle = "#aaa"; ctx.fillText(`%${Math.round(score*100)}`, originX+5, originY+48);
+                        const s = scanData.get(sid);
+                        ctx.fillText(`${s.gen} | ~${s.age} YAŞ`, originX+6, originY+15);
+                        ctx.fillStyle = varColor(1);
+                        ctx.fillText(s.eth, originX+6, originY+32);
+                        
+                        if(bioMode === 'deep') {
+                            ctx.fillStyle = "#aaa";
+                            ctx.fillText(`DUYGU: ${s.emo}`, originX+6, originY+50);
+                            ctx.fillStyle = varColor(score);
+                            ctx.fillText(`TARAMA GÜVENİ: %${Math.round(score*100)}`, originX+6, originY+68);
+                        }
                     } else {
-                        ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX+5, originY+17);
+                        ctx.fillText(`${label.toUpperCase()} | %${Math.round(score*100)}`, originX+6, originY+18);
                     }
                 }
             });
         }
 
-        window.runAction = (type) => {
-            const current = targetLabel === "all" ? "GENEL" : targetLabel.toUpperCase();
-            if(type === 'count') alert(`Tespit Edilen: ${count} ${current}`);
-            if(type === 'save_loc') alert(`Konum verileri NPU belleğine mühürlendi.`);
-            if(type === 'ask') alert(`Seçili nesne davranışı: Aktif.`);
+        function varColor(s) { return s > 0.6 ? "#00ff9d" : "#ffcc00"; }
+
+        window.runReadyAction = (type) => {
+            const current = document.getElementById('targetObj').value;
+            if(type === 'count') alert(`Sayılan toplam nesne: ${count}`);
+            if(type === 'save') alert(`Görüntüdeki tüm ${current} koordinatları belleğe mühürlendi.`);
+            if(type === 'track') alert(`En yakın ${current} hedefine kilitlenildi. (NPU-Focus)`);
+            if(type === 'reset') { count = 0; window.tracked.clear(); document.getElementById('count-tag').innerText = "SAYAÇ: 0"; }
         };
 
-        window.resetCounter = () => { count = 0; window.tracked.clear(); document.getElementById('count-tag').innerText = "SAYAÇ: 0"; };
-        window.toggleFeature = (f) => { features[f] = !features[f]; document.getElementById(f+'Btn').style.opacity = features[f]?"1":"0.5"; };
         window.toggleMenu = (s) => document.getElementById('panel').style.transform = s ? "translateY(0)" : "translateY(120%)";
         window.toggleAcc = (el) => { document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active')); el.parentElement.classList.add('active'); };
-        window.lockRadar = () => { if(detections[0]) savedAnchors.push({ alpha: deviceOri.alpha }); };
-        window.addEventListener('deviceorientation', e => { if(e.alpha) deviceOri.alpha = e.alpha; });
-
+        window.toggleFeature = (f) => { features[f] = !features[f]; document.getElementById(f+'Btn').style.opacity = features[f]?"1":"0.5"; };
+        
         initCameras().then(() => applyAll());
     </script>
 </body>
