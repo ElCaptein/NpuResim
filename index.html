@@ -3,46 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poco X7 Pro - Profesyonel AI Analiz</title>
+    <title>Poco X7 Pro - Hyper AI Vision</title>
     <style>
-        :root { --neon: #00e5ff; --bg: #080808; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        :root { --neon: #00ff9d; --bg: #050505; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* Modern Arayüz */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; border: 2px solid rgba(0, 229, 255, 0.2); box-sizing: border-box; }
-        .top-bar { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 14px; letter-spacing: 2px; color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        #main-container { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
         
-        #video-container { position: relative; width: 100vw; height: 100vh; background: black; }
+        /* Kamera Alanı */
+        #camera-wrapper { position: relative; flex-grow: 1; background: #000; overflow: hidden; }
         video { width: 100%; height: 100%; object-fit: cover; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        .control-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 20px; border: 1px solid var(--neon); pointer-events: auto; }
-        .stats { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px; font-family: monospace; }
+        /* Arayüz Paneli */
+        .ui-panel { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.8); padding: 20px 0; border-top: 1px solid var(--neon); display: flex; flex-direction: column; align-items: center; gap: 15px; }
         
-        button { width: 100%; background: var(--neon); color: black; border: none; padding: 15px; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; }
-        button:disabled { background: #333; color: #666; }
+        .btn-group { display: flex; gap: 10px; width: 90%; }
+        button { flex: 1; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        
+        #startBtn { background: var(--neon); color: black; }
+        #captureBtn { background: #ffffff; color: black; display: none; }
+        
+        .info-bar { font-size: 11px; color: var(--neon); font-family: monospace; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        <div class="top-bar">NPU HYPER-VISION ACTIVE</div>
-    </div>
-
-    <div id="video-container">
-        <video id="webcam" autoplay playsinline muted></video>
-        <canvas id="output_canvas"></canvas>
-    </div>
-
-    <div class="control-panel">
-        <div class="stats">
-            <div id="fps">FPS: --</div>
-            <div id="detect-count">NESNE: 0</div>
+    <div id="main-container">
+        <div id="camera-wrapper">
+            <video id="webcam" autoplay playsinline muted></video>
+            <canvas id="output_canvas"></canvas>
         </div>
-        <div id="info" style="font-size: 11px; color: #888; margin-bottom: 10px; text-align: center;">
-            Sistem: MediaPipe EfficientDet-Lite2 (Yüksek Doğruluk)
+
+        <div class="ui-panel">
+            <div class="info-bar" id="status">SİSTEM: HAZIR | MODEL: EFFICIENTDET-L2</div>
+            <div class="btn-group">
+                <button id="startBtn">SİSTEMİ BAŞLAT</button>
+                <button id="captureBtn">FOTOĞRAF ÇEK VE KAYDET</button>
+            </div>
         </div>
-        <button id="startBtn">ANALİZİ BAŞLAT</button>
     </div>
 
     <script type="module">
@@ -51,43 +50,40 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
         const startBtn = document.getElementById('startBtn');
-        const fpsDisplay = document.getElementById('fps');
-        const countDisplay = document.getElementById('detect-count');
+        const captureBtn = document.getElementById('captureBtn');
 
         let objectDetector;
         let lastVideoTime = -1;
-        let frameCount = 0;
-        let lastFpsUpdate = 0;
+        let currentDetections = [];
 
-        // --- AYARLAR VE ÖZEL TANIMLAR ---
-        const MIN_CONFIDENCE = 0.65; // %65 altındaki tahminleri çöpe at (Kaliteyi artırır)
+        // --- TÜRKÇE NESNE SÖZLÜĞÜ (Genişletilmiş) ---
         const labelsTR = {
-            'person': 'İNSAN', 'cat': 'HAYVAN (Kedi)', 'dog': 'HAYVAN (Köpek)',
-            'laptop': 'TEKNOLOJİ (PC)', 'cell phone': 'TEKNOLOJİ (Telefon)',
-            'chair': 'MOBİLYA (Sandalye)', 'bottle': 'EŞYA (Şişe)'
+            'person': 'İNSAN', 'chair': 'SANDALYE/KOLTUK', 'couch': 'KOLTUK/KANEPE',
+            'dining table': 'YEMEK MASASI', 'bed': 'YATAK', 'potted plant': 'SAKSI BİTKİSİ',
+            'tv': 'TELEVİZYON/MONİTÖR', 'laptop': 'BİLGİSAYAR', 'cell phone': 'CEP TELEFONU',
+            'bottle': 'ŞİŞE', 'cup': 'BARDAK', 'backpack': 'ÇANTA', 'handbag': 'EL ÇANTASI',
+            'book': 'KİTAP', 'clock': 'SAAT', 'vase': 'VAZO', 'scissors': 'MAKAS',
+            'mouse': 'FARE', 'keyboard': 'KLAVYE', 'remote': 'KUMANDA'
         };
 
         async function init() {
-            startBtn.innerText = "Yükleniyor...";
+            status.innerText = "YAPAY ZEKA YÜKLENİYOR...";
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             
             objectDetector = await ObjectDetector.createFromOptions(vision, {
                 baseOptions: {
-                    // Lite2 modeli Lite0'dan %40 daha doğru sonuç verir
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
                     delegate: "GPU"
                 },
-                scoreThreshold: MIN_CONFIDENCE,
+                scoreThreshold: 0.5, // Doğruluk için eşik değer
                 runningMode: "VIDEO"
             });
-
-            startBtn.innerText = "SİSTEMİ BAŞLAT";
-            startBtn.disabled = false;
+            status.innerText = "SİSTEM: AKTİF | MODEL: ÇEVRİMİÇİ";
         }
 
         startBtn.onclick = async () => {
-            startBtn.parentElement.style.opacity = "0.2"; // Panel şeffaflaşsın
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: "environment", width: 1280, height: 720 }
             });
@@ -95,6 +91,8 @@
             video.onloadeddata = () => {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
+                startBtn.style.display = "none";
+                captureBtn.style.display = "block";
                 predict();
             };
         };
@@ -102,57 +100,65 @@
         async function predict() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
-                const startTime = performance.now();
-                const detections = objectDetector.detectForVideo(video, startTime);
-                
-                render(detections);
-                updateStats(startTime);
+                const detections = objectDetector.detectForVideo(video, performance.now());
+                currentDetections = detections.detections;
+                draw(currentDetections);
             }
             window.requestAnimationFrame(predict);
         }
 
-        function render(result) {
+        function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            countDisplay.innerText = `NESNE: ${result.detections.length}`;
+            detections.forEach(det => {
+                const { originX, originY, width, height } = det.boundingBox;
+                const label = labelsTR[det.categories[0].categoryName] || det.categories[0].categoryName.toUpperCase();
+                const score = Math.round(det.categories[0].score * 100);
 
-            result.detections.forEach(detection => {
-                const { originX, originY, width, height } = detection.boundingBox;
-                const rawLabel = detection.categories[0].categoryName;
-                const score = Math.round(detection.categories[0].score * 100);
-                
-                let finalLabel = labelsTR[rawLabel] || rawLabel.toUpperCase();
-
-                // --- ÖZEL MANTIK: ÇOCUK/YETİŞKİN AYRIMI ---
-                // Eğer nesne insansa ve kutu boyu ekranın %40'ından kısaysa "Çocuk" tahmini yap
-                if (rawLabel === 'person') {
-                    const screenRatio = height / canvas.height;
-                    if (screenRatio < 0.4) finalLabel = "İNSAN (Çocuk)";
-                    else finalLabel = "İNSAN (Yetişkin)";
-                }
-
-                // Çerçeve Tasarımı
-                ctx.strokeStyle = '#00e5ff';
-                ctx.lineWidth = 4;
+                // Görsel Tasarım
+                ctx.strokeStyle = "#00ff9d";
+                ctx.lineWidth = 5;
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Köşe Detayları
-                ctx.fillStyle = '#00e5ff';
-                ctx.fillRect(originX, originY - 35, finalLabel.length * 12 + 50, 35);
-                
-                ctx.fillStyle = 'black';
-                ctx.font = 'bold 18px Arial';
-                ctx.fillText(`${finalLabel} %${score}`, originX + 10, originY - 10);
+                ctx.fillStyle = "#00ff9d";
+                ctx.font = "bold 24px Arial";
+                ctx.fillText(`${label} %${score}`, originX, originY - 10);
             });
         }
 
-        function updateStats(now) {
-            frameCount++;
-            if (now - lastFpsUpdate > 1000) {
-                fpsDisplay.innerText = "FPS: " + frameCount;
-                frameCount = 0;
-                lastFpsUpdate = now;
-            }
-        }
+        // --- FOTOĞRAF ÇEKME VE DIŞARI AKTARMA ---
+        captureBtn.onclick = () => {
+            // Geçici bir canvas oluştur (Video + İşaretlemeler birleşecek)
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = video.videoWidth;
+            exportCanvas.height = video.videoHeight;
+            const eCtx = exportCanvas.getContext('2d');
+
+            // 1. Videodaki anlık görüntüyü çiz
+            eCtx.drawImage(video, 0, 0);
+
+            // 2. Yapay zeka kutularını üzerine çiz
+            currentDetections.forEach(det => {
+                const { originX, originY, width, height } = det.boundingBox;
+                const label = labelsTR[det.categories[0].categoryName] || det.categories[0].categoryName.toUpperCase();
+                
+                eCtx.strokeStyle = "red";
+                eCtx.lineWidth = 6;
+                eCtx.strokeRect(originX, originY, width, height);
+                
+                eCtx.fillStyle = "red";
+                eCtx.font = "bold 30px Arial";
+                eCtx.fillText(label, originX, originY - 15);
+            });
+
+            // 3. Dosya olarak indir
+            const link = document.createElement('a');
+            link.download = `AI_Analiz_${Date.now()}.png`;
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+            
+            status.innerText = "FOTOĞRAF GALERİYE KAYDEDİLDİ!";
+            setTimeout(() => status.innerText = "SİSTEM: AKTİF", 2000);
+        };
 
         init();
     </script>
