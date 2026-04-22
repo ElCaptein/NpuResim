@@ -3,23 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v38 Legacy-Core</title>
+    <title>AI Vision v40 Omni-Final</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
-        video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* HUD - Durum Göstergeleri */
+        /* HUD & Durum */
         .hud { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
+
+        /* Recovery UI (Siyah Ekran Çözümü) */
+        #recovery-ui { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1500; text-align: center; background: rgba(0,0,0,0.9); padding: 20px; border-radius: 20px; border: 1px solid var(--neon); }
 
         /* Master Panel */
         #panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 80vh; display: flex; flex-direction: column; backdrop-filter: blur(25px);
+            max-height: 75vh; display: flex; flex-direction: column; backdrop-filter: blur(25px);
         }
         .acc-item { border-bottom: 1px solid #222; }
         .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--neon); align-items: center; }
@@ -29,25 +32,21 @@
         .btn { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 5px; cursor: pointer; }
         .btn-neon { background: var(--neon); color: #000; border: none; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        
-        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-spin { width: 40px; height: 40px; border: 3px solid #111; border-top: 3px solid var(--neon); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="load-overlay">
-        <div class="loader-spin"></div>
-        <div style="color:var(--neon); font-weight: 900; margin-top: 20px; letter-spacing: 2px;">NPU + GPU RE-LINK</div>
-        <div id="load-status" style="color:#555; font-size: 10px; margin-top: 8px;">ESKİ PROTOKOLLER YÜKLENİYOR...</div>
+    <div id="recovery-ui">
+        <div style="color:var(--neon); font-size: 14px; font-weight: 900; margin-bottom: 10px;">GÖRÜNTÜ SİNYALİ YOK</div>
+        <button class="btn btn-neon" onclick="applyAll(true)">🎥 SİSTEMİ ZORLA BAŞLAT</button>
+        <div style="font-size: 9px; color: #555; margin-top: 10px;">Loading veya Siyah Ekranda Kalırsa Basın</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
     <div class="hud">
-        <div id="hw-tag" class="chip">HW: NPU-HYBRID</div>
+        <div id="hw-tag" class="chip">HW: NPU+GPU</div>
         <div id="res-tag" class="chip">RES: 720P</div>
         <div id="mode-tag" class="chip" style="color:var(--accent); border-color:var(--accent);">MOD: ANALİZ</div>
         <div id="count-tag" class="chip" style="color:var(--gold); border-color:var(--gold);">SAYAÇ: 0</div>
@@ -55,7 +54,7 @@
 
     <div id="panel">
         <div class="acc-item active">
-            <div class="acc-header" onclick="toggleAcc(this)">⚡ KOMUT & AKSİYON MERKEZİ</div>
+            <div class="acc-header" onclick="toggleAcc(this)">⚡ KOMUT VE AKSİYON MERKEZİ</div>
             <div class="acc-body">
                 <div class="grid">
                     <button class="btn btn-neon" onclick="setOpMode('scan')">🔍 DERİN ANALİZ</button>
@@ -69,20 +68,17 @@
         <div class="acc-item">
             <div class="acc-header" onclick="toggleAcc(this)">⚙️ DONANIM & NPU KONTROL</div>
             <div class="acc-body">
-                <label style="font-size:9px; color:#555;">YAPAY ZEKA MODELİ</label>
                 <select id="modelSel" class="btn">
-                    <option value="efficientdet_lite0">Lite-0 (Maksimum Hız)</option>
-                    <option value="efficientdet_lite2" selected>Lite-2 (Dengeli HD)</option>
-                    <option value="efficientdet_lite4">Lite-4 (Ultra Keskinlik)</option>
+                    <option value="efficientdet_lite0">Lite-0 (Hızlı Sayım)</option>
+                    <option value="efficientdet_lite2" selected>Lite-2 (Dengeli Analiz)</option>
                 </select>
-                <label style="font-size:9px; color:#555; margin-top:10px; display:block;">ÇÖZÜNÜRLÜK</label>
-                <select id="pxSel" class="btn"><option value="480">480P</option><option value="720" selected>720P HD</option><option value="1080">1080P FHD</option></select>
+                <select id="pxSel" class="btn"><option value="480">480P (Güç Tasarrufu)</option><option value="720" selected>720P (HD)</option></select>
                 <button class="btn btn-neon" style="margin-top:10px;" onclick="applyAll()">✅ AYARLARI UYGULA</button>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🧬 RADAR, BİYOMETRİ & HAFIZA</div>
+            <div class="acc-header" onclick="toggleAcc(this)">🧬 RADAR, BİYOMETRİ & FOTOĞRAF</div>
             <div class="acc-body">
                 <div class="grid">
                     <button class="btn" style="background:var(--gold); color:#000;" onclick="lockRadar()">📍 RADAR ÇİVİLE</button>
@@ -92,7 +88,7 @@
                     <label style="font-size:9px; color:#555;">FOTOĞRAFDAN NESNE ÖĞRET</label>
                     <input type="file" accept="image/*" class="btn" onchange="teachModel(event)">
                 </div>
-                <button class="btn" style="background:var(--danger); margin-top:10px;" onclick="localStorage.clear(); location.reload();">🧹 TAM SIFIRLA</button>
+                <button class="btn" style="background:var(--danger); margin-top:10px;" onclick="localStorage.clear(); location.reload();">🧹 TAM SIFIRLAMA</button>
             </div>
         </div>
     </div>
@@ -103,39 +99,33 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
-        const loader = document.getElementById('load-overlay');
+        const recoveryUI = document.getElementById('recovery-ui');
 
         let detector, isRunning = false;
         let detections = [], currentFacing = "environment";
-        let opMode = 'scan';
-        let scanData = new Map();
+        let opMode = 'scan', scanData = new Map();
         let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
-        let count = parseInt(localStorage.getItem('v38_count')) || 0;
+        let count = parseInt(localStorage.getItem('v40_c')) || 0;
         let trackedIds = new Set();
 
         const ETHNICS = [
             {n: "Semitik / Levant", r: "Doğu Akdeniz"}, {n: "Anadolu / Türk", r: "Batı Asya"},
-            {n: "Kafkasya / Gürcü", r: "Kafkas Dağları"}, {n: "Slav / Baltık", r: "Doğu Avrupa"},
-            {n: "Germen / Nordik", r: "Kuzey Avrupa"}, {n: "Helen / Balkan", r: "Balkanlar"},
-            {n: "Pers / Aryen", r: "İran Platosu"}
+            {n: "Kafkasya / Gürcü", r: "Kafkaslar"}, {n: "Slav / Baltık", r: "Doğu Avrupa"},
+            {n: "Nordik / Germen", r: "Kuzey Avrupa"}, {n: "Balkan / Helen", r: "Güneydoğu Avrupa"}
         ];
 
-        // Bypass: 4 saniye sonra loading'i zorla kaldır
-        setTimeout(() => { loader.style.display = 'none'; }, 4000);
-
-        window.applyAll = async () => {
-            loader.style.display = 'flex';
+        window.applyAll = async (force = false) => {
+            if(force) recoveryUI.style.display = "none";
             isRunning = false;
             try {
                 const model = document.getElementById('modelSel').value;
                 const res = document.getElementById('pxSel').value;
 
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-                const s = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: currentFacing, width: res == "1080" ? 1920 : (res == "720" ? 1280 : 640) } 
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: currentFacing, width: res == "720" ? 1280 : 640 } 
                 });
-                video.videoWidth = res == "1080" ? 1920 : 1280;
-                video.srcObject = s;
+                video.srcObject = stream;
 
                 const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
                 detector = await ObjectDetector.createFromOptions(vision, {
@@ -143,19 +133,18 @@
                         modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/${model}/float16/1/${model}.tflite`,
                         delegate: "GPU" 
                     },
-                    scoreThreshold: opMode === 'counter' ? 0.35 : 0.55, 
+                    scoreThreshold: opMode === 'counter' ? 0.35 : 0.5, 
                     runningMode: "VIDEO"
                 });
 
                 video.onloadedmetadata = () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    loader.style.display = 'none';
+                    recoveryUI.style.display = "none";
                     isRunning = true;
                     renderLoop();
                 };
             } catch (e) {
-                console.error("NPU Re-Link Hatası");
-                loader.style.display = 'none';
+                console.error("Sistem Hatası");
             }
         };
 
@@ -165,15 +154,15 @@
             detections = res.detections;
 
             detections.forEach(d => {
-                const id = `${Math.round(d.boundingBox.originX/40)}-${Math.round(d.boundingBox.originY/40)}`;
+                const id = `${Math.round(d.boundingBox.originX/50)}-${Math.round(d.boundingBox.originY/50)}`;
                 if(!trackedIds.has(id)) {
                     trackedIds.add(id);
                     count++;
-                    localStorage.setItem('v38_count', count);
+                    localStorage.setItem('v40_c', count);
                     document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
                 }
             });
-            if(trackedIds.size > 100) trackedIds.clear();
+            if(trackedIds.size > 120) trackedIds.clear();
             draw();
             requestAnimationFrame(renderLoop);
         }
@@ -181,11 +170,11 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // RADAR ÇİZİMİ (ESKİ ÖZELLİK)
+            // RADAR ÇİZİMİ
             savedAnchors.forEach(a => {
-                const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 50;
-                if(Math.abs(deviceOri.alpha - a.alpha) < 40) {
-                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 14, 0, 7); ctx.fill();
+                const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
+                if(Math.abs(deviceOri.alpha - a.alpha) < 45) {
+                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 12, 0, 7); ctx.fill();
                     ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif"; ctx.fillText(a.label, x + 18, canvas.height/2 + 5);
                 }
             });
@@ -194,36 +183,29 @@
                 const { originX, originY, width, height } = d.boundingBox;
                 const score = d.categories[0].score;
                 const label = d.categories[0].categoryName;
-                const nameMap = {"person": "İNSAN", "car": "ARAÇ", "motorcycle": "MOTOR", "truck": "KAMYON"};
+                const nameMap = {"person": "İNSAN", "car": "ARAÇ", "motorcycle": "MOTOR", "truck": "KAMYON", "dog": "KÖPEK", "cat": "KEDİ"};
                 const prettyLabel = nameMap[label] || label.toUpperCase();
 
                 ctx.strokeStyle = label === targetLabel ? "#00e5ff" : (score > 0.7 ? "#00ff9d" : "#ffcc00");
-                ctx.lineWidth = opMode === 'counter' ? 2 : 5;
+                ctx.lineWidth = opMode === 'counter' ? 2 : 4;
                 ctx.strokeRect(originX, originY, width, height);
 
                 if(opMode === 'scan') {
-                    ctx.fillStyle = "rgba(0,0,0,0.85)";
-                    const hudH = label === 'person' ? 95 : 35;
-                    ctx.fillRect(originX, originY, width, hudH);
-                    
-                    ctx.fillStyle = "#fff";
-                    ctx.font = "bold 13px sans-serif";
+                    ctx.fillStyle = "rgba(0,0,0,0.8)";
+                    const h = label === 'person' ? 90 : 35;
+                    ctx.fillRect(originX, originY, width, h);
+                    ctx.fillStyle = "#fff"; ctx.font = "bold 13px sans-serif";
                     
                     if(label === 'person') {
                         if(!scanData.has(i)) {
                             const seed = Math.floor(originX + originY);
-                            scanData.set(i, {p:0, age: 18+(seed%38), eth:ETHNICS[seed%ETHNICS.length]});
+                            scanData.set(i, {age: 18+(seed%38), eth:ETHNICS[seed%ETHNICS.length]});
                         }
                         let s = scanData.get(i);
-                        if(s.p < 100) s.p += 2.5;
-                        if(s.p < 100) {
-                            ctx.fillText(`DERİN ANALİZ: %${Math.floor(s.p)}`, originX + 10, originY + 25);
-                        } else {
-                            ctx.fillText(`İNSAN | ${s.age} YAŞ`, originX + 10, originY + 28);
-                            ctx.font = "11px sans-serif"; ctx.fillStyle = "#00ff9d";
-                            ctx.fillText(`KÖKEN: ${s.eth.n}`, originX + 10, originY + 52);
-                            ctx.fillStyle = "#aaa"; ctx.fillText(`BÖLGE: ${s.eth.r}`, originX + 10, originY + 72);
-                        }
+                        ctx.fillText(`İNSAN | ${s.age} YAŞ`, originX + 10, originY + 25);
+                        ctx.font = "11px sans-serif"; ctx.fillStyle = "#00ff9d";
+                        ctx.fillText(`KÖKEN: ${s.eth.n}`, originX + 10, originY + 50);
+                        ctx.fillStyle = "#aaa"; ctx.fillText(`BÖLGE: ${s.eth.r}`, originX + 10, originY + 70);
                     } else {
                         ctx.fillText(`${prettyLabel} %${Math.round(score*100)}`, originX + 10, originY + 25);
                     }
@@ -245,10 +227,8 @@
         };
 
         window.toggleAcc = (el) => {
-            const item = el.parentElement;
-            const wasActive = item.classList.contains('active');
             document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active'));
-            if(!wasActive) item.classList.add('active');
+            el.parentElement.classList.add('active');
         };
 
         window.teachModel = (e) => {
@@ -257,7 +237,7 @@
                 const img = new Image(); img.src = f.target.result;
                 img.onload = () => {
                     const res = detector.detect(img);
-                    if(res.detections[0]) { targetLabel = res.detections[0].categories[0].categoryName; alert("HEDEF ÖĞRETİLDİ: " + targetLabel); }
+                    if(res.detections[0]) { targetLabel = res.detections[0].categories[0].categoryName; alert("ÖĞRETİLDİ: " + targetLabel); }
                 };
             };
             reader.readAsDataURL(e.target.files[0]);
