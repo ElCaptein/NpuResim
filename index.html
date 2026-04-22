@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v60 Titan Legacy-X</title>
+    <title>AI Vision v65 Synchro-Fix</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
@@ -19,7 +19,7 @@
         #panel {
             position: absolute; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 85vh; display: flex; flex-direction: column; backdrop-filter: blur(40px); transition: 0.4s ease-out;
+            max-height: 85vh; display: flex; flex-direction: column; backdrop-filter: blur(40px); transition: 0.4s ease-out; transform: translateY(120%);
         }
         .panel-toolbar { display: flex; justify-content: space-between; padding: 15px 20px; background: #000; border-bottom: 1px solid var(--neon); }
         .acc-item { border-bottom: 1px solid #222; }
@@ -41,9 +41,10 @@
 <body>
 
     <div id="load-overlay">
-        <div style="color:var(--neon); font-weight: 900; letter-spacing: 8px; font-size:24px;">TITAN LEGACY-X</div>
+        <div style="color:var(--neon); font-weight: 900; letter-spacing: 8px; font-size:24px;">TITAN v65</div>
         <div class="loader-bar"><div class="loader-fill" id="load-fill"></div></div>
-        <div id="status-text" style="color:#444; font-size: 9px; margin-top: 15px;">ESKİ VE YENİ PROTOKOLLER BİRLEŞTİRİLİYOR...</div>
+        <div id="status-text" style="color:#444; font-size: 9px; margin-top: 15px; text-transform: uppercase;">DONANIM SENKRONİZASYONU...</div>
+        <button id="forceCpu" class="btn" style="display:none; width:auto; margin-top:20px; border-color:var(--danger); color:var(--danger);" onclick="forceSafeMode()">⚠️ GÜVENLİ MODDA ZORLA (CPU)</button>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -57,9 +58,9 @@
 
     <button id="showMenuBtn" onclick="toggleMenu(true)">⚙️ TITAN MERKEZİ</button>
 
-    <div id="panel" style="transform: translateY(120%);">
+    <div id="panel">
         <div class="panel-toolbar">
-            <div style="color:var(--neon); font-size:12px; font-weight:900;">TITAN v60 CORE</div>
+            <div style="color:var(--neon); font-size:12px; font-weight:900;">TITAN v65 CORE</div>
             <button onclick="toggleMenu(false)" style="background:none; border:none; color:var(--danger); font-size:11px; font-weight:900;">GİZLE</button>
         </div>
 
@@ -70,19 +71,19 @@
                 <select id="hwSel">
                     <option value="NPU">SADECE NPU</option>
                     <option value="GPU">SADECE GPU</option>
-                    <option value="CPU">SADECE CPU</option>
+                    <option value="CPU">SADECE CPU (Stabil)</option>
                     <option value="GPU_NPU" selected>GPU + NPU (Poco Optimized)</option>
                     <option value="GPU_CPU">GPU + CPU</option>
                 </select>
 
                 <label style="font-size:9px; color:#555; margin-top:10px; display:block;">MODEL DERİNLİĞİ (1-10)</label>
                 <select id="modelSel">
-                    <option value="0">1. Nano (Max Hız)</option>
+                    <option value="0">1. Nano</option>
                     <option value="0">2. Ultra-Light</option>
                     <option value="1">4. Standard</option>
                     <option value="2" selected>5. Balanced HD</option>
                     <option value="3">7. Heavy-Neural</option>
-                    <option value="4">10. Titan-Core (Ultra)</option>
+                    <option value="4">10. Titan-Core</option>
                 </select>
 
                 <label style="font-size:9px; color:#555; margin-top:10px; display:block;">KAMERA KAYNAĞI</label>
@@ -95,7 +96,7 @@
         <div class="acc-item">
             <div class="acc-header" onclick="toggleAcc(this)">🎯 AKSİYON & TAKİP</div>
             <div class="acc-body">
-                <label style="font-size:9px; color:#555;">TAKİP EDİLECEK HEDEF</label>
+                <label style="font-size:9px; color:#555;">HEDEF NESNE</label>
                 <select id="targetObj">
                     <option value="all">TÜM NESNELER</option>
                     <option value="person">İNSAN</option>
@@ -141,8 +142,15 @@
         let count = 0, lastTime = performance.now();
         let targetLabel = "all", savedAnchors = [], deviceOri = { alpha: 0 };
 
-        const TR_MAP = {"person":"İNSAN", "car":"ARAÇ", "motorcycle":"MOTOR", "cell phone":"TELEFON", "laptop":"PC", "bottle":"ŞİŞE"};
         const ETHNICS = ["Anadolu / Türk", "Levant", "Kafkasya", "Slav", "Nordik", "Cermen"];
+
+        // Takılma durumunda butonu göster (7 saniye)
+        const watchdog = setTimeout(() => { if(!isRunning) document.getElementById('forceCpu').style.display='block'; }, 7000);
+
+        window.forceSafeMode = () => {
+            document.getElementById('hwSel').value = "CPU";
+            applyAll();
+        };
 
         async function initCameras() {
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -160,7 +168,7 @@
             isRunning = false;
             overlay.style.display = 'flex';
             fill.style.width = "20%";
-            statusText.innerText = "Donanım Katmanları Senkronize Ediliyor...";
+            statusText.innerText = "KAMERA BAŞLATILIYOR...";
 
             const hwMode = document.getElementById('hwSel').value;
             const modelLevel = document.getElementById('modelSel').value;
@@ -171,65 +179,69 @@
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 
-                // ZOOM YASAK: Sabit 1x Geniş Açı
+                // 1. Kamera Akışını Başlat (Takılmayı Önlemek İçin Önce Görüntü)
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: 1280, height: 720 } 
                 });
                 video.srcObject = stream;
 
-                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                fill.style.width = "60%";
-                
-                detector = await ObjectDetector.createFromOptions(vision, {
-                    baseOptions: { 
-                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                        delegate: delegate 
-                    },
-                    scoreThreshold: 0.4, runningMode: "VIDEO"
-                });
-
-                video.onloadedmetadata = () => {
+                video.onloadedmetadata = async () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                    fill.style.width = "50%";
+                    statusText.innerText = "ALGORİTMALAR BAĞLANIYOR...";
+
+                    // 2. AI Modeli Asenkron Yükle
+                    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+                    fill.style.width = "80%";
+                    
+                    detector = await ObjectDetector.createFromOptions(vision, {
+                        baseOptions: { 
+                            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
+                            delegate: delegate 
+                        },
+                        scoreThreshold: 0.4, runningMode: "VIDEO"
+                    });
+
                     document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
                     fill.style.width = "100%";
-                    setTimeout(() => { overlay.style.display = 'none'; isRunning = true; renderLoop(); }, 600);
+                    setTimeout(() => { overlay.style.display = 'none'; isRunning = true; renderLoop(); }, 500);
                 };
             } catch (e) {
-                statusText.innerText = "SİSTEM ERİŞİM HATASI!";
-                setTimeout(() => overlay.style.display='none', 2000);
+                statusText.innerText = "ERİŞİM REDDEDİLDİ!";
+                document.getElementById('forceCpu').style.display='block';
             }
         };
 
         function renderLoop(now) {
-            if(!isRunning) return;
+            if(!isRunning || !detector) return;
             const fps = 1000 / (now - lastTime);
             lastTime = now;
             if(now % 30 < 2) document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fps)}`;
 
-            const result = detector.detectForVideo(video, performance.now());
-            detections = result.detections;
-            targetLabel = document.getElementById('targetObj').value;
+            try {
+                const result = detector.detectForVideo(video, performance.now());
+                detections = result.detections;
+                targetLabel = document.getElementById('targetObj').value;
 
-            detections.forEach(d => {
-                const label = d.categories[0].categoryName;
-                if(targetLabel === "all" || label === targetLabel) {
-                    const sid = `${label}-${Math.floor(d.boundingBox.originX/50)}`;
-                    if(!window.tracked) window.tracked = new Set();
-                    if(!window.tracked.has(sid)) {
-                        window.tracked.add(sid); count++;
-                        document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
+                detections.forEach(d => {
+                    const label = d.categories[0].categoryName;
+                    if(targetLabel === "all" || label === targetLabel) {
+                        const sid = `${label}-${Math.floor(d.boundingBox.originX/50)}`;
+                        if(!window.tracked) window.tracked = new Set();
+                        if(!window.tracked.has(sid)) {
+                            window.tracked.add(sid); count++;
+                            document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
+                        }
                     }
-                }
-            });
-
-            draw();
+                });
+                draw();
+            } catch (err) { }
             requestAnimationFrame(renderLoop);
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Eski Özellik: Radar
+            
             if(features.gyro) {
                 savedAnchors.forEach(a => {
                     const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
@@ -248,10 +260,8 @@
                 if(targetLabel !== "all" && label !== targetLabel) return;
 
                 ctx.strokeStyle = label === targetLabel ? "#00e5ff" : "#00ff9d";
-                ctx.lineWidth = 3;
-                ctx.strokeRect(originX, originY, width, height);
+                ctx.lineWidth = 3; ctx.strokeRect(originX, originY, width, height);
 
-                // Eski Özellik: Biyometri
                 if(features.bio) {
                     ctx.fillStyle = "rgba(0,0,0,0.85)";
                     const boxH = label === 'person' ? 60 : 25;
@@ -265,24 +275,20 @@
                         }
                         const s = scanData.get(spatialId);
                         ctx.fillText(`İNSAN | ~${s.age} YAŞ`, originX+5, originY+15);
-                        ctx.fillStyle = varColor(1);
-                        ctx.fillText(s.eth, originX+5, originY+32);
-                        ctx.fillStyle = "#aaa"; ctx.fillText(`GÜVEN: %${Math.round(score*100)}`, originX+5, originY+48);
+                        ctx.fillStyle = "#00ff9d"; ctx.fillText(s.eth, originX+5, originY+32);
+                        ctx.fillStyle = "#aaa"; ctx.fillText(`%${Math.round(score*100)}`, originX+5, originY+48);
                     } else {
-                        const tr = TR_MAP[label] || label.toUpperCase();
-                        ctx.fillText(`${tr} | %${Math.round(score*100)}`, originX+5, originY+17);
+                        ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX+5, originY+17);
                     }
                 }
             });
         }
 
-        function varColor(s) { return s > 0.6 ? "#00ff9d" : "#ffcc00"; }
-
         window.runAction = (type) => {
             const current = targetLabel === "all" ? "GENEL" : targetLabel.toUpperCase();
-            if(type === 'count') alert(`Sistem Sayımı: ${count} adet ${current}`);
-            if(type === 'save_loc') alert(`${current} konum verileri GPS-NPU katmanına mühürlendi.`);
-            if(type === 'ask') alert(`Yapay zeka bu ${current} objesinin davranışını 'stabil' olarak tanımladı.`);
+            if(type === 'count') alert(`Tespit Edilen: ${count} ${current}`);
+            if(type === 'save_loc') alert(`Konum verileri NPU belleğine mühürlendi.`);
+            if(type === 'ask') alert(`Seçili nesne davranışı: Aktif.`);
         };
 
         window.resetCounter = () => { count = 0; window.tracked.clear(); document.getElementById('count-tag').innerText = "SAYAÇ: 0"; };
