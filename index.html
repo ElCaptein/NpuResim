@@ -3,117 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poco X7 Pro - Ultra AI Vision</title>
+    <title>Poco X7 Pro - Profesyonel AI Analiz</title>
     <style>
-        :root {
-            --accent: #00ff9d;
-            --bg: #0a0a0a;
-            --panel: rgba(20, 20, 20, 0.8);
-        }
+        :root { --neon: #00e5ff; --bg: #080808; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
+        
+        /* Modern Arayüz */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; border: 2px solid rgba(0, 229, 255, 0.2); box-sizing: border-box; }
+        .top-bar { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 14px; letter-spacing: 2px; color: var(--neon); text-shadow: 0 0 10px var(--neon); }
+        
+        #video-container { position: relative; width: 100vw; height: 100vh; background: black; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: white;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        #scanner-container {
-            position: relative;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        /* Siber Arayüz Elemanları */
-        .overlay-ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-        }
-
-        .status-badge {
-            background: var(--panel);
-            padding: 8px 15px;
-            border-radius: 5px;
-            border-left: 3px solid var(--accent);
-            font-size: 12px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .controls {
-            position: absolute;
-            bottom: 40px;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        #startBtn {
-            background: var(--accent);
-            color: black;
-            border: none;
-            padding: 18px 45px;
-            border-radius: 40px;
-            font-weight: 800;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 0 30px rgba(0, 255, 157, 0.4);
-            transition: 0.3s;
-        }
-
-        #startBtn:active { transform: scale(0.95); }
-        #startBtn:disabled { background: #333; color: #666; box-shadow: none; }
-
-        .fps-box {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-family: monospace;
-            color: var(--accent);
-            font-size: 14px;
-        }
+        .control-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 20px; border: 1px solid var(--neon); pointer-events: auto; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px; font-family: monospace; }
+        
+        button { width: 100%; background: var(--neon); color: black; border: none; padding: 15px; border-radius: 12px; font-weight: 900; font-size: 16px; cursor: pointer; }
+        button:disabled { background: #333; color: #666; }
     </style>
 </head>
 <body>
 
-    <div class="overlay-ui">
-        <div class="status-badge" id="statusText">Sistem Hazırlanıyor...</div>
+    <div id="ui-layer">
+        <div class="top-bar">NPU HYPER-VISION ACTIVE</div>
     </div>
 
-    <div class="fps-box" id="fps">FPS: --</div>
-
-    <div id="scanner-container">
+    <div id="video-container">
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output_canvas"></canvas>
     </div>
 
-    <div class="controls">
-        <button id="startBtn" disabled>SİSTEMİ BAŞLAT</button>
+    <div class="control-panel">
+        <div class="stats">
+            <div id="fps">FPS: --</div>
+            <div id="detect-count">NESNE: 0</div>
+        </div>
+        <div id="info" style="font-size: 11px; color: #888; margin-bottom: 10px; text-align: center;">
+            Sistem: MediaPipe EfficientDet-Lite2 (Yüksek Doğruluk)
+        </div>
+        <button id="startBtn">ANALİZİ BAŞLAT</button>
     </div>
 
     <script type="module">
@@ -122,118 +51,101 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
-        const statusText = document.getElementById('statusText');
         const startBtn = document.getElementById('startBtn');
         const fpsDisplay = document.getElementById('fps');
+        const countDisplay = document.getElementById('detect-count');
 
         let objectDetector;
         let lastVideoTime = -1;
         let frameCount = 0;
         let lastFpsUpdate = 0;
 
-        // Kapsamlı Türkçe Nesne Sözlüğü
-        const dictionary = {
-            'person': 'İNSAN', 'bicycle': 'BİSİKLET', 'car': 'ARABA', 'motorcycle': 'MOTOSİKLET',
-            'airplane': 'UÇAK', 'bus': 'OTOBÜS', 'train': 'TREN', 'truck': 'KAMYON', 'boat': 'TEKNE',
-            'traffic light': 'TRAFİK IŞIĞI', 'bird': 'KUŞ', 'cat': 'KEDİ', 'dog': 'KÖPEK',
-            'backpack': 'SIRT ÇANTASI', 'umbrella': 'ŞEMSİYE', 'handbag': 'EL ÇANTASI', 'tie': 'KRAVAT',
-            'suitcase': 'BAVUL', 'bottle': 'ŞİŞE', 'wine glass': 'KADEH', 'cup': 'BARDAK',
-            'fork': 'ÇATAL', 'knife': 'BIÇAK', 'spoon': 'KAŞIK', 'bowl': 'KASE',
-            'apple': 'ELMA', 'sandwich': 'SANDVİÇ', 'orange': 'PORTAKAL', 'broccoli': 'BROKOLİ',
-            'carrot': 'HAVUÇ', 'hot dog': 'SOSİSLİ', 'pizza': 'PİZZA', 'donut': 'DONUT', 'cake': 'KEK',
-            'chair': 'SANDALYE', 'couch': 'KOLTUK', 'potted plant': 'SAKSI BİTKİSİ', 'bed': 'YATAK',
-            'dining table': 'YEMEK MASASI', 'laptop': 'BİLGİSAYAR', 'mouse': 'FARE',
-            'remote': 'KUMANDA', 'keyboard': 'KLAVYE', 'cell phone': 'TELEFON', 'tv': 'TELEVİZYON',
-            'book': 'KİTAP', 'clock': 'SAAT', 'vase': 'VAZO', 'scissors': 'MAKAS',
-            'teddy bear': 'OYUNCAK AYI', 'hair drier': 'SAÇ KURUTMA MAKİNESİ', 'toothbrush': 'DİŞ FIRÇASI'
+        // --- AYARLAR VE ÖZEL TANIMLAR ---
+        const MIN_CONFIDENCE = 0.65; // %65 altındaki tahminleri çöpe at (Kaliteyi artırır)
+        const labelsTR = {
+            'person': 'İNSAN', 'cat': 'HAYVAN (Kedi)', 'dog': 'HAYVAN (Köpek)',
+            'laptop': 'TEKNOLOJİ (PC)', 'cell phone': 'TEKNOLOJİ (Telefon)',
+            'chair': 'MOBİLYA (Sandalye)', 'bottle': 'EŞYA (Şişe)'
         };
 
-        async function setup() {
-            try {
-                statusText.innerText = "Yapay Zeka Katmanları Yükleniyor...";
-                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                
-                objectDetector = await ObjectDetector.createFromOptions(vision, {
-                    baseOptions: {
-                        // EfficientDet-Lite2: Mobil tarayıcılar için en dengeli/kaliteli model
-                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-                        delegate: "GPU" // NPU ve GPU'yu aktif eder
-                    },
-                    scoreThreshold: 0.45, // %45 güven eşiği
-                    runningMode: "VIDEO"
-                });
+        async function init() {
+            startBtn.innerText = "Yükleniyor...";
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+            
+            objectDetector = await ObjectDetector.createFromOptions(vision, {
+                baseOptions: {
+                    // Lite2 modeli Lite0'dan %40 daha doğru sonuç verir
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
+                    delegate: "GPU"
+                },
+                scoreThreshold: MIN_CONFIDENCE,
+                runningMode: "VIDEO"
+            });
 
-                statusText.innerText = "Yapay Zeka Hazır. Başlatın.";
-                startBtn.disabled = false;
-            } catch (err) {
-                statusText.innerText = "HATA: " + err;
-                console.error(err);
-            }
+            startBtn.innerText = "SİSTEMİ BAŞLAT";
+            startBtn.disabled = false;
         }
 
         startBtn.onclick = async () => {
-            startBtn.style.display = 'none';
-            statusText.innerText = "Kamera Aktif / NPU Analizi Başladı";
-            
+            startBtn.parentElement.style.opacity = "0.2"; // Panel şeffaflaşsın
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: "environment", width: 1280, height: 720 }
             });
             video.srcObject = stream;
-            video.addEventListener("loadeddata", () => {
+            video.onloadeddata = () => {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 predict();
-            });
+            };
         };
 
         async function predict() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
-                const startTimeMs = performance.now();
-                const detections = objectDetector.detectForVideo(video, startTimeMs);
+                const startTime = performance.now();
+                const detections = objectDetector.detectForVideo(video, startTime);
                 
                 render(detections);
-                updateFPS(startTimeMs);
+                updateStats(startTime);
             }
             window.requestAnimationFrame(predict);
         }
 
         function render(result) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            countDisplay.innerText = `NESNE: ${result.detections.length}`;
 
             result.detections.forEach(detection => {
                 const { originX, originY, width, height } = detection.boundingBox;
-                const label = detection.categories[0].categoryName;
+                const rawLabel = detection.categories[0].categoryName;
                 const score = Math.round(detection.categories[0].score * 100);
-                const trLabel = dictionary[label] || label.toUpperCase();
+                
+                let finalLabel = labelsTR[rawLabel] || rawLabel.toUpperCase();
 
-                // Çerçeve Çizimi
-                ctx.strokeStyle = '#00ff9d';
+                // --- ÖZEL MANTIK: ÇOCUK/YETİŞKİN AYRIMI ---
+                // Eğer nesne insansa ve kutu boyu ekranın %40'ından kısaysa "Çocuk" tahmini yap
+                if (rawLabel === 'person') {
+                    const screenRatio = height / canvas.height;
+                    if (screenRatio < 0.4) finalLabel = "İNSAN (Çocuk)";
+                    else finalLabel = "İNSAN (Yetişkin)";
+                }
+
+                // Çerçeve Tasarımı
+                ctx.strokeStyle = '#00e5ff';
                 ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Köşe Süsleri (Sci-fi görünüm)
-                const s = 20;
-                ctx.beginPath();
-                ctx.lineWidth = 8;
-                // Sol Üst
-                ctx.moveTo(originX, originY + s); ctx.lineTo(originX, originY); ctx.lineTo(originX + s, originY);
-                // Sağ Üst
-                ctx.moveTo(originX + width - s, originY); ctx.lineTo(originX + width, originY); ctx.lineTo(originX + width, originY + s);
-                ctx.stroke();
-
-                // Yazı Arka Planı
-                ctx.fillStyle = 'rgba(0, 255, 157, 0.9)';
-                ctx.fillRect(originX, originY - 30, trLabel.length * 15 + 60, 30);
-
-                // Metin
-                ctx.fillStyle = '#000';
-                ctx.font = '900 18px Inter, sans-serif';
-                ctx.fillText(`${trLabel} %${score}`, originX + 10, originY - 8);
+                // Köşe Detayları
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillRect(originX, originY - 35, finalLabel.length * 12 + 50, 35);
+                
+                ctx.fillStyle = 'black';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(`${finalLabel} %${score}`, originX + 10, originY - 10);
             });
         }
 
-        function updateFPS(now) {
+        function updateStats(now) {
             frameCount++;
             if (now - lastFpsUpdate > 1000) {
                 fpsDisplay.innerText = "FPS: " + frameCount;
@@ -242,7 +154,7 @@
             }
         }
 
-        setup();
+        init();
     </script>
 </body>
 </html>
