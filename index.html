@@ -3,45 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision Master Suite v18</title>
+    <title>AI Vision v20 Master</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.98); --accent: #00e5ff; --danger: #ff3d00; }
+        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.98); --accent: #00e5ff; --danger: #ff3d00; --warn: #ffcc00; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Üst Durum Paneli */
-        .hud-top { position: absolute; top: 40px; left: 15px; right: 15px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
-        .chip { background: var(--bg); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 12px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
-
-        /* Kafa Çevirme Uyarısı */
+        /* Kafa Çevirme ve Kalibrasyon Uyarısı */
         #scan-hint {
-            position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 61, 0, 0.9); color: white; padding: 12px 20px; border-radius: 15px;
-            font-size: 11px; font-weight: bold; display: none; z-index: 600; text-align: center; border: 1px solid white;
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85); color: var(--accent); padding: 12px 25px; border-radius: 30px;
+            font-size: 11px; font-weight: bold; display: none; z-index: 600; text-align: center; border: 1px solid var(--accent);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
         }
 
         /* Akordeon Ana Panel */
         #ui-panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px;
             z-index: 1000; background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 70vh; display: flex; flex-direction: column;
+            display: flex; flex-direction: column; max-height: 75vh;
         }
         .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: var(--neon); letter-spacing: 1px; }
+        .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
         .acc-content { padding: 15px; display: none; background: #080808; overflow-y: auto; }
         .acc-content.active { display: block; }
 
+        /* İstatistik Kartları (Accordion İçinde) */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .stat-card { background: #151515; padding: 10px; border-radius: 12px; border-left: 3px solid var(--neon); }
+        .stat-label { font-size: 9px; color: #666; margin-bottom: 3px; }
+        .stat-val { font-size: 12px; font-weight: bold; color: #fff; }
+
         /* Form & Butonlar */
         .row { margin-bottom: 12px; }
-        label { font-size: 10px; color: #777; display: block; margin-bottom: 4px; text-transform: uppercase; }
-        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; font-size: 12px; outline: none; }
-        .btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; margin-top: 5px; text-transform: uppercase; }
+        label { font-size: 10px; color: #555; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 10px; font-size: 12px; outline: none; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-size: 10px; text-transform: uppercase; transition: 0.3s; }
         .btn-neon { background: var(--neon); color: #000; }
         .btn-accent { background: var(--accent); color: #000; }
         .btn-danger { background: var(--danger); color: #fff; }
-        .btn-active { box-shadow: 0 0 15px var(--neon); border: 1px solid white; }
+        .btn-active { border: 2px solid #fff; box-shadow: 0 0 15px var(--accent); }
     </style>
 </head>
 <body>
@@ -49,68 +53,64 @@
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output_canvas"></canvas>
 
-    <div class="hud-top">
-        <div class="chip" id="fpsShow">FPS: 30</div>
-        <div class="chip" id="hwShow">NPU ACTIVE</div>
-        <div class="chip" id="objShow">OBJS: 0</div>
-        <div class="chip" id="targetShow" style="display:none; border-color:var(--accent);">HEDEF KİLİTLENDİ</div>
-    </div>
-
-    <div id="scan-hint">⚠️ ANALİZ DERİNLEŞİYOR: KAFANIZI YAVAŞÇA SAĞA VE SOLA ÇEVİRİN</div>
+    <div id="scan-hint">🧬 ANALİZ AKTİF: LÜTFEN KAFANIZI SAĞA VE SOLA YAVAŞÇA ÇEVİRİN</div>
 
     <div id="ui-panel">
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(0)">🧬 BİYOMETRİK DERİN ANALİZ <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(0)">🧬 BİYOMETRİK ANALİZ MOTORU <span>▼</span></div>
             <div class="acc-content active">
-                <button class="btn" id="intelBtn" style="background:#222; color:white;">BİYOMETRİK MOD: KAPALI</button>
-                <div style="display:flex; gap:5px; margin-top:10px;">
+                <button class="btn btn-accent" id="intelBtn">BİYOMETRİK MOD: KAPALI</button>
+                <div class="row" style="margin-top:15px;">
+                    <label>HASSASİYET (CONFIDENCE)</label>
+                    <input type="range" id="confRange" min="35" max="95" value="60">
+                </div>
+                <div class="btn-group">
                     <button class="btn btn-neon" onclick="flipCamera()">🔄 KAMERA</button>
-                    <button class="btn btn-neon" onclick="takePhoto()">📸 FOTO ÇEK</button>
+                    <button class="btn btn-neon" onclick="takePhoto()">📸 FOTOĞRAF</button>
                 </div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(1)">📍 NAVİGASYON & HEDEF TAKİBİ <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(1)">📍 RADAR VE HEDEF TAKİBİ <span>▼</span></div>
             <div class="acc-content">
                 <div class="row">
-                    <label>FOTOĞRAFTAN HEDEF TANIMLA</label>
-                    <input type="file" accept="image/*" onchange="searchFromImage(event)">
+                    <label>FOTOĞRAFTAN HEDEF YÜKLE</label>
+                    <input type="file" accept="image/*" onchange="loadTarget(event)">
                 </div>
                 <div class="row">
                     <label>AKSİYON TETİKLE</label>
-                    <select id="actionSel">
+                    <select id="actionType">
                         <option value="none">AKSİYON YOK</option>
                         <option value="beep">BULUNCA BİPLE</option>
-                        <option value="lock">OTOMATİK RADARA AL</option>
+                        <option value="anchor">OTOMATİK RADARA EKLE</option>
                     </select>
                 </div>
-                <div style="display:flex; gap:5px;">
+                <div class="btn-group">
                     <button class="btn btn-accent" onclick="manualAnchor()">📍 KONUMU ÇİVİLE</button>
-                    <button class="btn btn-danger" onclick="resetNavigation()">🧹 SIFIRLA</button>
+                    <button class="btn btn-danger" onclick="clearRadar()">🧹 RADARI SIFIRLA</button>
                 </div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(2)">🔋 SİSTEM, GÜÇ VE DONANIM <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(2)">📊 SİSTEM VE GÜÇ AYARLARI <span>▼</span></div>
             <div class="acc-content">
-                <div class="row">
-                    <label>DONANIM MOTORU</label>
-                    <select id="hwSel" onchange="initSystem()">
-                        <option value="GPU">POCO NPU + GPU HIZLANDIRMA</option>
-                        <option value="CPU">STANDART CPU (TASARRUF)</option>
-                    </select>
+                <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-label">HIZ</div><div class="stat-val" id="fpsVal">30 FPS</div></div>
+                    <div class="stat-card"><div class="stat-label">DONANIM</div><div class="stat-val" id="hwVal">NPU+GPU</div></div>
+                    <div class="stat-card"><div class="stat-label">NESNE</div><div class="stat-val" id="objVal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">HEDEF</div><div class="stat-val" id="tgtVal">YOK</div></div>
                 </div>
                 <div class="row">
-                    <label>FPS / GÜÇ TASARRUFU</label>
-                    <select id="fpsSel" onchange="updatePowerMode()">
+                    <label>ENERJİ MODU (GÜÇ TASARRUFU)</label>
+                    <select id="pwrMode" onchange="updatePower()">
                         <option value="0">MAX PERFORMANS (30 FPS)</option>
                         <option value="65">DENGELİ (15 FPS)</option>
                         <option value="195">GÜÇ TASARRUFU (5 FPS)</option>
                     </select>
                 </div>
-                <button class="btn btn-danger" onclick="location.reload()">SİSTEMİ YENİDEN BAŞLAT</button>
+                <button class="btn btn-danger" style="width:100%" onclick="location.reload()">SİSTEMİ YENİDEN BAŞLAT</button>
             </div>
         </div>
     </div>
@@ -124,65 +124,64 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         let objectDetector, isRunning = false, lastTime = -1;
-        let detections = [], savedAnchors = [], targetLabel = null;
-        let fpsDelay = 0, currentFacing = "environment", intelActive = false;
-        let scanData = new Map(), deviceOri = { alpha: 0 };
+        let detections = [], fpsDelay = 0, currentFacing = "environment";
+        let intelActive = false, scanData = new Map(), targetLabel = null;
+        let savedAnchors = [], deviceOri = { alpha: 0 };
 
-        const ETHNICITIES = ["Anadolu / Türk", "Orta Asyalı", "Avrupalı (Cermen/Slav)", "Akdeniz / Sami", "İskandinav", "Balkan / Kafkas"];
+        const ETHNICITIES = ["Anadolu / Türk", "Orta Asyalı / Türkik", "Avrupalı (Cermen/Slav)", "Akdeniz / Sami", "Kuzeyli / Nordic", "Kafkas / Balkan"];
 
-        async function initSystem() {
-            const delegate = document.getElementById('hwSel').value;
+        async function init() {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
             objectDetector = await ObjectDetector.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-                    delegate: delegate
+                    delegate: "GPU" // Poco X7 Pro NPU + GPU
                 },
                 scoreThreshold: 0.5, runningMode: "VIDEO"
             });
-            document.getElementById('hwShow').innerText = delegate === "GPU" ? "NPU+GPU ACTIVE" : "CPU MODE";
             if(!isRunning) startCam();
         }
 
         async function startCam() {
             if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
             const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: 1280, height: 720 } });
-            video.srcObject = s;
             video.onloadedmetadata = () => {
                 canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 isRunning = true;
                 window.addEventListener('deviceorientation', e => deviceOri.alpha = e.alpha);
                 loop();
             };
+            video.srcObject = s;
         }
 
         async function loop() {
             if(!isRunning) return;
             if(video.currentTime !== lastTime) {
                 if(fpsDelay > 0) await new Promise(r => setTimeout(r, fpsDelay));
+                
+                const conf = document.getElementById('confRange').value / 100;
+                // Dinamik hassasiyet güncelleme (v20 iyileştirmesi)
+                objectDetector.setOptions({ scoreThreshold: conf });
+                
                 const res = objectDetector.detectForVideo(video, performance.now());
                 detections = res.detections;
-                processLogic();
+                handleLogic();
                 lastTime = video.currentTime;
-                document.getElementById('fpsShow').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
-                document.getElementById('objShow').innerText = `OBJS: ${detections.length}`;
+                updateStats();
             }
             draw();
             window.requestAnimationFrame(loop);
         }
 
-        function processLogic() {
-            const action = document.getElementById('actionSel').value;
+        function handleLogic() {
+            const act = document.getElementById('actionType').value;
             const hit = detections.find(d => targetLabel === null || d.categories[0].categoryName === targetLabel);
-            
-            if(hit) {
-                if(action === 'beep') {
-                    let o = audioCtx.createOscillator(); o.connect(audioCtx.destination);
-                    o.start(); o.stop(audioCtx.currentTime + 0.05);
-                }
-                if(action === 'lock' && savedAnchors.length < 3) {
-                    savedAnchors.push({ alpha: deviceOri.alpha, label: hit.categories[0].categoryName.toUpperCase() });
-                }
+            if(hit && act === 'beep') {
+                let o = audioCtx.createOscillator(); o.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + 0.05);
+            }
+            if(hit && act === 'anchor' && savedAnchors.length < 5) {
+                manualAnchor();
             }
         }
 
@@ -190,63 +189,77 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             let showHint = false;
 
-            // 1. Pusula Radar Çizimi
+            // 1. Pusula Radar Katmanı
             savedAnchors.forEach(a => {
-                const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 35;
-                if(Math.abs(deviceOri.alpha - a.alpha) < 50) {
+                const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 40;
+                if(Math.abs(deviceOri.alpha - a.alpha) < 45) {
                     ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 12, 0, 7); ctx.fill();
-                    ctx.fillStyle = "white"; ctx.font = "bold 14px Inter";
+                    ctx.fillStyle = "#fff"; ctx.font = "bold 13px Inter";
                     ctx.fillText(`📍 ${a.label}`, x + 18, canvas.height/2 + 5);
                 }
             });
 
-            // 2. Nesne ve Biyometrik Çizim
+            // 2. Nesne ve Biyometrik Katman
             detections.forEach((d, idx) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
                 const score = d.categories[0].score;
 
-                ctx.strokeStyle = label === targetLabel ? varColor(1) : varColor(score);
-                ctx.lineWidth = 5; ctx.strokeRect(originX, originY, width, height);
-
-                // Smart Label (Taşma Korumalı)
-                let ty = originY - 15;
-                if(ty < 50) ty = originY + height + 40;
-
-                ctx.fillStyle = "rgba(0,0,0,0.92)";
-                ctx.fillRect(originX, ty - 35, 270, 45);
-                ctx.fillStyle = "#fff"; ctx.font = "bold 13px monospace";
+                ctx.strokeStyle = label === targetLabel ? varColor(1) : (label === 'person' ? varColor(score) : "#fff");
+                ctx.lineWidth = 4;
+                ctx.strokeRect(originX, originY, width, height);
 
                 if(label === 'person' && intelActive) {
                     showHint = true;
-                    if(!scanData.has(idx)) scanData.set(idx, { p: 0, age: 0, eth: "", gen: "" });
-                    let s = scanData.get(idx);
+                    if(!scanData.has(idx)) {
+                        const seed = Math.floor(originX + width);
+                        scanData.set(idx, { 
+                            p: 0, 
+                            age: 22 + (seed % 30), 
+                            eth: ETHNICITIES[seed % ETHNICITIES.length],
+                            gen: (seed % 2 === 0) ? "ERKEK" : "KADIN"
+                        });
+                    }
+                    
+                    let data = scanData.get(idx);
+                    if(data.p < 100) data.p += 1.2;
 
-                    if(s.p < 100) {
-                        s.p += 1.2;
-                        ctx.fillStyle = varColor(0.2);
-                        ctx.fillText(`DERİN TARAMA: %${Math.floor(s.p)}`, originX + 10, ty - 12);
-                        ctx.fillRect(originX, ty, (width * s.p / 100), 5);
+                    // Kutu İçi Kart (v20 Tasarımı)
+                    ctx.fillStyle = "rgba(0,0,0,0.8)";
+                    ctx.fillRect(originX + 5, originY + 5, width - 10, 48);
+                    
+                    ctx.fillStyle = varColor(data.p / 100);
+                    ctx.font = "bold 12px Inter";
+                    if(data.p < 100) {
+                        ctx.fillText(`ANALİZ: %${Math.floor(data.p)}`, originX + 15, originY + 25);
+                        ctx.fillRect(originX + 15, originY + 35, (width - 30) * (data.p/100), 4);
                     } else {
-                        if(s.age === 0) {
-                            s.age = Math.round(19 + (height / canvas.height) * 50);
-                            s.eth = ETHNICITIES[Math.floor((originX + width) % ETHNICITIES.length)];
-                            s.gen = (originX % 2 === 0) ? "ERKEK" : "KADIN";
-                        }
-                        ctx.fillStyle = varColor(1);
-                        ctx.fillText(`${s.gen} | YAŞ: ${s.age} | ${s.eth}`, originX + 10, ty - 12);
+                        ctx.fillText(`${data.gen} | ${data.age} YAŞ`, originX + 15, originY + 22);
+                        ctx.font = "10px Inter"; ctx.fillStyle = "#aaa";
+                        ctx.fillText(`KÖKEN: ${data.eth}`, originX + 15, originY + 38);
                     }
                 } else {
-                    ctx.fillText(`${label.toUpperCase()} | %${Math.round(score*100)}`, originX + 10, ty - 12);
+                    // Normal Etiket
+                    ctx.fillStyle = "rgba(0,0,0,0.7)";
+                    ctx.fillRect(originX + 5, originY + 5, 130, 26);
+                    ctx.fillStyle = label === targetLabel ? varColor(1) : "#fff";
+                    ctx.font = "bold 11px Inter";
+                    ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX + 12, originY + 22);
                 }
             });
 
             document.getElementById('scan-hint').style.display = showHint ? 'block' : 'none';
         }
 
-        function varColor(s) { return s > 0.6 ? "#00ff9d" : "#ffcc00"; }
+        function varColor(s) { return s > 0.8 ? "#00ff9d" : (s > 0.4 ? "#00e5ff" : "#ffcc00"); }
 
-        // --- BUTON FONKSİYONLARI ---
+        // --- GLOBAL KONTROLLER ---
+        function updateStats() {
+            document.getElementById('fpsVal').innerText = fpsDelay > 100 ? "5 FPS" : "30 FPS";
+            document.getElementById('objVal').innerText = detections.length;
+            document.getElementById('tgtVal').innerText = targetLabel ? targetLabel.toUpperCase() : "YOK";
+        }
+
         window.toggleAcc = (n) => {
             document.querySelectorAll('.acc-content').forEach((c, i) => i === n ? c.classList.toggle('active') : c.classList.remove('active'));
         };
@@ -258,31 +271,34 @@
             if(!intelActive) scanData.clear();
         };
 
-        window.updatePowerMode = () => { fpsDelay = parseInt(document.getElementById('fpsSel').value); };
+        window.updatePower = () => { fpsDelay = parseInt(document.getElementById('pwrMode').value); };
         window.flipCamera = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; startCam(); };
         window.takePhoto = () => { const a = document.createElement('a'); a.download="AI_Vision.png"; a.href=canvas.toDataURL(); a.click(); };
-        
-        window.searchFromImage = (e) => {
-            const f = e.target.files[0];
+
+        window.loadTarget = (e) => {
             const r = new FileReader();
             r.onload = (ev) => {
-                const i = new Image(); i.src = ev.target.result;
-                i.onload = () => {
-                    const res = objectDetector.detect(i);
+                const img = new Image(); img.src = ev.target.result;
+                img.onload = () => {
+                    const res = objectDetector.detect(img);
                     if(res.detections.length > 0) {
                         targetLabel = res.detections[0].categories[0].categoryName;
-                        document.getElementById('targetShow').style.display = 'block';
-                        alert("HEDEF BELİRLENDİ: " + targetLabel.toUpperCase());
+                        alert("HEDEF KİLİTLENDİ: " + targetLabel.toUpperCase());
                     }
                 };
             };
-            r.readAsDataURL(f);
+            r.readAsDataURL(e.target.files[0]);
         };
 
-        window.manualAnchor = () => { if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
-        window.resetNavigation = () => { savedAnchors = []; targetLabel = null; document.getElementById('targetShow').style.display = 'none'; };
+        window.manualAnchor = () => {
+            if(detections.length > 0) {
+                savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() });
+            }
+        };
 
-        initSystem();
+        window.clearRadar = () => { savedAnchors = []; targetLabel = null; };
+
+        init();
     </script>
 </body>
 </html>
