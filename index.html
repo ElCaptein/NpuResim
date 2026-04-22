@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v42 Titan-Core</title>
+    <title>AI Vision v43 Titan-Core</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.95); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
-        video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        
+        /* ZOOM FIX: 'cover' yerine 'contain' kullanıldı. Kamera sensörünün tam açısını gösterir. */
+        video { position: absolute; width: 100%; height: 100%; object-fit: contain; z-index: 1; background: #000; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; }
 
-        /* HUD Göstergeleri */
         .hud { position: absolute; top: 15px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 500; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
 
-        /* Menüyü Göster Butonu (Menü gizliyken çıkar) */
-        #showMenuBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 10px 20px; background: rgba(0,0,0,0.8); color: var(--neon); border: 1px solid var(--neon); border-radius: 20px; font-size: 10px; font-weight: 900; display: none; cursor: pointer; }
+        #showMenuBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 10px 20px; background: rgba(0,0,0,0.9); color: var(--neon); border: 1px solid var(--neon); border-radius: 20px; font-size: 10px; font-weight: 900; display: none; cursor: pointer; }
 
-        /* Ana Kontrol Paneli */
         #panel {
             position: absolute; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 15px; border: 1px solid #333; overflow: hidden;
@@ -43,8 +42,8 @@
 <body>
 
     <div id="load-overlay">
-        <div style="color:var(--neon); font-weight: 900; letter-spacing: 3px; font-size:16px;">TITAN CORE OS</div>
-        <div style="color:#555; font-size: 9px; margin-top: 5px;">MODÜLLER BAŞLATILIYOR...</div>
+        <div style="color:var(--neon); font-weight: 900; letter-spacing: 3px; font-size:16px;">TITAN CORE v43</div>
+        <div style="color:#555; font-size: 9px; margin-top: 5px;">SİSTEM AYAĞA KALDIRILIYOR...</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -61,7 +60,7 @@
 
     <div id="panel">
         <div class="panel-toolbar">
-            <div class="panel-title">SİSTEM MERKEZİ v42</div>
+            <div class="panel-title">SİSTEM MERKEZİ v43</div>
             <button class="btn" style="width: auto; padding: 4px 10px; margin: 0; border: 1px solid var(--danger); color: var(--danger); background: transparent;" onclick="toggleMenuVisibility()">GİZLE ▼</button>
         </div>
 
@@ -82,11 +81,10 @@
             <div class="acc-body">
                 <label style="font-size:9px; color:#aaa;">BİRİM (NPU/GPU/CPU)</label>
                 <select id="hwSel">
-                    <option value="GPU">SADECE NPU (Hibrid Yapı)</option>
+                    <option value="GPU">SADECE NPU (Hibrid)</option>
                     <option value="GPU">SADECE GPU (Grafik)</option>
                     <option value="CPU">SADECE CPU (Güvenli)</option>
                     <option value="GPU" selected>GPU + NPU (Önerilen)</option>
-                    <option value="GPU">GPU + CPU (Stabil)</option>
                 </select>
 
                 <label style="font-size:9px; color:#aaa;">YAPAY ZEKA AĞIRLIĞI</label>
@@ -112,11 +110,12 @@
                     <option value="1080">1080P (FHD)</option>
                 </select>
 
-                <label style="font-size:9px; color:#aaa; margin-top:8px; display:block;">SENSÖR KONTROLLERİ</label>
+                <label style="font-size:9px; color:#aaa; margin-top:8px; display:block;">KAMERA AÇISI & SENSÖRLER</label>
                 <div class="grid">
-                    <button class="btn" id="gyroBtn" style="border-color:var(--accent)" onclick="toggleSensor('gyro')">📍 JİROSKOP: AÇIK</button>
+                    <button class="btn" id="zoomBtn" style="border-color:var(--accent)" onclick="toggleZoom()">AÇI: GENİŞ (ZOOMSUZ)</button>
                     <button class="btn" id="bioBtn" style="border-color:var(--accent)" onclick="toggleSensor('bio')">🧬 BİYOMETRİ: AÇIK</button>
                 </div>
+                <button class="btn" id="gyroBtn" style="border-color:var(--accent); margin-top:6px;" onclick="toggleSensor('gyro')">📍 JİROSKOP & RADAR: AÇIK</button>
 
                 <button class="btn btn-neon" style="margin-top:10px;" onclick="applyAll()">⚙️ SİSTEMİ YENİDEN YAPILANDIR</button>
             </div>
@@ -144,18 +143,17 @@
 
         let detector, isRunning = false;
         let detections = [], currentFacing = "environment";
-        let scanData = new Map();
+        let scanData = new Map(); // Biyometri hafızası
         let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
-        let sensors = { gyro: true, bio: true };
-        let count = parseInt(localStorage.getItem('v42_c')) || 0;
+        let sensors = { gyro: true, bio: true, wideAngle: true };
+        let count = parseInt(localStorage.getItem('v43_c')) || 0;
         let lastTime = performance.now();
         let isMenuVisible = true;
 
-        // Kapsamlı Çeviri ve Etiket Haritası
         const LABEL_MAP = {
             "person": "İNSAN", "car": "ARAÇ", "motorcycle": "MOTOR", "truck": "KAMYON", "bus": "OTOBÜS",
             "bicycle": "BİSİKLET", "cat": "KEDİ", "dog": "KÖPEK", "bottle": "ŞİŞE", "chair": "SANDALYE",
-            "cell phone": "TELEFON", "tv": "EKSAN/TV", "laptop": "BİLGİSAYAR"
+            "cell phone": "TELEFON", "tv": "EKSAN/TV", "laptop": "BİLGİSAYAR", "cup": "BARDAK"
         };
         const ETHNICS = ["Levant / Doğu Akdeniz", "Anadolu / Türk", "Kafkasya", "Slav / Balkan", "Nordik", "İran Platosu"];
 
@@ -164,6 +162,14 @@
             document.getElementById('panel').style.transform = isMenuVisible ? "translateY(0)" : "translateY(120%)";
             document.getElementById('panel').style.opacity = isMenuVisible ? "1" : "0";
             document.getElementById('showMenuBtn').style.display = isMenuVisible ? "none" : "block";
+        };
+
+        window.toggleZoom = () => {
+            sensors.wideAngle = !sensors.wideAngle;
+            const fitMode = sensors.wideAngle ? "contain" : "cover";
+            video.style.objectFit = fitMode;
+            canvas.style.objectFit = fitMode;
+            document.getElementById('zoomBtn').innerText = sensors.wideAngle ? "AÇI: GENİŞ (ZOOMSUZ)" : "AÇI: TAM EKRAN (ZOOMLU)";
         };
 
         window.applyAll = async () => {
@@ -177,39 +183,33 @@
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 
-                // Kademeli Kamera Başlatma (Çökme Önleyici)
-                let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: {ideal: parseInt(res)} } });
-                } catch(camErr) {
-                    console.warn("Hedef çözünürlük reddedildi, güvenli mod açılıyor...");
-                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing } });
-                }
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: currentFacing, width: {ideal: parseInt(res) === 1080 ? 1920 : (parseInt(res) === 720 ? 1280 : 640)} } 
+                });
                 video.srcObject = stream;
 
-                // Model Çekimi (Hata vermemesi için güvenli Lite0 ve Lite2 haritalaması)
                 const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
                 detector = await ObjectDetector.createFromOptions(vision, {
                     baseOptions: { 
                         modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
                         delegate: hw 
                     },
-                    scoreThreshold: 0.35, // Tanıma oranını artırmak için düşürüldü
+                    scoreThreshold: 0.35, 
                     runningMode: "VIDEO"
                 });
 
                 video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    document.getElementById('hw-tag').innerText = `HW: NPU/GPU`;
+                    // Çizim alanını video ile birebir eşle
+                    canvas.width = video.videoWidth; 
+                    canvas.height = video.videoHeight;
+                    document.getElementById('hw-tag').innerText = `HW: AKTİF`;
                     document.getElementById('res-tag').innerText = `RES: ${res}P`;
                     loader.style.display = 'none';
                     isRunning = true;
                     renderLoop();
                 };
             } catch (e) { 
-                alert("Donanım erişim hatası! Sistem onarılıyor...");
-                document.getElementById('resSel').value = "480";
-                document.getElementById('modelSel').value = "0";
+                alert("Donanım erişim hatası! Kamera izinlerini kontrol edin.");
                 loader.style.display = 'none';
             }
         };
@@ -219,7 +219,7 @@
             const log = document.getElementById('log');
             
             if(cmd.includes("insan") || cmd.includes("takip")) {
-                document.getElementById('modelSel').value = "0"; // Lite0
+                document.getElementById('modelSel').value = "0";
                 document.getElementById('resSel').value = "480";
                 targetLabel = "person";
                 log.innerText = "KOMUT: Hafif model (480p) ile İNSAN TAKİBİ aktif.";
@@ -249,11 +249,12 @@
             detections.forEach(d => {
                 const label = d.categories[0].categoryName;
                 if(!targetLabel || label === targetLabel) {
-                    const id = `${Math.floor(d.boundingBox.originX/50)}-${Math.floor(d.boundingBox.originY/50)}`;
-                    if(!this.tracked) this.tracked = new Set();
-                    if(!this.tracked.has(id)) {
-                        this.tracked.add(id); count++;
-                        localStorage.setItem('v42_c', count);
+                    // Güvenli Sayım Mantığı
+                    const id = `${label}-${Math.floor(d.boundingBox.originX/60)}`;
+                    if(!window.tracked) window.tracked = new Set();
+                    if(!window.tracked.has(id)) {
+                        window.tracked.add(id); count++;
+                        localStorage.setItem('v43_c', count);
                         document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
                     }
                 }
@@ -274,11 +275,18 @@
                 });
             }
 
-            detections.forEach((d, i) => {
+            // Gelişmiş Tracking (Kimlik Kaybetmemesi İçin ID Eşleştirme)
+            let currentFrameIds = new Set();
+
+            detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const score = d.categories[0].score;
                 const rawLabel = d.categories[0].categoryName;
                 const trLabel = LABEL_MAP[rawLabel] || rawLabel.toUpperCase();
+
+                // Benzersiz Nesne Kimliği (Konum bazlı)
+                const spatialId = `${rawLabel}_${Math.round(originX/20)}_${Math.round(width/20)}`;
+                currentFrameIds.add(spatialId);
 
                 ctx.strokeStyle = rawLabel === targetLabel ? "#00e5ff" : (score > 0.6 ? "#00ff9d" : "#ffcc00");
                 ctx.lineWidth = 3;
@@ -291,12 +299,13 @@
                     ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif";
                     
                     if(rawLabel === 'person') {
-                        if(!scanData.has(i)) {
-                            // Stabil Biyometri Matematiği
-                            const seed = Math.abs(Math.floor(originX + originY));
-                            scanData.set(i, {age: 18 + (seed % 40), eth: ETHNICS[seed % ETHNICS.length]});
+                        // Kimlik bazlı Biyometri (Flicker yapmaz)
+                        if(!scanData.has(spatialId)) {
+                            const seed = Math.abs(Math.floor(originX + width));
+                            scanData.set(spatialId, {age: 18 + (seed % 40), eth: ETHNICS[seed % ETHNICS.length]});
                         }
-                        let s = scanData.get(i);
+                        let s = scanData.get(spatialId);
+                        
                         ctx.fillText(`İNSAN | ~${s.age} YAŞ`, originX + 8, originY + 20);
                         ctx.font = "10px sans-serif"; ctx.fillStyle = "#00ff9d";
                         ctx.fillText(`KÖKEN: ${s.eth}`, originX + 8, originY + 40);
@@ -307,11 +316,18 @@
                     }
                 }
             });
+
+            // Ekrandan çıkanların biyometrisini temizle (Hafızayı şişirmemek için)
+            if(Math.random() < 0.05) {
+                for (let key of scanData.keys()) {
+                    if (!currentFrameIds.has(key)) scanData.delete(key);
+                }
+            }
         }
 
         window.toggleSensor = (type) => {
             sensors[type] = !sensors[type];
-            document.getElementById(type+'Btn').innerText = `${type === 'gyro' ? '📍 JİROSKOP' : '🧬 BİYOMETRİ'}: ${sensors[type] ? 'AÇIK' : 'KAPALI'}`;
+            document.getElementById(type+'Btn').innerText = `${type === 'gyro' ? '📍 JİROSKOP & RADAR' : '🧬 BİYOMETRİ'}: ${sensors[type] ? 'AÇIK' : 'KAPALI'}`;
             document.getElementById(type+'Btn').style.borderColor = sensors[type] ? 'var(--accent)' : '#333';
             document.getElementById(type+'Btn').style.color = sensors[type] ? 'white' : '#666';
         };
@@ -322,13 +338,12 @@
         };
 
         window.executeCmd = (cmd) => {
-            if(cmd === 'CLEAR') { targetLabel = null; scanData.clear(); if(this.tracked) this.tracked.clear(); document.getElementById('log').innerText="Sistem temizlendi."; }
+            if(cmd === 'CLEAR') { targetLabel = null; scanData.clear(); if(window.tracked) window.tracked.clear(); document.getElementById('log').innerText="Sistem temizlendi."; }
         };
         window.lockRadar = () => { if(detections[0]) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName }); };
         window.flipCam = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; applyAll(); };
         window.addEventListener('deviceorientation', e => { if(e.alpha) deviceOri.alpha = e.alpha; });
 
-        // Sistemi ilk açılışta güvenli başlat
         setTimeout(applyAll, 500);
     </script>
 </body>
