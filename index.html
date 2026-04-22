@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poco X7 Pro NPU Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; margin: 0; padding: 20px; }
+        #video-container { position: relative; margin: 20px auto; width: 320px; height: 320px; border: 3px solid #00ff00; border-radius: 15px; overflow: hidden; background: #000; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        button { background: #00ff00; color: black; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        #status { margin: 15px; color: #ffcc00; font-size: 14px; }
+        #results { font-size: 20px; margin-top: 20px; color: #00ff00; min-height: 50px; }
+    </style>
+</head>
+<body>
+
+    <h2>NPU Görüntü Analizi</h2>
+    
+    <div id="video-container">
+        <video id="webcam" autoplay playsinline muted></video>
+    </div>
+
+    <div id="status">Sistem hazır. Butona basın.</div>
+    <div id="results"></div>
+    <button id="startBtn">ANALİZİ BAŞLAT</button>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const status = document.getElementById('status');
+        const results = document.getElementById('results');
+        const startBtn = document.getElementById('startBtn');
+        let model;
+
+        async function init() {
+            startBtn.disabled = true;
+            status.innerText = "1/2 Model yükleniyor (Lütfen bekleyin)...";
+            
+            try {
+                // Modeli yükle
+                model = await mobilenet.load();
+                status.innerText = "2/2 Kamera açılıyor...";
+
+                // Kamerayı başlat
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }, // Arka kamera
+                    audio: false
+                });
+                video.srcObject = stream;
+
+                video.onloadedmetadata = () => {
+                    status.innerText = "ANALİZ AKTİF (NPU ÇALIŞIYOR)";
+                    startBtn.style.display = "none";
+                    predictLoop();
+                };
+            } catch (err) {
+                status.style.color = "red";
+                status.innerText = "HATA: " + err.message + "\n(Kamera izni verdiğinizden emin olun)";
+                console.error(err);
+            }
+        }
+
+        async function predictLoop() {
+            // Analiz yap
+            const predictions = await model.classify(video);
+            
+            // Sonucu ekrana yaz (En yüksek olasılıklı ilk sonucu al)
+            if (predictions.length > 0) {
+                results.innerText = predictions[0].className.split(',')[0].toUpperCase() + 
+                                  " (% " + (predictions[0].probability * 100).toFixed(0) + ")";
+            }
+
+            // Döngüye devam et
+            requestAnimationFrame(predictLoop);
+        }
+
+        startBtn.onclick = init;
+    </script>
+</body>
+</html>
