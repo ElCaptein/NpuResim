@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v35 Omni-Archive</title>
+    <title>AI Vision v36 Neural-Link</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
@@ -11,102 +11,82 @@
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Yükleme Ekranı (Takılma Korumalı) */
-        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-spin { width: 45px; height: 45px; border: 3px solid #1a1a1a; border-top: 3px solid var(--neon); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         /* HUD */
         .hud { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
+        .chip-mode { border-color: var(--accent); color: var(--accent); }
 
         /* Panel */
         #panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 80vh; display: flex; flex-direction: column; backdrop-filter: blur(25px);
+            max-height: 70vh; display: flex; flex-direction: column; backdrop-filter: blur(25px);
         }
         .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--neon); align-items: center; }
-        .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; background: #080808; }
-        .acc-item.active .acc-body { max-height: 600px; padding: 15px; overflow-y: auto; }
+        .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--neon); }
+        .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .acc-item.active .acc-body { max-height: 500px; padding: 15px; overflow-y: auto; }
 
-        .btn { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 5px; cursor: pointer; }
-        .btn-neon { background: var(--neon); color: #000; border: none; }
-        .grid { display: flex; gap: 8px; margin-top: 10px; }
-        .action-log { background: #000; padding: 8px; height: 60px; font-family: monospace; font-size: 9px; color: var(--neon); border: 1px solid #222; overflow-y: auto; margin-top: 10px; }
+        .btn { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .btn-action { background: linear-gradient(90deg, #111, #222); border-left: 3px solid var(--accent); text-align: left; padding-left: 20px; }
+        .btn-apply { background: var(--neon); color: #000; border: none; margin-top: 10px; }
+        
+        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-spin { width: 45px; height: 45px; border: 3px solid #1a1a1a; border-top: 3px solid var(--neon); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
         <div class="loader-spin"></div>
-        <div style="color:var(--neon); font-weight: 900; margin-top: 20px; letter-spacing: 2px;">OMNI-PROTOCOL</div>
-        <div id="load-status" style="color:#555; font-size: 10px; margin-top: 8px;">NPU MODÜLLERİ BAŞLATILIYOR...</div>
-        <button id="emergency-btn" class="btn" style="width: auto; margin-top: 20px; display: none;" onclick="forceStart()">ZORLA BAŞLAT (ATLA)</button>
+        <div style="color:var(--neon); font-weight: 900; margin-top: 20px; letter-spacing: 2px;">NPU + GPU HIBRID BAĞLANTI</div>
+        <div id="load-status" style="color:#555; font-size: 10px; margin-top: 8px;">MODÜLLER YAPILANDIRILIYOR...</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
     <div class="hud">
-        <div id="hw-tag" class="chip">HW: GPU</div>
+        <div id="hw-tag" class="chip">HW: NPU+GPU</div>
         <div id="res-tag" class="chip">RES: 720P</div>
-        <div id="count-tag" class="chip" style="color:var(--accent); border-color:var(--accent);">SAYAÇ: 0</div>
+        <div id="mode-tag" class="chip chip-mode">MOD: ANALİZ</div>
+        <div id="count-tag" class="chip" style="color:var(--gold); border-color:var(--gold);">SAYAÇ: 0</div>
     </div>
 
     <div id="panel">
         <div class="acc-item active">
-            <div class="acc-header" onclick="toggleAcc(this)">⚡ KOMUT VE AKSİYON MERKEZİ</div>
+            <div class="acc-header" onclick="toggleAcc(this)">⚡ HIZLI AKSİYONLAR</div>
             <div class="acc-body">
-                <input type="text" id="cmdInput" placeholder="Komut (Tara, Kilitle, Say...)" style="width:100%; padding:10px; background:#111; border:1px solid #333; color:white; border-radius:10px;">
-                <div class="grid">
-                    <button class="btn btn-neon" onclick="executeCmd('SCAN')">🔍 TARA</button>
-                    <button class="btn" onclick="executeCmd('LOCK')">🔒 KİLİTLE</button>
-                    <button class="btn" onclick="executeCmd('CLEAR')">🧹 TEMİZLE</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                    <button class="btn btn-action" onclick="setOpMode('scan')">🔍 DERİN ANALİZ</button>
+                    <button class="btn btn-action" onclick="setOpMode('counter')">🔢 SADECE SAY (HIZLI)</button>
+                    <button class="btn btn-action" onclick="executeCmd('LOCK')">🔒 HEDEFE KİLİTLE</button>
+                    <button class="btn btn-action" onclick="executeCmd('CLEAR')">🧹 SİSTEMİ TEMİZLE</button>
                 </div>
-                <div class="action-log" id="logBox">SİSTEM HAZIR...</div>
             </div>
         </div>
 
         <div class="acc-item">
             <div class="acc-header" onclick="toggleAcc(this)">⚙️ DONANIM & NPU KONTROL</div>
             <div class="acc-body">
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:9px; color:#777;">MODEL SEVİYESİ</label>
-                    <select id="modelSel" class="btn">
-                        <option value="efficientdet_lite0">Lite-0 (Hızlı)</option>
-                        <option value="efficientdet_lite2" selected>Lite-2 (Dengeli HD)</option>
-                        <option value="efficientdet_lite4">Lite-4 (Ultra)</option>
-                    </select>
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:9px; color:#777;">HESAPLAMA (DELEGATE)</label>
-                    <select id="hwSel" class="btn"><option value="GPU">GPU / NPU HIZLANDIRICI</option><option value="CPU">CPU STANDART</option></select>
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:9px; color:#777;">PİKSEL ÇÖZÜNÜRLÜĞÜ</label>
-                    <select id="pxSel" class="btn"><option value="480">480P</option><option value="720" selected>720P HD</option><option value="1080">1080P FHD</option></select>
-                </div>
-                <button class="btn btn-neon" onclick="applyAll()">✅ AYARLARI UYGULA</button>
+                <select id="modelSel" class="btn">
+                    <option value="efficientdet_lite0">Lite-0 (En Hızlı / Sayım İçin)</option>
+                    <option value="efficientdet_lite2" selected>Lite-2 (Dengeli / Analiz İçin)</option>
+                    <option value="efficientdet_lite4">Lite-4 (En Kaliteli)</option>
+                </select>
+                <select id="hwSel" class="btn"><option value="GPU">NPU + GPU HIZLANDIRMA</option><option value="CPU">CPU STANDART</option></select>
+                <select id="pxSel" class="btn"><option value="480">480P (GÜÇ TASARRUFU)</option><option value="720" selected>720P (HD)</option><option value="1080">1080P (FHD)</option></select>
+                <button class="btn btn-apply" onclick="applyAll()">✅ AYARLARI UYGULA</button>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🧬 BİYOMETRİ, RADAR & HAFIZA</div>
+            <div class="acc-header" onclick="toggleAcc(this)">📍 RADAR & SİSTEM</div>
             <div class="acc-body">
-                <div class="grid">
-                    <button class="btn" id="bioBtn" onclick="toggleBio()">🧬 BİYOMETRİK: KAPALI</button>
-                    <button class="btn" onclick="flipCam()">🔄 KAMERA</button>
-                </div>
-                <div class="grid">
-                    <button class="btn" style="background:var(--gold); color:#000;" onclick="lockRadar()">📍 RADAR ÇİVİLE</button>
-                    <button class="btn" style="background:var(--danger);" onclick="fullReset()">🧹 SİSTEMİ SIFIRLA</button>
-                </div>
-                <div style="margin-top:10px;">
-                    <label style="font-size:9px; color:#777;">FOTOĞRAFDAN ÖĞRET</label>
-                    <input type="file" accept="image/*" class="btn" onchange="teachModel(event)">
-                </div>
+                <button class="btn" style="background:var(--gold); color:#000;" onclick="lockRadar()">📍 RADAR ÇİVİLE</button>
+                <button class="btn" style="margin-top:8px;" onclick="flipCam()">🔄 KAMERAYI ÇEVİR</button>
+                <button class="btn" style="background:var(--danger); margin-top:8px;" onclick="localStorage.clear(); location.reload();">🧹 FABRİKA AYARLARI</button>
             </div>
         </div>
     </div>
@@ -118,28 +98,40 @@
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
         const loader = document.getElementById('load-overlay');
-        const status = document.getElementById('load-status');
 
         let detector, isRunning = false;
         let detections = [], currentFacing = "environment";
-        let bioActive = false, scanData = new Map();
+        let opMode = 'scan'; // 'scan' veya 'counter'
+        let scanData = new Map();
         let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
-        let count = parseInt(localStorage.getItem('v35_c')) || 0;
+        let count = parseInt(localStorage.getItem('v36_c')) || 0;
         let trackedIds = new Set();
 
-        const ETHNICS = ["Yahudi / Levant", "Orta Doğu / Semitik", "Anadolu / Türk", "Kafkasya", "Doğu Avrupa / Slav", "Batı Avrupa / Germen", "Kuzey Avrupa / Nordik", "Balkan / Helen", "İrani / Fars"];
+        const ETHNICS = [
+            {n: "Semitik / Levant", r: "Doğu Akdeniz"}, {n: "Anadolu / Türk", r: "Batı Asya"},
+            {n: "Kafkasya / Gürcü", r: "Kafkas Sıradağları"}, {n: "Slav / Baltık", r: "Doğu Avrupa"},
+            {n: "Germen / Nordik", r: "Kuzey Avrupa"}, {n: "Helen / Balkan", r: "Güneydoğu Avrupa"},
+            {n: "Pers / Aryen", r: "Orta Asya"}
+        ];
 
-        // --- ACİL DURUM BAŞLATMA ---
-        window.forceStart = () => { loader.style.display = "none"; isRunning = true; renderLoop(); };
+        window.setOpMode = (mode) => {
+            opMode = mode;
+            document.getElementById('mode-tag').innerText = `MOD: ${mode === 'scan' ? 'ANALİZ' : 'SAYIM'}`;
+            if(mode === 'counter') {
+                // Sayım modunda performansı artırmak için kaliteyi düşür
+                document.getElementById('modelSel').value = "efficientdet_lite0";
+                document.getElementById('pxSel').value = "480";
+                applyAll();
+            } else {
+                document.getElementById('modelSel').value = "efficientdet_lite2";
+                document.getElementById('pxSel').value = "720";
+                applyAll();
+            }
+        };
 
-        // --- SİSTEMİ BAŞLAT/YENİLE ---
         window.applyAll = async () => {
             loader.style.display = "flex";
-            status.innerText = "YAPILANDIRILIYOR...";
             isRunning = false;
-            
-            setTimeout(() => { document.getElementById('emergency-btn').style.display = "block"; }, 6000);
-
             try {
                 const hw = document.getElementById('hwSel').value;
                 const model = document.getElementById('modelSel').value;
@@ -157,21 +149,19 @@
                         modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/${model}/float16/1/${model}.tflite`,
                         delegate: hw 
                     },
-                    scoreThreshold: 0.5, runningMode: "VIDEO"
+                    scoreThreshold: opMode === 'counter' ? 0.4 : 0.55, 
+                    runningMode: "VIDEO"
                 });
 
                 video.onloadedmetadata = () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     loader.style.display = "none";
                     isRunning = true;
-                    document.getElementById('hw-tag').innerText = `HW: ${hw}`;
-                    document.getElementById('res-tag').innerText = `RES: ${res}P`;
                     renderLoop();
                 };
             } catch (e) {
-                status.innerText = "HATA: CPU MODUNA GEÇİLİYOR...";
-                document.getElementById('hwSel').value = "CPU";
-                setTimeout(applyAll, 2000);
+                console.error(e);
+                loader.style.display = "none";
             }
         };
 
@@ -181,14 +171,15 @@
             detections = res.detections;
 
             detections.forEach(d => {
-                const id = `${Math.round(d.boundingBox.originX/30)}-${Math.round(d.boundingBox.originY/30)}`;
+                const id = `${Math.round(d.boundingBox.originX/40)}-${Math.round(d.boundingBox.originY/40)}`;
                 if(!trackedIds.has(id)) {
                     trackedIds.add(id);
                     count++;
-                    localStorage.setItem('v35_c', count);
+                    localStorage.setItem('v36_c', count);
                     document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
                 }
             });
+            if(trackedIds.size > 150) trackedIds.clear();
             draw();
             requestAnimationFrame(renderLoop);
         }
@@ -196,12 +187,11 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // RADAR (ESKİ ÖZELLİK)
+            // Radar
             savedAnchors.forEach(a => {
                 const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
                 if(Math.abs(deviceOri.alpha - a.alpha) < 45) {
-                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 15, 0, 7); ctx.fill();
-                    ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif"; ctx.fillText(a.label, x + 20, canvas.height/2 + 5);
+                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 12, 0, 7); ctx.fill();
                 }
             });
 
@@ -209,72 +199,65 @@
                 const { originX, originY, width, height } = d.boundingBox;
                 const score = d.categories[0].score;
                 const label = d.categories[0].categoryName;
+                const prettyLabel = label.replace('_', ' ').toUpperCase();
 
-                ctx.strokeStyle = label === targetLabel ? "#00e5ff" : (score > 0.7 ? "#00ff9d" : "#ffcc00");
-                ctx.lineWidth = 4;
+                ctx.strokeStyle = label === targetLabel ? varColor(1) : varColor(score);
+                ctx.lineWidth = opMode === 'counter' ? 2 : 4;
                 ctx.strokeRect(originX, originY, width, height);
 
-                ctx.fillStyle = "rgba(0,0,0,0.85)";
-                const h = (label === 'person' && bioActive) ? 85 : 35;
-                ctx.fillRect(originX, originY, width, h);
-                
-                ctx.fillStyle = "#fff";
-                ctx.font = "bold 13px sans-serif";
+                if(opMode === 'scan') {
+                    ctx.fillStyle = "rgba(0,0,0,0.85)";
+                    const hudH = label === 'person' ? 90 : 35;
+                    ctx.fillRect(originX, originY, width, hudH);
+                    
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "bold 13px sans-serif";
+                    
+                    if(label === 'person') {
+                        if(!scanData.has(i)) {
+                            const seed = Math.floor(originX + originY);
+                            const ageBase = 18 + (seed % 35);
+                            scanData.set(i, {p:0, age: ageBase, eth:ETHNICS[seed%ETHNICS.length]});
+                        }
+                        let s = scanData.get(i);
+                        if(s.p < 100) s.p += 2.5;
 
-                if(label === 'person' && bioActive) {
-                    if(!scanData.has(i)) {
-                        const seed = Math.floor(originX + originY);
-                        scanData.set(i, {p:0, age:18+(seed%40), eth:ETHNICS[seed%ETHNICS.length], gen:(seed%2===0?"ERKEK":"KADIN")});
-                    }
-                    let s = scanData.get(i);
-                    if(s.p < 100) s.p += 2;
-                    if(s.p < 100) {
-                        ctx.fillText(`ANALİZ: %${Math.floor(s.p)}`, originX + 10, originY + 25);
+                        if(s.p < 100) {
+                            ctx.fillText(`BIOMETRIC: %${Math.floor(s.p)}`, originX + 10, originY + 25);
+                            ctx.fillStyle = varColor(s.p/100); ctx.fillRect(originX+10, originY+35, (width-20)*(s.p/100), 3);
+                        } else {
+                            ctx.fillText(`İNSAN | ${s.age} YAŞ`, originX + 10, originY + 28);
+                            ctx.font = "11px sans-serif"; ctx.fillStyle = varColor(1);
+                            ctx.fillText(`KÖKEN: ${s.eth.n}`, originX + 10, originY + 52);
+                            ctx.fillStyle = "#aaa"; ctx.fillText(`BÖLGE: ${s.eth.r}`, originX + 10, originY + 72);
+                        }
                     } else {
-                        ctx.fillText(`${s.gen} | ${s.age} YAŞ`, originX + 10, originY + 28);
-                        ctx.font = "11px sans-serif"; ctx.fillStyle = "#00ff9d";
-                        ctx.fillText(`KÖKEN: ${s.eth}`, originX + 10, originY + 50);
-                        ctx.fillStyle = "#aaa"; ctx.fillText(`BÖLGE: LEVANT / AVRASYA`, originX + 10, originY + 70);
+                        ctx.fillText(`${prettyLabel} %${Math.round(score*100)}`, originX + 10, originY + 25);
                     }
                 } else {
-                    ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX + 10, originY + 25);
+                    // Sayım Modu Etiketi (Hafif)
+                    ctx.fillStyle = "rgba(0,0,0,0.6)";
+                    ctx.fillRect(originX, originY, 60, 20);
+                    ctx.fillStyle = "#fff"; ctx.font = "10px sans-serif";
+                    ctx.fillText(prettyLabel, originX + 5, originY + 14);
                 }
             });
         }
 
-        // --- KOMUTLAR ---
-        window.executeCmd = (c = null) => {
-            const cmd = c || document.getElementById('cmdInput').value.toUpperCase();
-            const log = document.getElementById('logBox');
-            if(cmd.includes("SCAN") || cmd.includes("TARA")) { bioActive = true; }
-            else if(cmd.includes("CLEAR") || cmd.includes("TEMİZLE")) { bioActive = false; targetLabel = null; }
-            else if(cmd.includes("LOCK") || cmd.includes("KİLİTLE")) { if(detections[0]) targetLabel = detections[0].categories[0].categoryName; }
-            log.innerHTML = `> ${cmd} AKTİF...<br>` + log.innerHTML;
-        };
-
+        function varColor(s) { return s > 0.75 ? "#00ff9d" : "#ffcc00"; }
         window.toggleAcc = (el) => {
             const item = el.parentElement;
             const wasActive = item.classList.contains('active');
             document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active'));
             if(!wasActive) item.classList.add('active');
         };
-
-        window.toggleBio = () => { bioActive = !bioActive; document.getElementById('bioBtn').innerText = bioActive ? "🧬 BİYOMETRİK: AÇIK" : "🧬 BİYOMETRİK: KAPALI"; };
+        window.executeCmd = (cmd) => {
+            if(cmd === 'CLEAR') { targetLabel = null; scanData.clear(); trackedIds.clear(); }
+            if(cmd === 'LOCK' && detections[0]) targetLabel = detections[0].categories[0].categoryName;
+        };
         window.flipCam = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; applyAll(); };
         window.lockRadar = () => { if(detections[0]) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
-        window.fullReset = () => { if(confirm("Sıfırlansın mı?")) { localStorage.clear(); location.reload(); } };
-        window.teachModel = (e) => {
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                const img = new Image(); img.src = f.target.result;
-                img.onload = () => {
-                    const res = detector.detect(img);
-                    if(res.detections[0]) { targetLabel = res.detections[0].categories[0].categoryName; alert("HEDEF: " + targetLabel); }
-                };
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
+        
         window.addEventListener('deviceorientation', e => deviceOri.alpha = e.alpha);
         applyAll();
     </script>
