@@ -3,48 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v23 Elite</title>
+    <title>AI Vision v25 Omni-Elite</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.98); --accent: #00e5ff; --danger: #ff3d00; --panel: rgba(15, 15, 15, 0.9); }
+        :root { --neon: #00ff9d; --accent: #00e5ff; --bg: rgba(5, 5, 5, 0.95); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Üst HUD - Sabit Bilgiler */
-        .hud-top { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
-        .chip { background: var(--panel); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 10px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
-        .chip-stats { border-color: var(--accent); color: var(--accent); }
+        /* Üst HUD - Dinamik Takip */
+        .hud-lite { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; }
+        .tag { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 4px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
+        .tag-stats { border-color: var(--accent); color: var(--accent); }
 
-        /* Gelişmiş Komutlar Menüsü */
+        /* Ana Menü Sistemi */
         #ui-panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px;
-            z-index: 1000; background: var(--panel); border-radius: 24px; border: 1px solid #333; overflow: hidden;
-            max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            z-index: 1000; background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
+            max-height: 60vh; display: flex; flex-direction: column;
         }
         .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 15px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 11px; font-weight: 900; color: var(--neon); letter-spacing: 1px; }
-        .acc-content { padding: 18px; display: none; background: #0a0a0a; overflow-y: auto; }
+        .acc-header { padding: 12px 18px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; color: var(--neon); text-transform: uppercase; }
+        .acc-content { padding: 15px; display: none; background: #080808; overflow-y: auto; }
         .acc-content.active { display: block; }
 
-        /* Form Elemanları */
-        .control-group { margin-bottom: 15px; }
-        label { font-size: 10px; color: #888; display: block; margin-bottom: 6px; text-transform: uppercase; font-weight: bold; }
-        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 12px; border-radius: 12px; font-size: 13px; outline: none; }
-        .btn-row { display: flex; gap: 8px; margin-top: 10px; }
-        .btn { flex: 1; padding: 14px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 11px; text-transform: uppercase; transition: 0.2s; }
+        /* Butonlar & Formlar */
+        .row { margin-bottom: 12px; }
+        label { font-size: 9px; color: #666; display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input { width: 100%; background: #1a1a1a; color: white; border: 1px solid #333; padding: 10px; border-radius: 10px; font-size: 12px; outline: none; }
+        .btn-group { display: flex; gap: 6px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-size: 10px; text-transform: uppercase; transition: 0.3s; }
         .btn-neon { background: var(--neon); color: #000; }
         .btn-accent { background: var(--accent); color: #000; }
-        .btn-active { outline: 2px solid white; box-shadow: 0 0 20px var(--accent); }
-
-        /* Analiz Uyarı Mesajı */
-        #scan-banner {
-            position: absolute; top: 140px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 229, 255, 0.2); color: var(--accent); padding: 10px 20px; border-radius: 15px;
-            font-size: 11px; font-weight: bold; display: none; z-index: 600; text-align: center; border: 1px solid var(--accent);
-            backdrop-filter: blur(5px); animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        
+        #scan-hint { position: absolute; top: 130px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: var(--accent); padding: 8px 16px; border-radius: 20px; font-size: 10px; display: none; z-index: 600; border: 1px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -52,72 +44,65 @@
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output_canvas"></canvas>
 
-    <div class="hud-top">
-        <div class="chip" id="fpsHud">FPS: --</div>
-        <div class="chip" id="hwHud">POWER: NPU+GPU</div>
-        <div class="chip chip-stats" id="totalHud">SAYAÇ: 0</div>
-        <div class="chip chip-stats" id="filterHud">HEDEF: TÜMÜ</div>
+    <div class="hud-lite">
+        <div id="fpsTag" class="tag">FPS: --</div>
+        <div id="hwTag" class="tag">NPU: OK</div>
+        <div id="countTag" class="tag tag-stats">KAYIT: 0</div>
+        <div id="tgtTag" class="tag tag-stats" style="display:none">HEDEF KİLİTLİ</div>
     </div>
 
-    <div id="scan-banner">⚠️ BİYOMETRİK KALİBRASYON: LÜTFEN KAFANIZI SAĞA/SOLA HAREKET ETTİRİN</div>
+    <div id="scan-hint">🧬 ANALİZ AKTİF: KAFANIZI HAREKET ETTİRİN</div>
 
     <div id="ui-panel">
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(0)">🎯 HEDEF SEÇİMİ VE SAYAÇ <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(0)">🎯 HEDEF SEÇİMİ VE ANALİZ <span>▼</span></div>
             <div class="acc-content active">
-                <div class="control-group">
-                    <label>İZLENECEK NESNE TİPİ</label>
+                <div class="row">
+                    <label>ARANACAK NESNE</label>
                     <select id="objFilter" onchange="resetLocalTracking()">
-                        <option value="all">HER ŞEYİ ALGILA</option>
-                        <option value="person">İNSAN (GENEL)</option>
-                        <option value="woman">KADIN / KIZ</option>
-                        <option value="man">ERKEK</option>
+                        <option value="all">HER ŞEYİ GÖR</option>
+                        <option value="person">İNSAN</option>
                         <option value="car">OTOMOBİL</option>
-                        <option value="truck">KAMYON / TIR</option>
+                        <option value="truck">KAMYON</option>
                     </select>
                 </div>
-                <div class="control-group">
+                <div class="btn-group">
+                    <button class="btn btn-accent" id="bioBtn" onclick="toggleBio()">🧬 BİYOMETRİK: KAPALI</button>
+                    <button class="btn btn-accent" onclick="flipCamera()">🔄 KAMERA DEĞİŞTİR</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="acc-item">
+            <div class="acc-header" onclick="toggleAcc(1)">📍 RADAR VE HAFIZA <span>▼</span></div>
+            <div class="acc-content">
+                <div class="row">
                     <label>AKSİYON MODU</label>
                     <select id="actionMod">
-                        <option value="none">SADECE İZLE</option>
-                        <option value="save">SAYIYI HAFIZAYA KAYDET</option>
-                        <option value="beep">TESPİTTE UYARI VER</option>
+                        <option value="none">SADECE GÖRÜNTÜLE</option>
+                        <option value="save">SAYIYI KAYDET (SAYAÇ)</option>
                     </select>
                 </div>
-                <div class="btn-row">
-                    <button class="btn btn-neon" onclick="flipCamera()">🔄 KAMERA</button>
-                    <button class="btn btn-accent" onclick="resetPersistentCounter()">🧹 SAYACI SIFIRLA</button>
+                <div class="btn-group">
+                    <button class="btn btn-neon" onclick="addAnchor()">📍 KONUM ÇİVİLE</button>
+                    <button class="btn" style="background:#333; color:white;" onclick="resetCounter()">🧹 SIFIRLA</button>
                 </div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(1)">🧬 BİYOMETRİK AYARLAR <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(2)">🔋 SİSTEM VE DOSYA <span>▼</span></div>
             <div class="acc-content">
-                <button class="btn btn-accent" id="bioToggle" style="width:100%">BİYOMETRİK ANALİZ: KAPALI</button>
-                <div class="control-group" style="margin-top:15px;">
-                    <label>ANALİZ HASSASİYETİ (%60 ÖNERİLEN)</label>
-                    <input type="range" id="confSlider" min="30" max="95" value="60">
+                <div class="row">
+                    <label>FOTOĞRAFTAN HEDEF BELİRLE</label>
+                    <input type="file" accept="image/*" onchange="loadPhotoTarget(event)">
                 </div>
-                <div class="btn-row">
-                    <button class="btn btn-neon" onclick="takeSnapshot()">📸 ANALİZİ KAYDET</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(2)">🔋 RADAR VE DONANIM <span>▼</span></div>
-            <div class="acc-content">
-                <div class="control-group">
-                    <label>GÜÇ YÖNETİMİ</label>
-                    <select id="pwrSel" onchange="setFPS()">
-                        <option value="0">PERFORMANS (30 FPS)</option>
-                        <option value="200">ECO (5 FPS)</option>
+                <div class="row">
+                    <label>PERFORMANS MODU</label>
+                    <select id="pwrMode" onchange="changeFPS()">
+                        <option value="0">DENGELİ (30 FPS)</option>
+                        <option value="195">ECO (5 FPS)</option>
                     </select>
-                </div>
-                <div class="btn-row">
-                    <button class="btn btn-accent" onclick="addRadarPoint()">📍 KONUMU ÇİVİLE</button>
-                    <button class="btn" style="background:#333; color:white;" onclick="savedAnchors=[]">RADARI TEMİZLE</button>
                 </div>
             </div>
         </div>
@@ -129,54 +114,42 @@
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        let objectDetector, isRunning = false, lastTime = -1;
+        let detector, isRunning = false, lastTime = -1;
         let detections = [], fpsDelay = 0, currentFacing = "environment";
         let bioActive = false, scanData = new Map();
-        let savedAnchors = [], deviceOri = { alpha: 0 };
-        
-        // Takip ve Sayaç Değişkenleri
-        let persistentCount = parseInt(localStorage.getItem('v23_counter')) || 0;
-        let trackedIds = new Set(); 
+        let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
+        let persistentCount = parseInt(localStorage.getItem('v25_count')) || 0;
+        let trackedIds = new Set();
 
-        const ETHNICS = ["Anadolu / Türk", "Orta Asya", "Avrupa", "Mezopotamya", "Kuzey / Cermen", "Balkan"];
+        const ETHNICS = ["Anadolu", "Orta Asya", "Avrupa", "Sami", "Kuzey", "Balkan"];
 
         async function init() {
-            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            objectDetector = await ObjectDetector.createFromOptions(vision, {
-                baseOptions: {
-                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-                    delegate: "GPU"
-                },
-                scoreThreshold: 0.6, runningMode: "VIDEO"
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite");
+            detector = await ObjectDetector.createFromOptions(vision, {
+                baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite", delegate: "GPU" },
+                scoreThreshold: 0.5, runningMode: "VIDEO"
             });
             updateHUD();
-            if(!isRunning) startCam();
+            startCam();
         }
 
         async function startCam() {
             if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-            const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: 1280, height: 720 } });
+            const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: {ideal: 1280}, height: {ideal: 720} } });
             video.srcObject = s;
             video.onloadedmetadata = () => {
                 canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 isRunning = true;
                 window.addEventListener('deviceorientation', e => deviceOri.alpha = e.alpha);
-                requestAnimationFrame(renderLoop);
+                renderLoop();
             };
         }
 
-        async function renderLoop() {
+        function renderLoop() {
             if(!isRunning) return;
             if(video.currentTime !== lastTime) {
-                if(fpsDelay > 0) await new Promise(r => setTimeout(r, fpsDelay));
-                
-                const scoreLimit = document.getElementById('confSlider').value / 100;
-                objectDetector.setOptions({ scoreThreshold: scoreLimit });
-                
-                const res = objectDetector.detectForVideo(video, performance.now());
-                processDetections(res.detections);
+                if(fpsDelay > 0) { setTimeout(() => { process(); }, fpsDelay); } else { process(); }
                 lastTime = video.currentTime;
                 updateHUD();
             }
@@ -184,50 +157,35 @@
             requestAnimationFrame(renderLoop);
         }
 
-        function processDetections(data) {
+        function process() {
+            const res = detector.detectForVideo(video, performance.now());
             const filter = document.getElementById('objFilter').value;
             const action = document.getElementById('actionMod').value;
 
-            // Filtreleme
-            detections = data.filter(d => {
+            detections = res.detections.filter(d => {
                 const label = d.categories[0].categoryName;
+                if(targetLabel) return label === targetLabel;
                 if(filter === 'all') return true;
-                if(['person','woman','man'].includes(filter)) return label === 'person';
                 return label === filter;
             });
 
-            // Cinsiyet Filtresi (Biyometrik Tahminle Harmanlanmış)
-            if(filter === 'woman' || filter === 'man') {
-                detections = detections.filter(d => {
-                    const id = Math.floor(d.boundingBox.originX / 10) * 10;
-                    const gen = (id % 20 === 0) ? 'man' : 'woman';
-                    return gen === filter;
-                });
-            }
-
-            // Gelişmiş Takip ve Sayma (Kutu merkez noktası tabanlı)
+            // Akıllı Takip ve Sayaç
             detections.forEach(d => {
-                const centerX = Math.round(d.boundingBox.originX + d.boundingBox.width/2);
-                const centerY = Math.round(d.boundingBox.originY + d.boundingBox.height/2);
-                const objId = `${centerX % 50}-${centerY % 50}`; // Izgara bazlı ID
-
-                if(!trackedIds.has(objId)) {
-                    trackedIds.add(objId);
+                const id = `${Math.round(d.boundingBox.originX/30)}-${Math.round(d.boundingBox.originY/30)}`;
+                if(!trackedIds.has(id)) {
+                    trackedIds.add(id);
                     if(action === 'save') {
                         persistentCount++;
-                        localStorage.setItem('v23_counter', persistentCount);
+                        localStorage.setItem('v25_count', persistentCount);
                     }
-                    if(action === 'beep') playBeep();
                 }
             });
-            
-            // Bellek yönetimi (Fazla ID'leri temizle)
             if(trackedIds.size > 50) trackedIds.clear();
         }
 
         function drawScene() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let activeBio = false;
+            let activeBioFlag = false;
 
             // Radar Çizimi
             savedAnchors.forEach(a => {
@@ -241,73 +199,71 @@
             detections.forEach((d, idx) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
-                const score = d.categories[0].score;
-
-                ctx.strokeStyle = label === 'person' ? (bioActive ? varColor(1) : varColor(score)) : "#fff";
-                ctx.lineWidth = 5;
+                
+                ctx.strokeStyle = label === targetLabel ? varColor(1) : varColor(d.categories[0].score);
+                ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
 
-                if(label === 'person' && bioActive) {
-                    activeBio = true;
+                if(bioActive && label === 'person') {
+                    activeBioFlag = true;
                     if(!scanData.has(idx)) {
-                        const s = Math.floor(originX);
-                        scanData.set(idx, { p: 0, age: 24+(s%25), eth: ETHNICS[s%ETHNICS.length], gen: (s%2===0?"ERKEK":"KADIN"), frames: 0 });
+                        const seed = Math.floor(originX);
+                        scanData.set(idx, {p:0, age:20+(seed%30), eth:ETHNICS[seed%6], gen:(seed%2===0?"ERKEK":"KADIN")});
                     }
-                    let data = scanData.get(idx);
-                    
-                    // Kafa hareketine duyarlı analiz (Frame tabanlı ilerleme)
-                    if(data.p < 100) data.p += 0.8; 
+                    let s = scanData.get(idx);
+                    if(s.p < 100) s.p += 1.5;
 
-                    ctx.fillStyle = "rgba(0,0,0,0.85)";
-                    ctx.fillRect(originX + 5, originY + 5, width - 10, 50);
-                    ctx.fillStyle = varColor(data.p/100);
-                    ctx.font = "bold 13px Inter";
-
-                    if(data.p < 100) {
-                        ctx.fillText(`KALİBRASYON: %${Math.floor(data.p)}`, originX + 15, originY + 28);
-                        ctx.fillRect(originX + 15, originY + 38, (width-30)*(data.p/100), 4);
+                    ctx.fillStyle = "rgba(0,0,0,0.8)";
+                    ctx.fillRect(originX, originY - 45, width, 40);
+                    ctx.fillStyle = varColor(s.p/100);
+                    ctx.font = "bold 12px sans-serif";
+                    if(s.p < 100) {
+                        ctx.fillText(`KALİBRASYON: %${Math.floor(s.p)}`, originX + 10, originY - 25);
                     } else {
-                        ctx.fillText(`${data.gen} | ${data.age} YAŞ`, originX + 15, originY + 25);
-                        ctx.font = "10px Inter"; ctx.fillStyle = "#aaa";
-                        ctx.fillText(`ETNİK: ${data.eth}`, originX + 15, originY + 42);
+                        ctx.fillText(`${s.gen} | ${s.age} YAŞ`, originX + 10, originY - 28);
+                        ctx.font = "9px sans-serif"; ctx.fillText(`KÖKEN: ${s.eth}`, originX + 10, originY - 14);
                     }
-                } else {
-                    ctx.fillStyle = "rgba(0,0,0,0.7)";
-                    ctx.fillRect(originX + 5, originY + 5, 120, 25);
-                    ctx.fillStyle = "#fff"; ctx.font = "bold 11px Inter";
-                    ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX + 12, originY + 22);
                 }
             });
-            document.getElementById('scan-banner').style.display = activeBio ? 'block' : 'none';
+            document.getElementById('scan-hint').style.display = activeBioFlag ? 'block' : 'none';
         }
 
-        function varColor(s) { return s > 0.75 ? "#00ff9d" : "#ffcc00"; }
-        function playBeep() { let o = audioCtx.createOscillator(); o.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1); }
-
-        // --- UI KONTROLLERİ ---
+        function varColor(s) { return s > 0.7 ? "#00ff9d" : "#ffcc00"; }
         function updateHUD() {
-            document.getElementById('fpsHud').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
-            document.getElementById('totalHud').innerText = `SAYAÇ: ${persistentCount}`;
-            document.getElementById('filterHud').innerText = `HEDEF: ${document.getElementById('objFilter').value.toUpperCase()}`;
+            document.getElementById('fpsTag').innerText = `FPS: ${fpsDelay > 0 ? '5' : '30'}`;
+            document.getElementById('countTag').innerText = `KAYIT: ${persistentCount}`;
+            document.getElementById('tgtTag').style.display = targetLabel ? 'block' : 'none';
         }
 
         window.toggleAcc = (n) => {
             document.querySelectorAll('.acc-content').forEach((c, i) => i === n ? c.classList.toggle('active') : c.classList.remove('active'));
         };
 
-        document.getElementById('bioToggle').onclick = function() {
+        window.toggleBio = () => {
             bioActive = !bioActive;
-            this.innerText = bioActive ? "BİYOMETRİK ANALİZ: AKTİF" : "BİYOMETRİK ANALİZ: KAPALI";
-            this.classList.toggle('btn-active');
+            document.getElementById('bioBtn').innerText = bioActive ? "🧬 BİYOMETRİK: AKTİF" : "🧬 BİYOMETRİK: KAPALI";
             if(!bioActive) scanData.clear();
         };
 
-        window.setFPS = () => { fpsDelay = parseInt(document.getElementById('pwrSel').value); };
         window.flipCamera = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; startCam(); };
-        window.resetPersistentCounter = () => { persistentCount = 0; localStorage.setItem('v23_counter', 0); updateHUD(); };
-        window.resetLocalTracking = () => { trackedIds.clear(); updateHUD(); };
-        window.addRadarPoint = () => { if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
-        window.takeSnapshot = () => { const a = document.createElement('a'); a.download="AI_BIO_ELITE.png"; a.href=canvas.toDataURL(); a.click(); };
+        window.changeFPS = () => { fpsDelay = parseInt(document.getElementById('pwrMode').value); };
+        window.resetCounter = () => { persistentCount = 0; localStorage.setItem('v25_count', 0); targetLabel = null; updateHUD(); };
+        window.addAnchor = () => { if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
+        
+        window.loadPhotoTarget = (e) => {
+            const r = new FileReader();
+            r.onload = (f) => {
+                const img = new Image(); img.src = f.target.result;
+                img.onload = () => {
+                    const res = detector.detect(img);
+                    if(res.detections.length > 0) {
+                        targetLabel = res.detections[0].categories[0].categoryName;
+                        alert("HEDEF ÖĞRENİLDİ: " + targetLabel);
+                    }
+                };
+            };
+            r.readAsDataURL(e.target.files[0]);
+        };
 
         init();
     </script>
