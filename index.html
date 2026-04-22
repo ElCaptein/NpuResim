@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v33 Omni-Protocol</title>
+    <title>AI Vision v35 Omni-Archive</title>
     <style>
         :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
@@ -11,11 +11,16 @@
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Üst Durum HUD */
-        .hud-v33 { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
+        /* Yükleme Ekranı (Takılma Korumalı) */
+        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-spin { width: 45px; height: 45px; border: 3px solid #1a1a1a; border-top: 3px solid var(--neon); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* HUD */
+        .hud { position: absolute; top: 45px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 5px; z-index: 500; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 10px; border-radius: 8px; font-size: 9px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
 
-        /* Master Panel */
+        /* Panel */
         #panel {
             position: absolute; bottom: 20px; left: 10px; right: 10px; z-index: 1000;
             background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
@@ -23,37 +28,30 @@
         }
         .acc-item { border-bottom: 1px solid #222; }
         .acc-header { padding: 14px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--neon); align-items: center; }
-        .acc-header::after { content: '▼'; font-size: 9px; transition: 0.3s; }
-        .acc-item.active .acc-header::after { transform: rotate(180deg); }
         .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; background: #080808; }
         .acc-item.active .acc-body { max-height: 600px; padding: 15px; overflow-y: auto; }
 
-        .field { margin-bottom: 12px; }
-        label { font-size: 9px; color: #777; display: block; margin-bottom: 4px; font-weight: 800; text-transform: uppercase; }
-        select, input, .btn { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; font-size: 12px; outline: none; }
-        
-        .btn-apply { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; }
-        .btn-action { background: var(--accent); color: #000; font-weight: bold; border: none; font-size: 10px; }
-        .grid { display: flex; gap: 8px; margin-top: 5px; }
-
-        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .action-log { background: #000; border: 1px solid #222; padding: 8px; height: 60px; font-family: monospace; font-size: 10px; color: var(--neon); overflow-y: auto; margin-top: 10px; }
+        .btn { width: 100%; padding: 12px; background: #1a1a1a; color: white; border: 1px solid #333; border-radius: 12px; font-size: 11px; font-weight: bold; margin-top: 5px; cursor: pointer; }
+        .btn-neon { background: var(--neon); color: #000; border: none; }
+        .grid { display: flex; gap: 8px; margin-top: 10px; }
+        .action-log { background: #000; padding: 8px; height: 60px; font-family: monospace; font-size: 9px; color: var(--neon); border: 1px solid #222; overflow-y: auto; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
-        <div style="color:var(--neon); font-weight: 900; letter-spacing: 2px;">OMNI-PROTOCOL LOADING</div>
-        <div style="color:#555; font-size: 10px; margin-top: 10px;">INITIALIZING NPU DELEGATE...</div>
+        <div class="loader-spin"></div>
+        <div style="color:var(--neon); font-weight: 900; margin-top: 20px; letter-spacing: 2px;">OMNI-PROTOCOL</div>
+        <div id="load-status" style="color:#555; font-size: 10px; margin-top: 8px;">NPU MODÜLLERİ BAŞLATILIYOR...</div>
+        <button id="emergency-btn" class="btn" style="width: auto; margin-top: 20px; display: none;" onclick="forceStart()">ZORLA BAŞLAT (ATLA)</button>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
-    <div class="hud-v33">
+    <div class="hud">
         <div id="hw-tag" class="chip">HW: GPU</div>
         <div id="res-tag" class="chip">RES: 720P</div>
-        <div id="mdl-tag" class="chip">MDL: LITE-2</div>
         <div id="count-tag" class="chip" style="color:var(--accent); border-color:var(--accent);">SAYAÇ: 0</div>
     </div>
 
@@ -61,63 +59,53 @@
         <div class="acc-item active">
             <div class="acc-header" onclick="toggleAcc(this)">⚡ KOMUT VE AKSİYON MERKEZİ</div>
             <div class="acc-body">
-                <div class="field">
-                    <label>SİSTEM KOMUTU GİR</label>
-                    <input type="text" id="cmdInput" placeholder="Örn: Tara, Kilitle, Say..." onkeydown="if(event.key==='Enter') executeCmd()">
-                </div>
+                <input type="text" id="cmdInput" placeholder="Komut (Tara, Kilitle, Say...)" style="width:100%; padding:10px; background:#111; border:1px solid #333; color:white; border-radius:10px;">
                 <div class="grid">
-                    <button class="btn btn-action" onclick="executeCmd('SCAN')">🔍 TARA</button>
-                    <button class="btn btn-action" onclick="executeCmd('LOCK')">🔒 KİLİTLE</button>
-                    <button class="btn btn-action" onclick="executeCmd('CLEAR')">🧹 TEMİZLE</button>
+                    <button class="btn btn-neon" onclick="executeCmd('SCAN')">🔍 TARA</button>
+                    <button class="btn" onclick="executeCmd('LOCK')">🔒 KİLİTLE</button>
+                    <button class="btn" onclick="executeCmd('CLEAR')">🧹 TEMİZLE</button>
                 </div>
-                <div class="action-log" id="logBox">SİSTEM HAZIR. KOMUT BEKLENİYOR...</div>
+                <div class="action-log" id="logBox">SİSTEM HAZIR...</div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">⚙️ DONANIM VE NPU AYARLARI</div>
+            <div class="acc-header" onclick="toggleAcc(this)">⚙️ DONANIM & NPU KONTROL</div>
             <div class="acc-body">
-                <div class="field"><label>MODEL KALİTESİ</label>
-                    <select id="modelSel">
-                        <option value="efficientdet_lite0">Lite-0 (Performans)</option>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:9px; color:#777;">MODEL SEVİYESİ</label>
+                    <select id="modelSel" class="btn">
+                        <option value="efficientdet_lite0">Lite-0 (Hızlı)</option>
                         <option value="efficientdet_lite2" selected>Lite-2 (Dengeli HD)</option>
-                        <option value="efficientdet_lite4">Lite-4 (Maksimum Keskinlik)</option>
+                        <option value="efficientdet_lite4">Lite-4 (Ultra)</option>
                     </select>
                 </div>
-                <div class="field"><label>İŞLEMCİ (DELEGATE)</label>
-                    <select id="hwSel">
-                        <option value="GPU">GPU / NPU HIZLANDIRMA</option>
-                        <option value="CPU">CPU STANDART</option>
-                    </select>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:9px; color:#777;">HESAPLAMA (DELEGATE)</label>
+                    <select id="hwSel" class="btn"><option value="GPU">GPU / NPU HIZLANDIRICI</option><option value="CPU">CPU STANDART</option></select>
                 </div>
-                <div class="field"><label>PİKSEL DERİNLİĞİ</label>
-                    <select id="pxSel">
-                        <option value="480">480P</option>
-                        <option value="720" selected>720P HD</option>
-                        <option value="1080">1080P FHD</option>
-                    </select>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:9px; color:#777;">PİKSEL ÇÖZÜNÜRLÜĞÜ</label>
+                    <select id="pxSel" class="btn"><option value="480">480P</option><option value="720" selected>720P HD</option><option value="1080">1080P FHD</option></select>
                 </div>
-                <button class="btn btn-apply" onclick="applyAll()">✅ AYARLARI UYGULA VE YENİLE</button>
+                <button class="btn btn-neon" onclick="applyAll()">✅ AYARLARI UYGULA</button>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🧬 BİYOMETRİ VE RADAR</div>
+            <div class="acc-header" onclick="toggleAcc(this)">🧬 BİYOMETRİ, RADAR & HAFIZA</div>
             <div class="acc-body">
-                <div class="field"><label>HEDEF FİLTRESİ</label>
-                    <select id="filter" onchange="resetScan()">
-                        <option value="all">TÜM NESNELER</option>
-                        <option value="person" selected>İNSAN / BİYOMETRİK</option>
-                        <option value="car">ARAÇ / TRAFİK</option>
-                    </select>
+                <div class="grid">
+                    <button class="btn" id="bioBtn" onclick="toggleBio()">🧬 BİYOMETRİK: KAPALI</button>
+                    <button class="btn" onclick="flipCam()">🔄 KAMERA</button>
                 </div>
                 <div class="grid">
-                    <button class="btn" style="background:#222;" id="bioBtn" onclick="toggleBio()">🧬 BİYOMETRİK: KAPALI</button>
-                    <button class="btn" style="background:#222;" onclick="flipCam()">🔄 KAMERA</button>
+                    <button class="btn" style="background:var(--gold); color:#000;" onclick="lockRadar()">📍 RADAR ÇİVİLE</button>
+                    <button class="btn" style="background:var(--danger);" onclick="fullReset()">🧹 SİSTEMİ SIFIRLA</button>
                 </div>
-                <div class="grid">
-                    <button class="btn" style="background:var(--gold); color:black;" onclick="lockRadar()">📍 RADAR ÇİVİLE</button>
-                    <button class="btn" style="background:var(--danger); color:white;" onclick="localStorage.clear(); location.reload();">🧹 TAM SIFIRLA</button>
+                <div style="margin-top:10px;">
+                    <label style="font-size:9px; color:#777;">FOTOĞRAFDAN ÖĞRET</label>
+                    <input type="file" accept="image/*" class="btn" onchange="teachModel(event)">
                 </div>
             </div>
         </div>
@@ -130,56 +118,33 @@
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
         const loader = document.getElementById('load-overlay');
-        const logBox = document.getElementById('logBox');
+        const status = document.getElementById('load-status');
 
         let detector, isRunning = false;
         let detections = [], currentFacing = "environment";
         let bioActive = false, scanData = new Map();
         let targetLabel = null, savedAnchors = [], deviceOri = { alpha: 0 };
-        let count = parseInt(localStorage.getItem('v33_c')) || 0;
+        let count = parseInt(localStorage.getItem('v35_c')) || 0;
         let trackedIds = new Set();
 
         const ETHNICS = ["Yahudi / Levant", "Orta Doğu / Semitik", "Anadolu / Türk", "Kafkasya", "Doğu Avrupa / Slav", "Batı Avrupa / Germen", "Kuzey Avrupa / Nordik", "Balkan / Helen", "İrani / Fars"];
 
-        // KOMUT SİSTEMİ
-        window.executeCmd = (manualCmd = null) => {
-            const cmd = manualCmd || document.getElementById('cmdInput').value.toUpperCase();
-            document.getElementById('cmdInput').value = "";
-            let msg = "";
+        // --- ACİL DURUM BAŞLATMA ---
+        window.forceStart = () => { loader.style.display = "none"; isRunning = true; renderLoop(); };
 
-            if(cmd.includes("SCAN") || cmd.includes("TARA")) {
-                bioActive = true; msg = "> DERİN TARAMA BAŞLATILDI...";
-                document.getElementById('bioBtn').innerText = "🧬 BİYOMETRİK: AÇIK";
-            } else if(cmd.includes("LOCK") || cmd.includes("KİLİTLE")) {
-                if(detections.length > 0) {
-                    targetLabel = detections[0].categories[0].categoryName;
-                    msg = `> HEDEF KİLİTLENDİ: ${targetLabel}`;
-                } else msg = "> HATA: KİLİTLENECEK NESNE YOK.";
-            } else if(cmd.includes("CLEAR") || cmd.includes("TEMİZLE")) {
-                targetLabel = null; bioActive = false; scanData.clear(); trackedIds.clear();
-                document.getElementById('bioBtn').innerText = "🧬 BİYOMETRİK: KAPALI";
-                msg = "> SİSTEM TEMİZLENDİ.";
-            } else {
-                msg = `> BİLİNMEYEN KOMUT: ${cmd}`;
-            }
-
-            logBox.innerHTML = msg + "<br>" + logBox.innerHTML;
-        };
-
-        // ANA UYGULAMA VE AYARLAR
+        // --- SİSTEMİ BAŞLAT/YENİLE ---
         window.applyAll = async () => {
             loader.style.display = "flex";
+            status.innerText = "YAPILANDIRILIYOR...";
             isRunning = false;
             
-            const hw = document.getElementById('hwSel').value;
-            const model = document.getElementById('modelSel').value;
-            const res = document.getElementById('pxSel').value;
-
-            document.getElementById('hw-tag').innerText = `HW: ${hw}`;
-            document.getElementById('res-tag').innerText = `RES: ${res}P`;
-            document.getElementById('mdl-tag').innerText = `MDL: ${model.split('_')[1].toUpperCase()}`;
+            setTimeout(() => { document.getElementById('emergency-btn').style.display = "block"; }, 6000);
 
             try {
+                const hw = document.getElementById('hwSel').value;
+                const model = document.getElementById('modelSel').value;
+                const res = document.getElementById('pxSel').value;
+
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 const s = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: currentFacing, width: res == "1080" ? 1920 : (res == "720" ? 1280 : 640) } 
@@ -197,37 +162,33 @@
 
                 video.onloadedmetadata = () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    isRunning = true;
                     loader.style.display = "none";
+                    isRunning = true;
+                    document.getElementById('hw-tag').innerText = `HW: ${hw}`;
+                    document.getElementById('res-tag').innerText = `RES: ${res}P`;
                     renderLoop();
                 };
             } catch (e) {
-                alert("DONANIM HATASI: NPU/GPU BAĞLANTISI KESİLDİ.");
-                loader.style.display = "none";
+                status.innerText = "HATA: CPU MODUNA GEÇİLİYOR...";
+                document.getElementById('hwSel').value = "CPU";
+                setTimeout(applyAll, 2000);
             }
         };
 
         function renderLoop() {
             if(!isRunning) return;
             const res = detector.detectForVideo(video, performance.now());
-            const filter = document.getElementById('filter').value;
-
-            detections = res.detections.filter(d => {
-                const label = d.categories[0].categoryName;
-                if(targetLabel) return label === targetLabel;
-                return filter === 'all' || label === filter;
-            });
+            detections = res.detections;
 
             detections.forEach(d => {
                 const id = `${Math.round(d.boundingBox.originX/30)}-${Math.round(d.boundingBox.originY/30)}`;
                 if(!trackedIds.has(id)) {
                     trackedIds.add(id);
                     count++;
-                    localStorage.setItem('v33_c', count);
+                    localStorage.setItem('v35_c', count);
                     document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
                 }
             });
-
             draw();
             requestAnimationFrame(renderLoop);
         }
@@ -235,7 +196,7 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Pusula Radar (Eski Özellik)
+            // RADAR (ESKİ ÖZELLİK)
             savedAnchors.forEach(a => {
                 const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
                 if(Math.abs(deviceOri.alpha - a.alpha) < 45) {
@@ -249,13 +210,13 @@
                 const score = d.categories[0].score;
                 const label = d.categories[0].categoryName;
 
-                ctx.strokeStyle = label === targetLabel ? varColor(1) : varColor(score);
+                ctx.strokeStyle = label === targetLabel ? "#00e5ff" : (score > 0.7 ? "#00ff9d" : "#ffcc00");
                 ctx.lineWidth = 4;
                 ctx.strokeRect(originX, originY, width, height);
 
                 ctx.fillStyle = "rgba(0,0,0,0.85)";
-                const hudH = (label === 'person' && bioActive) ? 85 : 35;
-                ctx.fillRect(originX, originY, width, hudH);
+                const h = (label === 'person' && bioActive) ? 85 : 35;
+                ctx.fillRect(originX, originY, width, h);
                 
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 13px sans-serif";
@@ -267,13 +228,11 @@
                     }
                     let s = scanData.get(i);
                     if(s.p < 100) s.p += 2;
-
                     if(s.p < 100) {
-                        ctx.fillText(`ANALYZE: %${Math.floor(s.p)}`, originX + 10, originY + 25);
-                        ctx.fillStyle = varColor(s.p/100); ctx.fillRect(originX+10, originY+35, (width-20)*(s.p/100), 4);
+                        ctx.fillText(`ANALİZ: %${Math.floor(s.p)}`, originX + 10, originY + 25);
                     } else {
                         ctx.fillText(`${s.gen} | ${s.age} YAŞ`, originX + 10, originY + 28);
-                        ctx.font = "11px sans-serif"; ctx.fillStyle = varColor(1);
+                        ctx.font = "11px sans-serif"; ctx.fillStyle = "#00ff9d";
                         ctx.fillText(`KÖKEN: ${s.eth}`, originX + 10, originY + 50);
                         ctx.fillStyle = "#aaa"; ctx.fillText(`BÖLGE: LEVANT / AVRASYA`, originX + 10, originY + 70);
                     }
@@ -283,24 +242,39 @@
             });
         }
 
-        function varColor(s) { return s > 0.75 ? "#00ff9d" : "#ffcc00"; }
+        // --- KOMUTLAR ---
+        window.executeCmd = (c = null) => {
+            const cmd = c || document.getElementById('cmdInput').value.toUpperCase();
+            const log = document.getElementById('logBox');
+            if(cmd.includes("SCAN") || cmd.includes("TARA")) { bioActive = true; }
+            else if(cmd.includes("CLEAR") || cmd.includes("TEMİZLE")) { bioActive = false; targetLabel = null; }
+            else if(cmd.includes("LOCK") || cmd.includes("KİLİTLE")) { if(detections[0]) targetLabel = detections[0].categories[0].categoryName; }
+            log.innerHTML = `> ${cmd} AKTİF...<br>` + log.innerHTML;
+        };
 
-        // --- UI KONTROLLER ---
         window.toggleAcc = (el) => {
             const item = el.parentElement;
-            const isOpen = item.classList.contains('active');
+            const wasActive = item.classList.contains('active');
             document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active'));
-            if(!isOpen) item.classList.add('active');
+            if(!wasActive) item.classList.add('active');
         };
-        window.toggleBio = () => {
-            bioActive = !bioActive;
-            document.getElementById('bioBtn').innerText = bioActive ? "🧬 BİYOMETRİK: AÇIK" : "🧬 BİYOMETRİK: KAPALI";
-            if(!bioActive) scanData.clear();
-        };
+
+        window.toggleBio = () => { bioActive = !bioActive; document.getElementById('bioBtn').innerText = bioActive ? "🧬 BİYOMETRİK: AÇIK" : "🧬 BİYOMETRİK: KAPALI"; };
         window.flipCam = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; applyAll(); };
-        window.lockRadar = () => { if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
-        window.resetScan = () => { scanData.clear(); trackedIds.clear(); targetLabel = null; };
-        
+        window.lockRadar = () => { if(detections[0]) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() }); };
+        window.fullReset = () => { if(confirm("Sıfırlansın mı?")) { localStorage.clear(); location.reload(); } };
+        window.teachModel = (e) => {
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                const img = new Image(); img.src = f.target.result;
+                img.onload = () => {
+                    const res = detector.detect(img);
+                    if(res.detections[0]) { targetLabel = res.detections[0].categories[0].categoryName; alert("HEDEF: " + targetLabel); }
+                };
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
         window.addEventListener('deviceorientation', e => deviceOri.alpha = e.alpha);
         applyAll();
     </script>
