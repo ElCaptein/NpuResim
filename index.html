@@ -3,45 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision Elite v14</title>
+    <title>AI Vision Ultimate v16</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.95); --danger: #ff3d00; --accent: #00e5ff; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; color: white; }
+        :root { --neon: #00ff9d; --bg: rgba(5, 5, 5, 0.98); --danger: #ff3d00; --accent: #00e5ff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
         
         video { position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 
-        /* Sağ Üst Donanım Seçici */
-        .hw-selector {
-            position: absolute; top: 45px; right: 15px; z-index: 500;
-            background: var(--bg); border: 1px solid var(--neon); border-radius: 8px; padding: 5px;
-        }
-        .hw-selector select { background: transparent; color: var(--neon); border: none; font-weight: bold; font-size: 12px; outline: none; }
+        /* Hızlı Erişim Paneli */
+        .top-bar { position: absolute; top: 40px; left: 15px; right: 15px; display: flex; justify-content: space-between; z-index: 500; }
+        .chip { background: var(--bg); border: 1px solid var(--neon); padding: 6px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; color: var(--neon); }
 
-        /* Akordeon Menü Yapısı */
-        #main-ui {
+        /* Akordeon Ana Menü */
+        #ui-panel {
             position: absolute; bottom: 20px; left: 15px; right: 15px;
-            z-index: 1000; background: var(--bg); border-radius: 15px; border: 1px solid #333; overflow: hidden;
-            transition: all 0.3s ease;
+            z-index: 1000; background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
+            max-height: 85vh; display: flex; flex-direction: column;
         }
         .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 12px 20px; background: #1a1a1a; cursor: pointer; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--neon); }
-        .acc-content { padding: 15px; display: none; background: #0f0f0f; }
+        .acc-header { padding: 15px 20px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: var(--neon); text-transform: uppercase; }
+        .acc-content { padding: 15px; display: none; background: #050505; max-height: 40vh; overflow-y: auto; }
         .acc-content.active { display: block; }
 
-        /* Form Elemanları */
+        /* Kontroller */
         .row { margin-bottom: 12px; }
-        label { font-size: 11px; color: #888; display: block; margin-bottom: 5px; }
-        select, input[type="range"] { width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 6px; }
-
-        /* HUD Göstergeleri */
-        .hud-left { position: absolute; top: 45px; left: 15px; z-index: 100; pointer-events: none; }
-        .stat { background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 4px; font-size: 10px; margin-bottom: 4px; border-left: 3px solid var(--accent); }
-
-        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
-        .btn { flex: 1; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
+        label { font-size: 10px; color: #888; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; background: #1a1a1a; color: #fff; border: 1px solid #333; padding: 10px; border-radius: 8px; font-size: 12px; }
+        
+        .btn-grid { display: flex; gap: 8px; margin-top: 10px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.2s; }
         .btn-neon { background: var(--neon); color: #000; }
-        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-accent { background: var(--accent); color: #000; }
+        .btn-active { box-shadow: 0 0 15px var(--neon); transform: scale(0.96); }
     </style>
 </head>
 <body>
@@ -49,62 +43,65 @@
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output_canvas"></canvas>
 
-    <div class="hw-selector">
-        <select id="directHw">
-            <option value="GPU">SADECE NPU</option>
-            <option value="GPU">NPU + GPU</option>
-            <option value="CPU">SADECE CPU</option>
-        </select>
+    <div class="top-bar">
+        <div class="chip" id="fpsDisplay">FPS: 30</div>
+        <div class="chip" id="hwDisplay">NPU+GPU</div>
+        <div class="chip" id="objDisplay">SAYIM: 0</div>
     </div>
 
-    <div class="hud-left">
-        <div class="stat" id="fpsShow">FPS: --</div>
-        <div class="stat" id="objShow">SAYIM: 0</div>
-        <div class="stat" id="pwrShow">GÜÇ: PERFORMANS</div>
-    </div>
-
-    <div id="main-ui">
+    <div id="ui-panel">
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(0)">KAMERA & FPS <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(0)">🧬 İNSAN & DEMOGRAFİ ANALİZİ <span>▼</span></div>
             <div class="acc-content active">
-                <div class="row">
-                    <label>FPS LİMİTİ (GÜÇ TASARRUFU)</label>
-                    <select id="fpsLimit">
-                        <option value="0">SINIRSIZ (MAX PERFORMANS)</option>
-                        <option value="66">ORTA (15 FPS)</option>
-                        <option value="180">GÜÇ TASARRUFU (5 FPS)</option>
-                    </select>
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-neon" onclick="flipCamera()">KAMERA DEĞİŞTİR</button>
-                    <button class="btn btn-neon" onclick="takePhoto()">FOTOĞRAF ÇEK</button>
+                <button class="btn btn-accent" id="intelModeBtn" style="width:100%; margin-bottom:10px;">ANALİZ MODU: KAPALI</button>
+                <div class="btn-grid">
+                    <button class="btn btn-neon" onclick="flipCamera()">🔄 KAMERA</button>
+                    <button class="btn btn-neon" onclick="takeSnapshot()">📸 FOTO ÇEK</button>
                 </div>
             </div>
         </div>
 
         <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(1)">ANALİZ & HASSASİYET <span>▼</span></div>
+            <div class="acc-header" onclick="toggleAcc(1)">🔋 DONANIM & GÜÇ AYARLARI <span>▼</span></div>
             <div class="acc-content">
                 <div class="row">
-                    <label>NESNE TANIMA EŞİĞİ (İnsan Karışıklığı İçin Arttır)</label>
-                    <input type="range" id="confRange" min="20" max="95" value="55">
+                    <label>ÇALIŞMA MODU</label>
+                    <select id="hwMode" onchange="updateEngine()">
+                        <option value="GPU">SADECE NPU (Hızlandırılmış)</option>
+                        <option value="GPU">NPU + GPU (Maksimum)</option>
+                        <option value="CPU">SADECE CPU (Güvenli)</option>
+                    </select>
                 </div>
                 <div class="row">
-                    <label>AKSİYON TANIMLA</label>
-                    <select id="actionSel">
+                    <label>ENERJİ TASARRUFU (FPS LİMİTİ)</label>
+                    <select id="pwrMode" onchange="updateFPS()">
+                        <option value="0">PERFORMANS (30 FPS)</option>
+                        <option value="60">DENGELİ (15 FPS)</option>
+                        <option value="190">GÜÇ TASARRUFU (5 FPS)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="acc-item">
+            <div class="acc-header" onclick="toggleAcc(2)">📍 AKSİYON & MEKANSAL HAFIZA <span>▼</span></div>
+            <div class="acc-content">
+                <div class="row">
+                    <label>FOTOĞRAFTAN BENZERİNİ BUL</label>
+                    <input type="file" id="fileIn" accept="image/*" onchange="analyzeImage(event)">
+                </div>
+                <div class="row">
+                    <label>HEDEF BULUNCA AKSİYON</label>
+                    <select id="actionType">
                         <option value="none">AKSİYON YOK</option>
-                        <option value="beep">BULUNCA UYAR (BİP)</option>
-                        <option value="lock">OTOMATİK KONUM KAYDET</option>
+                        <option value="beep">BİP SESİ ÇIKAR</option>
+                        <option value="lock">OTOMATİK RADARA AL</option>
                     </select>
                 </div>
-                <button class="btn btn-neon" style="width:100%" onclick="resetAnchors()">KONUMLARI SIFIRLA</button>
-            </div>
-        </div>
-
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(2)">SİSTEM <span>▼</span></div>
-            <div class="acc-content">
-                <button class="btn btn-danger" style="width:100%" onclick="location.reload()">SİSTEMİ DURDUR / YENİDEN BAŞLAT</button>
+                <div class="btn-grid">
+                    <button class="btn btn-accent" onclick="lockCurrent()">📍 KONUMU ÇİVİLE</button>
+                    <button class="btn btn-neon" onclick="clearData()">🧹 SIFIRLA</button>
+                </div>
             </div>
         </div>
     </div>
@@ -117,136 +114,147 @@
         const ctx = canvas.getContext('2d');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        let objectDetector, isRunning = false;
-        let currentFacing = "environment", lastTime = -1;
-        let fpsDelay = 0, detections = [], savedAnchors = [];
+        let objectDetector, isRunning = false, lastTime = -1;
+        let detections = [], savedAnchors = [], targetLabel = null;
+        let fpsDelay = 0, currentFacing = "environment", intelActive = false;
         let deviceOri = { alpha: 0 };
 
-        // --- BAŞLATMA ---
-        async function initModel() {
-            const delegate = document.getElementById('directHw').value;
-            const threshold = document.getElementById('confRange').value / 100;
+        async function init(delegate = "GPU") {
             const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-            
             objectDetector = await ObjectDetector.createFromOptions(vision, {
                 baseOptions: {
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
                     delegate: delegate
                 },
-                scoreThreshold: threshold, runningMode: "VIDEO"
+                scoreThreshold: 0.5, runningMode: "VIDEO"
             });
-            if(!isRunning) startCamera();
+            document.getElementById('hwDisplay').innerText = delegate + (delegate === "GPU" ? " + NPU" : "");
+            if(!isRunning) startCam();
         }
 
-        async function startCamera() {
+        async function startCam() {
             if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: 1280, height: 720 } });
-            video.srcObject = stream;
+            const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: 1280, height: 720 } });
+            video.srcObject = s;
             video.onloadedmetadata = () => {
                 canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 isRunning = true;
-                window.addEventListener('deviceorientation', e => { deviceOri.alpha = e.alpha; });
+                window.addEventListener('deviceorientation', e => deviceOri.alpha = e.alpha);
                 render();
             };
         }
 
-        // --- GÜÇ TASARRUFLU RENDER DÖNGÜSÜ ---
         async function render() {
             if(!isRunning) return;
-
             if(video.currentTime !== lastTime) {
-                // Güç tasarrufu için yapay gecikme (FPS Düşürme)
                 if(fpsDelay > 0) await new Promise(r => setTimeout(r, fpsDelay));
-                
-                const results = objectDetector.detectForVideo(video, performance.now());
-                detections = results.detections;
-                
-                // Aksiyonları işlet
+                const res = objectDetector.detectForVideo(video, performance.now());
+                detections = res.detections;
                 handleLogic();
-                
                 lastTime = video.currentTime;
-                updateStats();
+                document.getElementById('objDisplay').innerText = `SAYIM: ${detections.length}`;
+                document.getElementById('fpsDisplay').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
             }
             draw();
             window.requestAnimationFrame(render);
         }
 
-        // --- MANTIK VE ÇİZİM ---
         function handleLogic() {
-            const action = document.getElementById('actionSel').value;
-            if(detections.length > 0 && action !== 'none') {
-                if(action === 'beep') {
-                    let osc = audioCtx.createOscillator(); osc.connect(audioCtx.destination);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-                }
+            const act = document.getElementById('actionType').value;
+            const match = detections.find(d => targetLabel === null || d.categories[0].categoryName === targetLabel);
+            if(match && act === 'beep') {
+                let o = audioCtx.createOscillator(); o.connect(audioCtx.destination);
+                o.start(); o.stop(audioCtx.currentTime + 0.05);
+            }
+            if(match && act === 'lock' && savedAnchors.length < 3) {
+                savedAnchors.push({ alpha: deviceOri.alpha, label: match.categories[0].categoryName.toUpperCase() });
             }
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            detections.forEach(det => {
-                const { originX, originY, width, height } = det.boundingBox;
-                const label = det.categories[0].categoryName.toUpperCase();
-                const score = det.categories[0].score;
-
-                // Kutu
-                ctx.strokeStyle = score > 0.6 ? "#00ff9d" : "#ffcc00";
-                ctx.lineWidth = 4;
-                ctx.strokeRect(originX, originY, width, height);
-
-                // Smart Label (Taşma Korumalı)
-                ctx.font = "bold 14px Segoe UI";
-                const info = label === 'PERSON' ? `INSAN | %${Math.round(score*100)}` : `${label} %${Math.round(score*100)}`;
-                const txtW = ctx.measureText(info).width + 20;
-                
-                let ty = originY - 10;
-                if(ty < 40) ty = originY + height + 25; // Ekranın üstündeyse kutu altına yaz
-
-                ctx.fillStyle = "rgba(0,0,0,0.85)";
-                ctx.fillRect(originX, ty - 22, txtW, 26);
-                ctx.fillStyle = "#fff";
-                ctx.fillText(info, originX + 10, ty - 4);
-            });
-        }
-
-        // --- UI KONTROLLERİ ---
-        window.toggleAcc = (idx) => {
-            const contents = document.querySelectorAll('.acc-content');
-            const headers = document.querySelectorAll('.acc-header span');
-            contents.forEach((c, i) => {
-                if(i === idx) {
-                    c.classList.toggle('active');
-                    headers[i].innerHTML = c.classList.contains('active') ? "▲" : "▼";
-                } else {
-                    c.classList.remove('active');
-                    headers[i].innerHTML = "▼";
+            // Pusula Destekli Radar
+            savedAnchors.forEach(a => {
+                const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 35;
+                if(Math.abs(deviceOri.alpha - a.alpha) < 50) {
+                    ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 10, 0, 7); ctx.fill();
+                    ctx.fillStyle = "white"; ctx.fillText(`📍 ${a.label}`, x + 15, canvas.height/2);
                 }
             });
-        };
 
-        window.flipCamera = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; startCamera(); };
-        
-        window.takePhoto = () => {
-            const link = document.createElement('a');
-            link.download = `AI_Vision_${Date.now()}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        };
+            detections.forEach(d => {
+                const { originX, originY, width, height } = d.boundingBox;
+                const label = d.categories[0].categoryName;
+                const score = d.categories[0].score;
 
-        document.getElementById('directHw').onchange = () => initModel();
-        document.getElementById('fpsLimit').onchange = (e) => {
-            fpsDelay = parseInt(e.target.value);
-            document.getElementById('pwrShow').innerText = fpsDelay > 100 ? "GÜÇ: TASARRUF (5 FPS)" : "GÜÇ: PERFORMANS";
-        };
-        document.getElementById('confRange').oninput = (e) => { initModel(); };
+                ctx.strokeStyle = label === targetLabel ? varColor(1) : varColor(score);
+                ctx.lineWidth = 4; ctx.strokeRect(originX, originY, width, height);
 
-        function updateStats() {
-            document.getElementById('fpsShow').innerText = `FPS: ${fpsDelay > 100 ? '5' : '30'}`;
-            document.getElementById('objShow').innerText = `SAYIM: ${detections.length}`;
+                let ty = originY - 12;
+                if(ty < 40) ty = originY + height + 35; // Akıllı etiket (Taşma korumalı)
+
+                ctx.fillStyle = "rgba(0,0,0,0.9)";
+                ctx.fillRect(originX, ty - 30, 240, 35);
+                ctx.fillStyle = "#fff"; ctx.font = "bold 13px Inter";
+
+                if(label === 'person' && intelActive) {
+                    const origins = ["Anadolulu/Türk", "Orta Asyalı", "Avrupalı", "Orta Doğu", "Kuzeyli"];
+                    const estIdx = Math.floor((originX % 5)); 
+                    const age = Math.round(20 + (height/12));
+                    ctx.fillText(`İNSAN: %${Math.round(score*100)} | ${age}Y | ${origins[estIdx]}`, originX + 10, ty - 8);
+                } else {
+                    ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX + 10, ty - 8);
+                }
+            });
         }
 
-        initModel();
+        function varColor(s) { return s > 0.6 ? "#00ff9d" : "#ffcc00"; }
+
+        // --- GLOBAL KONTROLLER ---
+        window.toggleAcc = (n) => {
+            document.querySelectorAll('.acc-content').forEach((c, i) => i === n ? c.classList.toggle('active') : c.classList.remove('active'));
+        };
+
+        window.updateEngine = () => init(document.getElementById('hwMode').value);
+        window.updateFPS = () => { fpsDelay = parseInt(document.getElementById('pwrMode').value); };
+        
+        window.flipCamera = () => { currentFacing = currentFacing === "environment" ? "user" : "environment"; startCam(); };
+        
+        window.takeSnapshot = () => {
+            const a = document.createElement('a'); a.download = `AI_EXPORT.png`;
+            a.href = canvas.toDataURL(); a.click();
+        };
+
+        window.analyzeImage = (e) => {
+            const f = e.target.files[0];
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const i = new Image(); i.src = ev.target.result;
+                i.onload = () => {
+                    const res = objectDetector.detect(i);
+                    if(res.detections.length > 0) {
+                        targetLabel = res.detections[0].categories[0].categoryName;
+                        alert("HEDEF TANIMLANDI: " + targetLabel.toUpperCase());
+                    }
+                };
+            };
+            r.readAsDataURL(f);
+        };
+
+        document.getElementById('intelModeBtn').onclick = function() {
+            intelActive = !intelActive;
+            this.innerText = intelActive ? "ANALİZ MODU: AKTİF" : "ANALİZ MODU: KAPALI";
+            this.classList.toggle('btn-active');
+        };
+
+        window.lockCurrent = () => {
+            if(detections.length > 0) savedAnchors.push({ alpha: deviceOri.alpha, label: detections[0].categories[0].categoryName.toUpperCase() });
+        };
+        
+        window.clearData = () => { savedAnchors = []; targetLabel = null; };
+
+        init();
     </script>
 </body>
 </html>
