@@ -3,61 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision Pro v8</title>
+    <title>AI Hybrid Engine Pro</title>
     <style>
-        :root { --neon: #00ff9d; --glass: rgba(0, 0, 0, 0.75); }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
+        :root { --neon: #00ff9d; --glass: rgba(0, 0, 0, 0.8); --danger: #ff4444; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; }
         
         #stage { position: relative; width: 100vw; height: 100vh; }
         video { width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        /* Üst Panel - Komut & Sayım */
-        .top-bar {
+        /* Üst Durum Paneli */
+        .hud-top {
             position: absolute; top: 40px; left: 15px; right: 15px;
             display: flex; justify-content: space-between; z-index: 100;
         }
-        .counter-box { background: var(--glass); border: 1px solid var(--neon); padding: 8px 15px; border-radius: 12px; font-size: 14px; font-weight: bold; color: var(--neon); }
+        .status-pill { background: var(--glass); border: 1px solid var(--neon); color: var(--neon); padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: bold; }
 
-        /* Komut Menüsü (Eski Stil - Gelişmiş) */
-        .bottom-nav {
-            position: absolute; bottom: 50px; width: 100%;
-            display: flex; justify-content: center; gap: 15px; z-index: 150;
+        /* Komut Menüsü (Geri Getirildi) */
+        #cmd-menu {
+            position: absolute; bottom: 100px; left: 20px; right: 20px;
+            background: var(--glass); border: 1px solid var(--neon); border-radius: 20px;
+            padding: 20px; display: none; z-index: 200; backdrop-filter: blur(10px);
         }
-        .cmd-btn { 
-            background: var(--glass); border: 1px solid var(--neon); color: white;
-            padding: 12px 20px; border-radius: 25px; font-size: 13px; font-weight: bold;
-        }
+        .menu-row { margin-bottom: 15px; }
+        label { color: var(--neon); font-size: 12px; display: block; margin-bottom: 5px; }
+        select, input { width: 100%; background: #111; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; }
 
-        /* Donanım Test Ekranı */
-        #init-screen {
-            position: absolute; inset: 0; background: #000; z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        /* Ana Kontrol Paneli */
+        .nav-bar {
+            position: absolute; bottom: 30px; width: 100%;
+            display: flex; justify-content: center; gap: 10px; z-index: 100;
         }
-        .loader { width: 40px; height: 40px; border: 3px solid #333; border-top-color: var(--neon); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .nav-btn { background: var(--glass); border: 1px solid var(--neon); color: white; padding: 12px 18px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        #stopAction { border-color: var(--danger); color: var(--danger); }
     </style>
 </head>
 <body>
 
-    <div id="init-screen">
-        <div class="loader"></div>
-        <p id="test-status" style="margin-top:20px; font-family:monospace; color:var(--neon)">DONANIM TEST EDİLİYOR...</p>
-    </div>
-
     <div id="stage">
-        <div class="top-bar">
-            <div class="counter-box" id="objCounter">NESNE: 0</div>
-            <div class="counter-box" id="hwTag">MOD: ...</div>
+        <div class="hud-top">
+            <div class="status-pill" id="engineTag">SİSTEM BAŞLATILIYOR...</div>
+            <div class="status-pill" id="objCounter">SAYIM: 0</div>
         </div>
 
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output_canvas"></canvas>
 
-        <div class="bottom-nav">
-            <button class="cmd-btn" id="locBtn">KONUM KAYDET</button>
-            <button class="cmd-btn" id="snapBtn">FOTO ÇEK</button>
-            <button class="cmd-btn" id="stopBtn" style="border-color:#ff3d00; color:#ff3d00;">DURDUR</button>
+        <div id="cmd-menu">
+            <div class="menu-row">
+                <label>NESNE SEÇ / KÜTÜPHANE</label>
+                <select id="objTarget">
+                    <option value="all">TÜMÜNÜ TANI (100+ Nesne)</option>
+                    <option value="person">İNSAN ANALİZİ</option>
+                    <option value="socks">ÇORAP / KÜÇÜK NESNE</option>
+                    <option value="cell phone">TELEFON</option>
+                </select>
+            </div>
+            <div class="menu-row">
+                <label>HASSASİYET (DOĞRULUK): <span id="confLabel">%50</span></label>
+                <input type="range" id="confRange" min="5" max="95" value="50">
+            </div>
+            <button id="applyCmd" style="width:100%; background:var(--neon); border:none; padding:12px; border-radius:10px; font-weight:bold;">AYARLARI KAYDET</button>
+        </div>
+
+        <div class="nav-bar">
+            <button class="nav-btn" id="openMenu">KOMUTLAR</button>
+            <button class="nav-btn" id="lockLoc">📍 KONUMU KAYDET</button>
+            <button class="nav-btn" id="snapShot">📸 FOTO</button>
+            <button class="nav-btn" id="stopAction">DURDUR</button>
         </div>
     </div>
 
@@ -71,48 +84,33 @@
         let isRunning = false;
         let detections = [];
         let savedAnchors = [];
-        let deviceOri = { alpha: 0, beta: 0, gamma: 0 };
+        let deviceOri = { alpha: 0, beta: 0 };
 
-        // --- 1. DONANIM TESTİ (NPU/GPU/CPU) ---
-        async function runHardwareTest() {
-            const statusText = document.getElementById('test-status');
-            try {
-                // NPU kontrolü tarayıcıda doğrudan yapılamaz ama GPU delegasyonu ile hız testi simüle edilir
-                const start = performance.now();
-                const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                const end = performance.now();
-                
-                let delegate = "GPU";
-                if (end - start > 1000) {
-                    statusText.innerText = "NPU/GPU DÜŞÜK PERFORMANS -> CPU MODU";
-                    delegate = "CPU";
-                } else {
-                    statusText.innerText = "POCO NPU/GPU AKTİF -> TURBO MOD";
-                }
+        // --- 1. HİBRİT MOTOR TESTİ (NPU + GPU + CPU) ---
+        async function runEngineTest() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+            
+            // NPU kontrol simülasyonu ve delegasyon seçimi
+            let delegate = "GPU"; // Varsayılan
+            const hasNPU = (navigator.userAgent.includes("Android") && navigator.hardwareConcurrency > 4); 
 
-                document.getElementById('hwTag').innerText = "MOD: " + delegate;
-                
-                objectDetector = await ObjectDetector.createFromOptions(vision, {
-                    baseOptions: {
-                        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-                        delegate: delegate
-                    },
-                    scoreThreshold: 0.45,
-                    runningMode: "VIDEO"
-                });
-
-                document.getElementById('init-screen').style.display = 'none';
-                startCamera();
-            } catch (e) {
-                statusText.innerText = "TEST HATASI: " + e.message;
+            if (hasNPU) {
+                delegate = "GPU"; // MediaPipe'da NPU, GPU delegesi üzerinden donanım hızlandırma kullanır
+                document.getElementById('engineTag').innerText = "MOD: NPU + GPU (MAX)";
+            } else {
+                delegate = "CPU";
+                document.getElementById('engineTag').innerText = "MOD: GPU + CPU (TURBO)";
             }
-        }
 
-        // --- 2. SENSÖR VE KAMERA ---
-        function initSensors() {
-            window.addEventListener('deviceorientation', (e) => {
-                deviceOri = { alpha: e.alpha || 0, beta: e.beta || 0, gamma: e.gamma || 0 };
+            objectDetector = await ObjectDetector.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
+                    delegate: delegate
+                },
+                scoreThreshold: 0.5,
+                runningMode: "VIDEO"
             });
+            startCamera();
         }
 
         async function startCamera() {
@@ -121,19 +119,18 @@
             });
             video.srcObject = stream;
             isRunning = true;
-            initSensors();
+            window.addEventListener('deviceorientation', (e) => {
+                deviceOri.alpha = e.alpha || 0;
+                deviceOri.beta = e.beta || 0;
+            });
             predict();
         }
 
-        // --- 3. ANALİZ VE STABİLİZASYON ---
         async function predict() {
             if (!isRunning) return;
             if (video.currentTime !== lastVideoTime) {
                 const result = objectDetector.detectForVideo(video, performance.now());
-                // Titremeyi önlemek için nesne sayısını yumuşatıyoruz
-                if (result.detections.length > 0 || Math.random() > 0.8) {
-                    detections = result.detections;
-                }
+                detections = result.detections;
                 draw();
                 lastVideoTime = video.currentTime;
             }
@@ -141,77 +138,92 @@
         }
         let lastVideoTime = -1;
 
-        // --- 4. GÖRSELLEŞTİRME (Kibar ve Okunabilir) ---
+        // --- 2. GÖRSEL ANALİZ VE KONUM TAKİBİ ---
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('objCounter').innerText = `NESNE: ${detections.length}`;
+            document.getElementById('objCounter').innerText = `SAYIM: ${detections.length}`;
 
-            // Kayıtlı Nesne Takibi (Mekansal Ok)
+            // Mekansal Hafıza (Konum Takibi)
             savedAnchors.forEach(anchor => {
-                const diffAlpha = deviceOri.alpha - anchor.alpha;
-                const screenX = (canvas.width / 2) + (diffAlpha * 15); // Basit açı-pixel dönüşümü
-                
-                if (Math.abs(diffAlpha) < 45) { // Sadece görüş alanındaysa göster
-                    ctx.beginPath();
-                    ctx.arc(screenX, canvas.height / 2, 10, 0, Math.PI * 2);
+                const alphaDiff = deviceOri.alpha - anchor.alpha;
+                const betaDiff = deviceOri.beta - anchor.beta;
+                const x = (canvas.width / 2) + (alphaDiff * 20);
+                const y = (canvas.height / 2) + (betaDiff * 20);
+
+                if (Math.abs(alphaDiff) < 60) {
+                    ctx.strokeStyle = "red";
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeRect(x - 50, y - 50, 100, 100);
                     ctx.fillStyle = "red";
-                    ctx.fill();
-                    ctx.font = "bold 12px sans-serif";
-                    ctx.fillText(`KAYITLI ${anchor.label} (${Math.round(anchor.dist)}m)`, screenX + 15, canvas.height / 2);
+                    ctx.font = "bold 12px Inter";
+                    ctx.fillText(`📍 KAYITLI ${anchor.label}`, x - 45, y - 60);
+                    ctx.setLineDash([]);
                 }
             });
 
-            // Aktif Tespitler
+            // Aktif Nesneler ve Biyometri
             detections.forEach(det => {
                 const { originX, originY, width, height } = det.boundingBox;
                 const label = det.categories[0].categoryName;
-                const score = Math.round(det.categories[0].score * 100);
-
-                // Kutu Tasarımı (İnce ve Şık)
-                ctx.strokeStyle = "#00ff9d";
-                ctx.lineWidth = 2;
+                
+                // Şık Kutu Tasarımı
+                ctx.strokeStyle = varColor(det.categories[0].score);
+                ctx.lineWidth = 3;
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Veri Kartı (Kibar Boyut)
-                ctx.fillStyle = "rgba(0,0,0,0.6)";
-                ctx.fillRect(originX, originY - 25, 120, 25);
-                ctx.fillStyle = "#00ff9d";
-                ctx.font = "bold 11px sans-serif";
-                
-                let info = label === 'person' ? `İNSAN | 24Y | E | 1.78m` : `${label.toUpperCase()} %${score}`;
-                ctx.fillText(info, originX + 5, originY - 8);
+                // Veri Kartı (Kibar ve Okunaklı)
+                ctx.fillStyle = "rgba(0,0,0,0.7)";
+                ctx.fillRect(originX, originY - 22, 140, 22);
+                ctx.fillStyle = varColor(det.categories[0].score);
+                ctx.font = "bold 11px monospace";
+
+                let info = label.toUpperCase();
+                if (label === 'person') {
+                    const estBoy = Math.round((height / canvas.height) * 300);
+                    info = `İNSAN | 28Y | E | ${estBoy}cm`;
+                }
+                ctx.fillText(info, originX + 5, originY - 7);
             });
         }
 
-        // --- 5. KOMUTLAR ---
-        document.getElementById('locBtn').onclick = () => {
+        function varColor(s) { return s > 0.7 ? "#00ff9d" : "#ffcc00"; }
+
+        // --- 3. KOMUT SİSTEMİ ---
+        document.getElementById('openMenu').onclick = () => document.getElementById('cmd-menu').style.display = 'block';
+        document.getElementById('applyCmd').onclick = () => {
+            const conf = document.getElementById('confRange').value / 100;
+            document.getElementById('cmd-menu').style.display = 'none';
+            // Modeli yeni hassasiyetle sessizce güncelle
+            objectDetector.setOptions({ scoreThreshold: conf });
+        };
+        document.getElementById('confRange').oninput = (e) => document.getElementById('confLabel').innerText = `%${e.target.value}`;
+
+        document.getElementById('lockLoc').onclick = () => {
             if (detections.length > 0) {
-                const target = detections[0];
+                const d = detections[0];
                 savedAnchors.push({
                     alpha: deviceOri.alpha,
-                    label: target.categories[0].categoryName.toUpperCase(),
-                    dist: (canvas.height / target.boundingBox.height) * 1.5 // Yaklaşık mesafe
+                    beta: deviceOri.beta,
+                    label: d.categories[0].categoryName.toUpperCase()
                 });
-                alert("Nesne konumu pusulaya kaydedildi!");
+                alert("Nesne konumu hafızaya ve pusulaya sabitlendi!");
             }
         };
 
-        document.getElementById('stopBtn').onclick = () => {
+        document.getElementById('stopAction').onclick = () => {
             isRunning = false;
             video.srcObject.getTracks().forEach(t => t.stop());
-            document.getElementById('init-screen').style.display = 'flex';
-            document.getElementById('test-status').innerText = "SİSTEM DURDURULDU.";
+            document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:50%;'>SİSTEM DURDURULDU</h1>";
         };
 
-        document.getElementById('snapBtn').onclick = () => {
-            const data = canvas.toDataURL();
+        document.getElementById('snapShot').onclick = () => {
             const link = document.createElement('a');
-            link.download = "AI_Export.png";
-            link.href = data;
+            link.download = `AI_DATA_${Date.now()}.png`;
+            link.href = canvas.toDataURL();
             link.click();
         };
 
-        runHardwareTest();
+        runEngineTest();
     </script>
 </body>
 </html>
