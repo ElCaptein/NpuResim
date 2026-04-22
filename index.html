@@ -2,45 +2,52 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision X-Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI Vision Elite</title>
     <style>
-        :root { --neon: #00ff9d; --bg: #000; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        :root { --neon: #00ff9d; --glass: rgba(0, 0, 0, 0.7); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; }
         
-        #view-link { position: relative; width: 100vw; height: 100vh; }
+        #container { position: relative; width: 100vw; height: 100vh; }
         video { width: 100%; height: 100%; object-fit: cover; }
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        /* Üst Panel */
-        .hud-top {
-            position: absolute; top: env(safe-area-inset-top, 20px); left: 15px; right: 15px;
+        /* Üst HUD - Bilgiler */
+        .top-hud {
+            position: absolute; top: 40px; left: 10px; right: 10px;
             display: flex; justify-content: space-between; z-index: 100;
         }
-        .badge { background: rgba(0,255,157,0.2); border: 1px solid var(--neon); color: var(--neon); padding: 5px 12px; border-radius: 15px; font-size: 10px; font-weight: bold; }
+        .stat { background: var(--glass); border: 1px solid var(--neon); color: var(--neon); padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; }
 
-        /* Alt Kontrol Paneli (Havada asılı - Safe Area uyumlu) */
-        .controls-wrapper {
-            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-            width: 90%; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 100;
+        /* YAN KONTROLLER - Alt çubuktan kurtarıldı */
+        .side-controls {
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 25px; z-index: 100;
         }
 
-        .main-btns { display: flex; align-items: center; gap: 20px; width: 100%; justify-content: center; }
-
-        #captureBtn {
-            width: 75px; height: 75px; background: white; border: 6px solid var(--neon);
-            border-radius: 50%; box-shadow: 0 0 25px rgba(0,255,157,0.6);
+        .action-btn {
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--neon);
+            background: var(--glass); color: white; display: flex; align-items: center; 
+            justify-content: center; font-size: 24px; box-shadow: 0 0 15px rgba(0,255,157,0.3);
         }
 
-        .side-btn {
-            background: rgba(0,0,0,0.7); border: 1px solid var(--neon); color: white;
-            padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
-        }
+        /* Deklanşör - Sağ Orta */
+        #captureBtn { width: 75px; height: 75px; background: white; border: 4px solid var(--neon); }
+        #captureBtn:active { transform: scale(0.9); }
 
+        /* Giriş Ekranı Butonu */
         #startBtn {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 20px 40px; background: var(--neon); border: none; border-radius: 30px;
-            font-weight: bold; font-size: 18px; z-index: 200;
+            padding: 20px 50px; background: var(--neon); color: black; border: none;
+            border-radius: 40px; font-weight: 900; font-size: 20px; z-index: 200;
+            box-shadow: 0 0 30px var(--neon);
+        }
+
+        /* Sol Alt Bildirim */
+        #info-box {
+            position: absolute; bottom: 120px; left: 20px; 
+            background: var(--glass); color: #fff; padding: 10px; border-radius: 10px;
+            font-size: 12px; max-width: 200px; border-left: 4px solid var(--neon);
         }
     </style>
 </head>
@@ -48,22 +55,25 @@
 
     <button id="startBtn">SİSTEMİ BAŞLAT</button>
 
-    <div id="view-link">
-        <div class="hud-top">
-            <div class="badge" id="fps">FPS: --</div>
-            <div class="badge">POCO HYPER-VISION</div>
-            <div class="badge" id="count">NESNE: 0</div>
+    <div id="container">
+        <div class="top-hud">
+            <div class="stat" id="fps">FPS: --</div>
+            <div class="stat" id="objCount">NESNE: 0</div>
         </div>
 
         <video id="webcam" autoplay playsinline muted></video>
         <canvas id="output_canvas"></canvas>
 
-        <div class="controls-wrapper" id="uiPanel" style="display: none;">
-            <div class="main-btns">
-                <button class="side-btn" id="flipBtn">🔄</button>
-                <div id="captureBtn"></div>
-                <button class="side-btn" id="infoBtn">ℹ️</button>
-            </div>
+        <div id="info-box">
+            <b>MOD:</b> Hyper-Vision L2<br>
+            <b>CİHAZ:</b> POCO X7 PRO<br>
+            <span id="ai-status" style="color:var(--neon)">Sistem Hazır</span>
+        </div>
+
+        <div class="side-controls" id="uiGroup" style="display: none;">
+            <button class="action-btn" id="flipBtn" title="Kamera Değiştir">🔄</button>
+            <div class="action-btn" id="captureBtn" title="Fotoğraf Çek">📸</div>
+            <button class="action-btn" id="zoomBtn">🔍</button>
         </div>
     </div>
 
@@ -76,25 +86,28 @@
         const startBtn = document.getElementById('startBtn');
         const flipBtn = document.getElementById('flipBtn');
         const captureBtn = document.getElementById('captureBtn');
-        const uiPanel = document.getElementById('uiPanel');
+        const uiGroup = document.getElementById('uiGroup');
 
         let objectDetector;
         let currentFacingMode = "environment";
         let lastVideoTime = -1;
-        let currentDetections = [];
+        let detections = [];
 
-        // --- DEV TÜRKÇE SÖZLÜK (Genişletilmiş) ---
-        const dictionary = {
+        // --- MAKSİMUM TÜRKÇE SÖZLÜK ---
+        const labelsTR = {
             'person': 'İNSAN', 'bicycle': 'BİSİKLET', 'car': 'ARABA', 'motorcycle': 'MOTOSİKLET',
-            'bird': 'KUŞ', 'cat': 'KEDİ', 'dog': 'KÖPEK', 'backpack': 'ÇANTA', 'umbrella': 'ŞEMSİYE',
-            'handbag': 'EL ÇANTASI', 'tie': 'KRAVAT', 'suitcase': 'BAVUL', 'bottle': 'ŞİŞE',
-            'cup': 'BARDAK', 'fork': 'ÇATAL', 'knife': 'BIÇAK', 'spoon': 'KAŞIK', 'bowl': 'KASE',
-            'apple': 'ELMA', 'sandwich': 'SANDVİÇ', 'pizza': 'PİZZA', 'donut': 'DONUT', 'cake': 'KEK',
-            'chair': 'SANDALYE', 'couch': 'KOLTUK', 'potted plant': 'BİTKİ', 'bed': 'YATAK',
-            'dining table': 'MASA', 'tv': 'EKRAN', 'laptop': 'BİLGİSAYAR', 'mouse': 'FARE',
-            'remote': 'KUMANDA', 'keyboard': 'KLAVYE', 'cell phone': 'TELEFON', 'microwave': 'MİKRODALGA',
-            'oven': 'FIRIN', 'sink': 'LAVABO', 'refrigerator': 'BUZDOLABI', 'book': 'KİTAP', 'clock': 'SAAT',
-            'vase': 'VAZO', 'scissors': 'MAKAS', 'toothbrush': 'DİŞ FIRÇASI', 'door': 'KAPI', 'window': 'PENCERE'
+            'airplane': 'UÇAK', 'bus': 'OTOBÜS', 'train': 'TREN', 'truck': 'KAMYON', 'boat': 'TEKNE',
+            'traffic light': 'TRAFİK IŞIĞI', 'fire hydrant': 'YANGIN MUSLUĞU', 'stop sign': 'DUR LEVHASI',
+            'bench': 'BANK', 'bird': 'KUŞ', 'cat': 'KEDİ', 'dog': 'KÖPEK', 'backpack': 'ÇANTA',
+            'umbrella': 'ŞEMSİYE', 'handbag': 'EL ÇANTASI', 'tie': 'KRAVAT', 'suitcase': 'BAVUL',
+            'bottle': 'ŞİŞE', 'cup': 'BARDAK', 'fork': 'ÇATAL', 'knife': 'BIÇAK', 'spoon': 'KAŞIK',
+            'bowl': 'KASE', 'apple': 'ELMA', 'sandwich': 'SANDVİÇ', 'orange': 'PORTAKAL', 'pizza': 'PİZZA',
+            'donut': 'DONUT', 'cake': 'KEK', 'chair': 'SANDALYE', 'couch': 'KOLTUK', 'potted plant': 'SAKSI',
+            'bed': 'YATAK', 'dining table': 'MASA', 'toilet': 'TUVALET', 'tv': 'EKRAN', 'laptop': 'BİLGİSAYAR',
+            'mouse': 'FARE', 'remote': 'KUMANDA', 'keyboard': 'KLAVYE', 'cell phone': 'TELEFON',
+            'microwave': 'MİKRODALGA', 'oven': 'FIRIN', 'sink': 'LAVABO', 'refrigerator': 'BUZDOLABI',
+            'book': 'KİTAP', 'clock': 'SAAT', 'vase': 'VAZO', 'scissors': 'MAKAS', 'toothbrush': 'DİŞ FIRÇASI',
+            'hair drier': 'FÖN MAKİNESİ', 'door': 'KAPI', 'window': 'PENCERE', 'mirror': 'AYNA'
         };
 
         async function init() {
@@ -104,14 +117,14 @@
                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
                     delegate: "GPU"
                 },
-                scoreThreshold: 0.40,
+                scoreThreshold: 0.45,
                 runningMode: "VIDEO"
             });
             startBtn.innerText = "SİSTEMİ AÇ";
         }
 
-        async function startStream() {
-            if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        async function toggleCamera() {
+            if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: currentFacingMode, width: 1280, height: 720 }
             });
@@ -125,20 +138,20 @@
 
         startBtn.onclick = () => {
             startBtn.style.display = "none";
-            uiPanel.style.display = "flex";
-            startStream();
+            uiGroup.style.display = "flex";
+            toggleCamera();
         };
 
         flipBtn.onclick = () => {
             currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
-            startStream();
+            toggleCamera();
         };
 
         async function predict() {
             if (video.currentTime !== lastVideoTime) {
                 lastVideoTime = video.currentTime;
                 const result = objectDetector.detectForVideo(video, performance.now());
-                currentDetections = result.detections;
+                detections = result.detections;
                 draw();
             }
             window.requestAnimationFrame(predict);
@@ -146,38 +159,35 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('count').innerText = `NESNE: ${currentDetections.length}`;
+            document.getElementById('objCount').innerText = `NESNE: ${detections.length}`;
 
-            currentDetections.forEach(det => {
+            detections.forEach(det => {
                 const { originX, originY, width, height } = det.boundingBox;
-                const rawLabel = det.categories[0].categoryName;
+                const rawName = det.categories[0].categoryName;
                 const score = Math.round(det.categories[0].score * 100);
-                let finalLabel = dictionary[rawLabel] || rawLabel.toUpperCase();
+                let label = labelsTR[rawName] || rawName.toUpperCase();
 
-                // --- GELİŞMİŞ YAŞ TAHMİNİ ---
-                if (rawLabel === 'person') {
-                    const boxArea = (width * height) / (canvas.width * canvas.height);
-                    const ratio = width / height;
-                    if (boxArea < 0.05) finalLabel = "BEBEK / KÜÇÜK ÇOCUK";
-                    else if (boxArea < 0.15) finalLabel = "ÇOCUK";
-                    else if (ratio > 0.4) finalLabel = "GENÇ / YETİŞKİN";
-                    else finalLabel = "YETİŞKİN";
+                // --- YAŞ TAHMİNİ ALGORİTMASI ---
+                if (rawName === 'person') {
+                    const personRatio = (width * height) / (canvas.width * canvas.height);
+                    if (personRatio < 0.04) label = "BEBEK";
+                    else if (personRatio < 0.12) label = "ÇOCUK";
+                    else if (height / width > 2.5) label = "YETİŞKİN";
+                    else label = "GENÇ / YETİŞKİN";
                 }
 
-                // Tasarım
+                // Çizim
                 ctx.strokeStyle = varColor(score);
-                ctx.lineWidth = 6;
+                ctx.lineWidth = 5;
                 ctx.strokeRect(originX, originY, width, height);
 
                 ctx.fillStyle = varColor(score);
-                ctx.font = "bold 22px sans-serif";
-                ctx.fillText(`${finalLabel} %${score}`, originX, originY - 10);
+                ctx.font = "bold 22px Arial";
+                ctx.fillText(`${label} %${score}`, originX, originY - 10);
             });
         }
 
-        function varColor(score) {
-            return score > 70 ? "#00ff9d" : "#ffcc00";
-        }
+        function varColor(s) { return s > 70 ? "#00ff9d" : "#ffcc00"; }
 
         captureBtn.onclick = () => {
             const temp = document.createElement('canvas');
@@ -185,17 +195,14 @@
             const tCtx = temp.getContext('2d');
             tCtx.drawImage(video, 0, 0);
             
-            currentDetections.forEach(det => {
+            detections.forEach(det => {
                 const { originX, originY, width, height } = det.boundingBox;
-                const label = dictionary[det.categories[0].categoryName] || det.categories[0].categoryName;
-                tCtx.strokeStyle = "#00ff9d"; tCtx.lineWidth = 8;
+                tCtx.strokeStyle = "cyan"; tCtx.lineWidth = 10;
                 tCtx.strokeRect(originX, originY, width, height);
-                tCtx.fillStyle = "#00ff9d"; tCtx.font = "bold 40px sans-serif";
-                tCtx.fillText(label, originX, originY - 15);
             });
 
             const a = document.createElement('a');
-            a.download = `AI_EXPORT_${Date.now()}.png`;
+            a.download = `AI_POCO_${Date.now()}.png`;
             a.href = temp.toDataURL();
             a.click();
         };
