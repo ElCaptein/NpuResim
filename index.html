@@ -84,10 +84,13 @@
 
             <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
 
-            <label>DONANIM VE KALİTE</label>
+            <label>DONANIM HIZLANDIRICI</label>
             <select id="hwSel">
-                <option value="GPU" selected>GPU (Grafik Birimi)</option>
-                <option value="CPU">CPU (İşlemci)</option>
+                <option value="GPU">GPU (Grafik İşlemci)</option>
+                <option value="NPU">NPU (AI İşlemci)</option>
+                <option value="CPU">CPU (Ana İşlemci)</option>
+                <option value="GPU+NPU">GPU + NPU (Maksimum)</option>
+                <option value="CPU+GPU">CPU + GPU (Dengeli)</option>
             </select>
 
             <div style="display: flex; gap: 10px;">
@@ -125,6 +128,25 @@
         const overlay = document.getElementById('load-overlay');
         const dynamicBtn = document.getElementById('dynamic-save-btn');
 
+        // Nesne İsimleri Türkçeleştirme Sözlüğü
+        const trLabels = {
+            "person": "İnsan", "bicycle": "Bisiklet", "car": "Araba", "motorcycle": "Motosiklet", "airplane": "Uçak",
+            "bus": "Otobüs", "train": "Tren", "truck": "Kamyon", "boat": "Tekne", "traffic light": "Trafik Işığı",
+            "fire hydrant": "Yangın Musluğu", "stop sign": "Dur İşareti", "parking meter": "Park Metresi", "bench": "Bank",
+            "bird": "Kuş", "cat": "Kedi", "dog": "Köpek", "horse": "At", "sheep": "Koyun", "cow": "İnek",
+            "elephant": "Fil", "bear": "Ayı", "zebra": "Zebra", "giraffe": "Zürafa", "backpack": "Sırt Çantası",
+            "umbrella": "Şemsiye", "handbag": "El Çantası", "tie": "Kravat", "suitcase": "Bavul", "frisbee": "Frizbi",
+            "skis": "Kayak", "snowboard": "Snowboard", "sports ball": "Top", "kite": "Uçurtma", "baseball bat": "Beyzbol Sopası",
+            "baseball glove": "Beyzbol Eldiveni", "skateboard": "Kaykay", "surfboard": "Sörf Tahtası", "tennis racket": "Tenis Raketi",
+            "bottle": "Şişe", "wine glass": "Kadeh", "cup": "Fincan", "fork": "Çatal", "knife": "Bıçak", "spoon": "Kaşık",
+            "bowl": "Kase", "banana": "Muz", "apple": "Elma", "sandwich": "Sandviç", "orange": "Portakal", "broccoli": "Brokoli",
+            "carrot": "Havuç", "hot dog": "Sosisli", "pizza": "Pizza", "donut": "Donat", "cake": "Kek", "chair": "Sandalye",
+            "couch": "Kanepe", "potted plant": "Saksı Bitkisi", "bed": "Yatak", "dining table": "Yemek Masası", "toilet": "Tuvalet",
+            "tv": "Televizyon", "laptop": "Laptop", "mouse": "Fare", "remote": "Kumanda", "keyboard": "Klavye", "cell phone": "Telefon",
+            "microwave": "Mikrodalga", "oven": "Fırın", "toaster": "Ekmek Kızartma Makinesi", "sink": "Evye", "refrigerator": "Buzdolabı",
+            "book": "Kitap", "clock": "Saat", "vase": "Vazo", "scissors": "Makas", "teddy bear": "Oyuncak Ayı", "hair drier": "Saç Kurutma", "toothbrush": "Diş Fırçası"
+        };
+
         let detector, isRunning = false, lastTime = performance.now();
         let visionData;
         let sensorData = { alpha: 0, beta: 0, gamma: 0 };
@@ -142,7 +164,7 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = 800; gain.gain.value = 0.05;
+            osc.frequency.value = 850; gain.gain.value = 0.05;
             osc.start(); osc.stop(audioCtx.currentTime + 0.1);
         }
 
@@ -174,22 +196,14 @@
 
         window.toggleMode = (m) => {
             modes[m] = !modes[m];
-            
-            // Eğer pin modu açıldıysa sensörleri başlat ve butonu göster
             if(m === 'pin' && modes[m]) {
                 initSensors();
                 dynamicBtn.style.display = 'block';
             } else if(m === 'pin' && !modes[m]) {
                 dynamicBtn.style.display = 'none';
             }
-
-            // UI Güncelleme
-            const btn = document.getElementById(`btn-${m}`);
-            const ind = document.getElementById(`ind-${m}`);
-            btn.classList.toggle('active', modes[m]);
-            ind.innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
-
-            // Eğer hedef seçme kapatılırsa hedefi temizle
+            document.getElementById(`btn-${m}`).classList.toggle('active', modes[m]);
+            document.getElementById(`ind-${m}`).innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
             if(m === 'select' && !modes[m]) {
                 selectedObjectLabel = null;
                 document.getElementById('target-tag').style.display = 'none';
@@ -198,24 +212,15 @@
 
         window.resetCounter = () => {
             cumulativeCount = 0;
-            detectedObjectsSet.clear();
             document.getElementById('count-tag').innerText = `SAYI: 0`;
         };
 
-        window.clearPins = () => {
-            savedPins = [];
-        };
+        window.clearPins = () => { savedPins = []; };
 
         window.togglePanel = () => {
             const content = document.getElementById('p-content');
-            const icon = document.getElementById('toggle-icon');
-            if(content.style.display === 'none') {
-                content.style.display = 'flex';
-                icon.innerText = '▼';
-            } else {
-                content.style.display = 'none';
-                icon.innerText = '▲';
-            }
+            content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+            document.getElementById('toggle-icon').innerText = content.style.display === 'none' ? '▲' : '▼';
         };
 
         canvas.addEventListener('click', (e) => {
@@ -229,7 +234,7 @@
                 if(x > originX && x < originX + width && y > originY && y < originY + height) {
                     selectedObjectLabel = d.categories[0].categoryName;
                     const tag = document.getElementById('target-tag');
-                    tag.innerText = `HEDEF: ${selectedObjectLabel.toUpperCase()}`;
+                    tag.innerText = `HEDEF: ${trLabels[selectedObjectLabel]?.toUpperCase() || selectedObjectLabel.toUpperCase()}`;
                     tag.style.display = 'block';
                     playBeep();
                 }
@@ -237,16 +242,10 @@
         });
 
         window.saveCurrentObjectCoords = () => {
-            if(!modes.pin) return;
-            
-            // Eğer hedef seçiliyse sadece o hedefe bak, değilse ilk gördüğünü al
             const target = lastDetections.find(d => !selectedObjectLabel || d.categories[0].categoryName === selectedObjectLabel);
-            
             if(target) {
                 const { originX, originY, width, height } = target.boundingBox;
                 pushPin(originX + width/2, originY + height/2, target.categories[0].categoryName);
-            } else {
-                alert(selectedObjectLabel ? `${selectedObjectLabel} bulunamadı!` : "Nesne bulunamadı!");
             }
         };
 
@@ -256,9 +255,7 @@
         }
 
         window.applySettings = async () => {
-            isRunning = false;
-            overlay.style.display = 'flex';
-            
+            isRunning = false; overlay.style.display = 'flex';
             const hwMode = document.getElementById('hwSel').value;
             const modelLevel = document.getElementById('modelSel').value;
             const res = parseInt(document.getElementById('resSel').value);
@@ -266,13 +263,8 @@
 
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-                
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        deviceId: deviceId ? {exact: deviceId} : undefined,
-                        facingMode: "environment",
-                        height: { ideal: res }
-                    } 
+                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, facingMode: "environment", height: { ideal: res } } 
                 });
                 video.srcObject = stream;
 
@@ -280,18 +272,20 @@
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     if (!visionData) visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
                     
+                    // NPU/GPU/CPU delegate mapping
+                    const delegate = (hwMode.includes("GPU") || hwMode.includes("NPU")) ? "GPU" : "CPU";
+
                     detector = await ObjectDetector.createFromOptions(visionData, {
                         baseOptions: { 
                             modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                            delegate: hwMode
+                            delegate: delegate 
                         },
                         scoreThreshold: 0.4, runningMode: "VIDEO"
                     });
 
                     document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
                     overlay.style.display = 'none'; 
-                    isRunning = true; 
-                    renderLoop();
+                    isRunning = true; renderLoop();
                 };
             } catch (e) { alert("Hata: " + e.message); }
         };
@@ -306,29 +300,13 @@
                 const result = detector.detectForVideo(video, performance.now());
                 lastDetections = result.detections;
                 
-                // Filtreleme mantığı: Eğer bir nesne seçilmişse sadece onu işle
                 const activeDetections = selectedObjectLabel 
                     ? lastDetections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
                     : lastDetections;
 
-                // Sadece seçili (veya tümü) nesneler için ses çıkar
-                if(modes.sound && activeDetections.length > 0) {
-                    if(now % 500 < 50) playBeep(); // Sürekli ötmemesi için ufak bir gecikme
-                }
+                if(modes.sound && activeDetections.length > 0 && now % 600 < 50) playBeep();
 
-                // Sayma mantığı
-                if(modes.count && activeDetections.length > 0) {
-                    activeDetections.forEach(d => {
-                        const l = d.categories[0].categoryName;
-                        // Benzersizlik için sadece seçili modu desteklerken mantığı basitleştirdik
-                        if(!detectedObjectsSet.has(l + "_" + cumulativeCount)) { 
-                            // Not: Bu basit bir demo sayacıdır, gerçek takip için IOU gerekir.
-                            // Şimdilik sadece "ekranda yeni bir şey var mı" gibi çalışır.
-                        }
-                    });
-                    // Örnek: Ekranda kaç tane hedef nesne var?
-                    document.getElementById('count-tag').innerText = `SAYI: ${activeDetections.length}`;
-                }
+                if(modes.count) document.getElementById('count-tag').innerText = `SAYI: ${activeDetections.length}`;
 
                 draw(activeDetections);
             } catch (err) { }
@@ -338,28 +316,29 @@
         function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // PİNLER (Sadece hedef nesneye ait olanlar veya hepsi)
             savedPins.forEach(p => {
                 const xOff = (sensorData.alpha - p.a) * 8;
                 const yOff = (sensorData.beta - p.b) * 8;
-                ctx.fillStyle = "red";
+                ctx.fillStyle = "#ff3e3e";
                 ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 8, 0, 7); ctx.fill();
+                ctx.fillStyle = "white"; ctx.font = "bold 10px sans-serif";
+                ctx.fillText(trLabels[p.label]?.toUpperCase() || p.label.toUpperCase(), p.x + xOff + 10, p.y + yOff + 3);
             });
 
-            // BOXES
             detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
+                const trName = trLabels[label] || label;
                 const score = Math.round(d.categories[0].score * 100);
 
                 ctx.strokeStyle = (label === selectedObjectLabel) ? "#ff3e3e" : "#00ff9d";
-                ctx.lineWidth = 3; 
+                ctx.lineWidth = (label === selectedObjectLabel) ? 4 : 2; 
                 ctx.strokeRect(originX, originY, width, height);
 
                 ctx.fillStyle = "rgba(0,0,0,0.7)";
                 ctx.fillRect(originX, originY - 25, width, 25);
                 ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif";
-                ctx.fillText(`${label.toUpperCase()} %${score}`, originX + 5, originY - 7);
+                ctx.fillText(`${trName.toUpperCase()} %${score}`, originX + 5, originY - 7);
             });
         }
 
