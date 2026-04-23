@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Yapay Zeka Görüntü Tanıma Pro</title>
+    <title>Yapay Zeka Görüntü Tanıma Pro - V2</title>
     <style>
         :root { --neon: #00ff9d; --bg: rgba(15, 15, 15, 0.9); --accent: #ff3e3e; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
@@ -14,7 +14,6 @@
         .hud-top { position: absolute; top: 15px; left: 15px; z-index: 500; display: flex; gap: 8px; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.7); border: 1px solid var(--neon); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; color: var(--neon); text-transform: uppercase; }
 
-        /* Panel aşağıya taşındı */
         #control-panel {
             position: absolute; bottom: 15px; right: 15px; z-index: 1000; width: 300px;
             background: var(--bg); border: 1px solid #444; border-radius: 12px; backdrop-filter: blur(15px);
@@ -27,23 +26,20 @@
         label { font-size: 10px; color: #aaa; font-weight: bold; margin-bottom: 2px; display: block; }
         select, button { width: 100%; padding: 8px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; outline: none; }
         
-        .action-btn { background: #333; color: white; border: 1px solid #555; margin-bottom: 5px; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+        .action-btn { background: #333; color: white; border: 1px solid #555; margin-bottom: 5px; text-align: left; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .action-btn.active { border-color: var(--neon); color: var(--neon); }
         
         .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; padding: 12px; }
         
         #load-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-text { color: var(--neon); font-size: 20px; font-weight: bold; letter-spacing: 2px; }
-        
-        /* Pin İşareti */
-        .pin-ui { position: absolute; color: var(--accent); font-size: 24px; transform: translate(-50%, -100%); pointer-events: none; z-index: 10; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
         <div class="loader-text">SİSTEM HAZIRLANIYOR...</div>
-        <div id="status-text">Lütfen bekleyin</div>
+        <div id="status-text">Donanım Yapılandırılıyor</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
@@ -70,17 +66,20 @@
 
             <hr style="border: 0; border-top: 1px solid #333; margin: 5px 0;">
 
+            <label>DONANIM HIZLANDIRICI</label>
+            <select id="hwSel">
+                <option value="NPU">NPU (AI Çipi)</option>
+                <option value="GPU" selected>GPU (Ekran Kartı)</option>
+                <option value="CPU">CPU (Güvenli Mod)</option>
+                <option value="NPU+GPU">NPU + GPU (Hibrit)</option>
+                <option value="GPU+CPU">GPU + CPU (Dengeli)</option>
+            </select>
+
             <label>ÇÖZÜNÜRLÜK</label>
             <select id="resSel">
                 <option value="480">480p (Hızlı)</option>
                 <option value="720" selected>720p (Standart)</option>
                 <option value="1080">1080p (Yüksek)</option>
-            </select>
-
-            <label>DONANIM HIZLANDIRICI</label>
-            <select id="hwSel">
-                <option value="GPU" selected>GPU (Önerilen)</option>
-                <option value="CPU">CPU (Güvenli)</option>
             </select>
 
             <label>YAPAY ZEKA MODELİ</label>
@@ -91,7 +90,7 @@
                 <option value="4">Pro Model (Lite 4)</option>
             </select>
 
-            <label>KAMERA KAYNAĞI</label>
+            <label>KAMERA</label>
             <select id="camSel"></select>
 
             <button class="primary-btn" onclick="applyAll()">SİSTEMİ YENİDEN BAŞLAT</button>
@@ -111,14 +110,13 @@
         let visionData;
         let sensorData = { alpha: 0, beta: 0, gamma: 0 };
         
-        // Özellik Durumları
         let modes = { select: false, count: false, pin: false, sound: false };
         let selectedObjectLabel = null;
         let cumulativeCount = 0;
         let detectedObjectsSet = new Set();
-        let savedPins = []; // {x, y, label, alpha, beta}
+        let savedPins = []; 
+        let lastDetections = [];
 
-        // Ses Bağlamı (Beep sesi için)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep() {
             if (!modes.sound) return;
@@ -129,15 +127,12 @@
             osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
-        // IMU / Sensör Erişimi
         function initSensors() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission();
             }
             window.addEventListener('deviceorientation', (e) => {
-                sensorData.alpha = e.alpha; // Pusula
-                sensorData.beta = e.beta;   // Eğim
-                sensorData.gamma = e.gamma;
+                sensorData.alpha = e.alpha; sensorData.beta = e.beta; sensorData.gamma = e.gamma;
             });
         }
 
@@ -157,11 +152,8 @@
 
         window.toggleMode = (m) => {
             modes[m] = !modes[m];
-            const btn = document.getElementById(`btn-${m}`);
-            const ind = document.getElementById(`ind-${m}`);
-            btn.classList.toggle('active', modes[m]);
-            ind.innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
-            
+            document.getElementById(`btn-${m}`).classList.toggle('active', modes[m]);
+            document.getElementById(`ind-${m}`).innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
             if(m === 'pin') initSensors();
             if(m === 'select' && !modes[m]) selectedObjectLabel = null;
         };
@@ -169,49 +161,39 @@
         window.togglePanel = () => {
             const content = document.getElementById('p-content');
             const icon = document.getElementById('toggle-icon');
-            if(content.style.display === 'none') {
-                content.style.display = 'flex';
-                icon.innerText = '▼';
-            } else {
-                content.style.display = 'none';
-                icon.innerText = '▲';
-            }
+            content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+            icon.innerText = content.style.display === 'none' ? '▲' : '▼';
         };
 
         canvas.addEventListener('click', (e) => {
             if(!modes.select && !modes.pin) return;
-            
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (canvas.width / rect.width);
             const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-            // Tıklanan yerdeki nesneyi bul (Son render sonucundan)
             lastDetections.forEach(d => {
                 const { originX, originY, width, height } = d.boundingBox;
                 if(x > originX && x < originX + width && y > originY && y < originY + height) {
                     if(modes.select) {
                         selectedObjectLabel = d.categories[0].categoryName;
-                        alert("Hedef Kilitlendi: " + selectedObjectLabel.toUpperCase());
+                        alert("HEDEF SEÇİLDİ: " + selectedObjectLabel.toUpperCase());
                     }
                     if(modes.pin) {
-                        savedPins.push({
-                            x: originX + width/2,
-                            y: originY + height/2,
-                            label: d.categories[0].categoryName,
-                            alpha: sensorData.alpha,
-                            beta: sensorData.beta
-                        });
+                        savedPins.push({ x: originX + width/2, y: originY + height/2, label: d.categories[0].categoryName, alpha: sensorData.alpha, beta: sensorData.beta });
                         playBeep();
                     }
                 }
             });
         });
 
-        async function createDetector(modelLevel, delegate) {
+        async function createDetector(modelLevel, hwMode) {
+            // MediaPipe için mantıksal eşleştirme: CPU dışındaki tüm modlar hızlandırma için GPU delegesini kullanır.
+            let delegate = hwMode === "CPU" ? "CPU" : "GPU";
+            
             return await ObjectDetector.createFromOptions(visionData, {
                 baseOptions: { 
                     modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                    delegate: delegate === "CPU" ? "CPU" : "GPU" 
+                    delegate: delegate 
                 },
                 scoreThreshold: 0.45, runningMode: "VIDEO"
             });
@@ -220,7 +202,7 @@
         window.applyAll = async () => {
             isRunning = false;
             overlay.style.display = 'flex';
-            statusText.innerText = "Yapay Zeka Modeli Yapılandırılıyor...";
+            statusText.innerText = "Yapay Zeka Modeli ve Donanım Hazırlanıyor...";
 
             const res = parseInt(document.getElementById('resSel').value);
             const hwMode = document.getElementById('hwSel').value;
@@ -244,10 +226,9 @@
                     isRunning = true; 
                     renderLoop();
                 };
-            } catch (e) { statusText.innerText = "Başlatma Hatası!"; }
+            } catch (e) { statusText.innerText = "Sistem Başlatılamadı!"; }
         };
 
-        let lastDetections = [];
         function renderLoop(now) {
             if(!isRunning || !detector) return;
             const fps = 1000 / (now - lastTime);
@@ -265,11 +246,8 @@
 
         function processLogic(detections) {
             if(detections.length > 0 && modes.sound) playBeep();
-
             detections.forEach(d => {
                 const label = d.categories[0].categoryName;
-                
-                // Sayma Mantığı
                 if(modes.count && !detectedObjectsSet.has(label)) {
                     detectedObjectsSet.add(label);
                     cumulativeCount++;
@@ -281,18 +259,14 @@
         function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Kayıtlı Pinleri Çiz (Basit IMU Telafisi)
+            // Kayıtlı Pinleri Çiz
             savedPins.forEach(pin => {
-                // Kamera hareket ettikçe pini ekranda tutmaya çalış (Görsel temsil)
                 let xOff = (sensorData.alpha - pin.alpha) * 10; 
                 let yOff = (sensorData.beta - pin.beta) * 10;
-                
                 ctx.fillStyle = "red";
-                ctx.beginPath();
-                ctx.arc(pin.x + xOff, pin.y + yOff, 8, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(pin.x + xOff, pin.y + yOff, 8, 0, Math.PI * 2); ctx.fill();
                 ctx.font = "bold 12px sans-serif";
-                ctx.fillText("KAYITLI: " + pin.label.toUpperCase(), pin.x + xOff + 10, pin.y + yOff);
+                ctx.fillText("PIN: " + pin.label.toUpperCase(), pin.x + xOff + 10, pin.y + yOff);
             });
 
             detections.forEach((d) => {
@@ -300,12 +274,7 @@
                 const label = d.categories[0].categoryName;
                 const score = Math.round(d.categories[0].score * 100);
 
-                // Seçili nesne filtresi
-                if(selectedObjectLabel && label !== selectedObjectLabel) {
-                    ctx.globalAlpha = 0.2;
-                } else {
-                    ctx.globalAlpha = 1.0;
-                }
+                if(selectedObjectLabel && label !== selectedObjectLabel) { ctx.globalAlpha = 0.2; } else { ctx.globalAlpha = 1.0; }
 
                 ctx.strokeStyle = label === selectedObjectLabel ? "#ff3e3e" : "#00ff9d";
                 ctx.lineWidth = label === selectedObjectLabel ? 4 : 2; 
@@ -313,11 +282,8 @@
 
                 ctx.fillStyle = "rgba(0,0,0,0.7)";
                 ctx.fillRect(originX, originY - 25, width, 25);
-                
-                ctx.fillStyle = "#fff"; 
-                ctx.font = "bold 14px sans-serif";
+                ctx.fillStyle = "#fff"; ctx.font = "bold 14px sans-serif";
                 ctx.fillText(`${label.toUpperCase()} %${score}`, originX + 5, originY - 7);
-                
                 ctx.globalAlpha = 1.0;
             });
         }
