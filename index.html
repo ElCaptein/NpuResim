@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision v66 - Stabilize Sürüm</title>
+    <title>AI Vision v67 - Analiz Sürümü</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(15, 15, 15, 0.85); }
+        :root { --neon: #00ff9d; --bg: rgba(15, 15, 15, 0.85); --gold: #ffcc00; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; color: white; }
         
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         video { z-index: 1; } canvas { z-index: 2; pointer-events: none; }
 
-        /* Modernleştirilmiş ve Küçültülmüş UI */
         .hud-top { position: absolute; top: 15px; left: 15px; z-index: 500; display: flex; gap: 8px; pointer-events: none; }
         .chip { background: rgba(0,0,0,0.7); border: 1px solid var(--neon); padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; color: var(--neon); }
 
@@ -22,12 +21,19 @@
         }
         
         .panel-header { padding: 12px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; color: var(--neon); }
-        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; }
+        
+        /* Kaydırılabilir İçerik Alanı */
+        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; max-height: 55vh; overflow-y: auto; }
+        /* Scrollbar Gizleme/İnceltme */
+        .panel-content::-webkit-scrollbar { width: 6px; }
+        .panel-content::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
         
         label { font-size: 11px; color: #aaa; font-weight: bold; }
         select, button { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; outline: none; }
         button { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; margin-top: 5px; }
         button:hover { opacity: 0.8; }
+        
+        .btn-bio { background: var(--gold); border: 1px solid #b38f00; }
 
         #load-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-text { color: var(--neon); font-size: 20px; font-weight: bold; letter-spacing: 2px; }
@@ -50,12 +56,24 @@
     </div>
 
     <div id="control-panel">
-        <div class="panel-header" onclick="document.getElementById('p-content').style.display = document.getElementById('p-content').style.display === 'none' ? 'flex' : 'none'">
-            <span>⚙️ AYARLAR</span>
-            <span>▼</span>
+        <div class="panel-header" id="menuToggle">
+            <span>⚙️ AYARLARI GİZLE/GÖSTER</span>
+            <span id="menuIcon">▼</span>
         </div>
         <div class="panel-content" id="p-content">
             
+            <button class="btn-bio" onclick="triggerBioAnalysis()">🧬 BİYOLOJİK ANALİZ YAP</button>
+
+            <div>
+                <label>HEDEF NESNE</label>
+                <select id="targetObj">
+                    <option value="all" selected>Tüm Nesneler</option>
+                    <option value="person">Sadece İnsan</option>
+                    <option value="cat">Sadece Kedi</option>
+                    <option value="dog">Sadece Köpek</option>
+                </select>
+            </div>
+
             <div>
                 <label>ÇÖZÜNÜRLÜK (KALİTE)</label>
                 <select id="resSel" onchange="applyAll()">
@@ -81,7 +99,7 @@
                     <option value="0" selected>1. Nano (En Hızlı)</option>
                     <option value="1">2. Standart</option>
                     <option value="2">3. Dengeli HD</option>
-                    <option value="3">4. Ağır Model (Kasıntı Yapabilir)</option>
+                    <option value="3">4. Ağır Model</option>
                 </select>
             </div>
 
@@ -105,10 +123,67 @@
 
         let detector, isRunning = false, lastTime = performance.now();
         let visionData;
+        let currentDetections = [];
+        let bioResults = []; // Biyolojik analiz sonuçlarını tutacak dizi
+
+        // Menü Aç/Kapat Mantığı
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            const content = document.getElementById('p-content');
+            const icon = document.getElementById('menuIcon');
+            if (content.style.display === 'none') {
+                content.style.display = 'flex';
+                icon.innerText = '▼';
+            } else {
+                content.style.display = 'none';
+                icon.innerText = '▲';
+            }
+        });
+
+        // --- BİYOLOJİK ANALİZ (SİMÜLASYON) FONKSİYONU ---
+        window.triggerBioAnalysis = () => {
+            bioResults = []; // Eski sonuçları temizle
+            const ethnics = ["Anadolu / Türk", "Levant", "Kafkasya", "Slav", "Nordik"];
+            const catBreeds = ["Tekir", "Siyam", "British Shorthair", "Van Kedisi", "Fars Kedisi"];
+            const dogBreeds = ["Golden Retriever", "Alman Kurdu", "Pug", "Kangal", "Terrier"];
+
+            currentDetections.forEach((d) => {
+                const label = d.categories[0].categoryName;
+                const { originX, originY, width, height } = d.boundingBox;
+                
+                let analysisText = "";
+                
+                if (label === 'person') {
+                    const age = Math.floor(Math.random() * (55 - 18 + 1)) + 18; // 18-55 arası
+                    const eth = ethnics[Math.floor(Math.random() * ethnics.length)];
+                    analysisText = `Yaş: ~${age} | ${eth}`;
+                } else if (label === 'cat') {
+                    const breed = catBreeds[Math.floor(Math.random() * catBreeds.length)];
+                    analysisText = `Irk: ${breed}`;
+                } else if (label === 'dog') {
+                    const breed = dogBreeds[Math.floor(Math.random() * dogBreeds.length)];
+                    analysisText = `Irk: ${breed}`;
+                }
+
+                if (analysisText !== "") {
+                    bioResults.push({
+                        text: analysisText,
+                        x: originX,
+                        y: originY,
+                        w: width,
+                        h: height,
+                        expireTime: performance.now() + 5000 // Ekranda 5 saniye kalsın
+                    });
+                }
+            });
+
+            if(bioResults.length === 0) {
+                alert("Ekranda analiz edilecek İnsan, Kedi veya Köpek bulunamadı!");
+            }
+        };
 
         async function initCameras() {
             try {
-                await navigator.mediaDevices.getUserMedia({ video: true }); // İzin iste
+                await navigator.mediaDevices.getUserMedia({ video: true });
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const camSel = document.getElementById('camSel');
                 camSel.innerHTML = "";
@@ -123,9 +198,7 @@
         }
 
         async function createDetector(modelLevel, delegate) {
-            // MediaPipe Web için NPU tam desteklenmediğinde GPU veya CPU'ya yönlendirmesi gerekir.
             let safeDelegate = (delegate === "CPU") ? "CPU" : "GPU"; 
-            
             return await ObjectDetector.createFromOptions(visionData, {
                 baseOptions: { 
                     modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
@@ -145,7 +218,6 @@
             let modelLevel = document.getElementById('modelSel').value;
             const deviceId = document.getElementById('camSel').value;
 
-            // Çözünürlük oranlarını belirle
             let idealWidth = res === 1080 ? 1920 : (res === 960 ? 1280 : (res === 720 ? 1280 : 640));
 
             try {
@@ -165,17 +237,12 @@
                     }
                     
                     try {
-                        // Seçilen modelle başlatmayı dene
                         detector = await createDetector(modelLevel, hwMode);
                         document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
                     } catch (modelError) {
-                        // EĞER CİHAZIN GÜCÜ YETMEZ VE ÇÖKERSE BURASI ÇALIŞIR (Siyah ekran engelleme)
-                        console.warn("Seçilen model cihaz için çok ağır. Güvenli moda geçiliyor...");
-                        statusText.innerText = "GÜÇ AŞIMI! Güvenli Moda (CPU - Nano) Geçiliyor...";
-                        
-                        document.getElementById('modelSel').value = "0"; // En basit modele çek
-                        document.getElementById('hwSel').value = "CPU"; // CPU'ya çek
-                        
+                        console.warn("Güvenli moda geçiliyor...");
+                        document.getElementById('modelSel').value = "0"; 
+                        document.getElementById('hwSel').value = "CPU"; 
                         detector = await createDetector(0, "CPU");
                         document.getElementById('hw-tag').innerText = `HW: CPU (Güvenli Mod)`;
                     }
@@ -185,7 +252,7 @@
                     renderLoop();
                 };
             } catch (e) {
-                statusText.innerText = "Kamera başlatılamadı. Cihaz desteklemiyor olabilir.";
+                statusText.innerText = "Kamera başlatılamadı.";
             }
         };
 
@@ -197,32 +264,46 @@
 
             try {
                 const result = detector.detectForVideo(video, performance.now());
-                draw(result.detections);
+                currentDetections = result.detections; // Analiz butonu için hafızada tut
+                draw(currentDetections, now);
             } catch (err) { }
             requestAnimationFrame(renderLoop);
         }
 
-        function draw(detections) {
+        function draw(detections, currentTime) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const target = document.getElementById('targetObj').value;
             
+            // 1. Normal Tespit Kutularını Çiz
             detections.forEach((d) => {
-                const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
+                if (target !== "all" && label !== target) return; // Filtreleme
+
+                const { originX, originY, width, height } = d.boundingBox;
                 const score = Math.round(d.categories[0].score * 100);
 
-                // Kutu çizimi
                 ctx.strokeStyle = "#00ff9d";
                 ctx.lineWidth = 2; 
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Yazı arka planı
                 ctx.fillStyle = "rgba(0,0,0,0.7)";
                 ctx.fillRect(originX, originY - 20, width, 20);
                 
-                // Gerçek Yapay Zeka Verisi (Sadece nesne türü ve güvenilirlik yüzdesi)
                 ctx.fillStyle = "#fff"; 
                 ctx.font = "bold 14px sans-serif";
                 ctx.fillText(`${label.toUpperCase()} %${score}`, originX + 5, originY - 5);
+            });
+
+            // 2. Biyolojik Analiz Sonuçlarını Çiz (Eğer butona basıldıysa ve süre dolmadıysa)
+            bioResults = bioResults.filter(b => currentTime < b.expireTime); // Süresi dolanları sil
+
+            bioResults.forEach((bio) => {
+                ctx.fillStyle = "rgba(255, 204, 0, 0.85)"; // Altın sarısı arka plan
+                ctx.fillRect(bio.x, bio.y + bio.h, bio.w, 25); // Kutunun hemen altına çiz
+                
+                ctx.fillStyle = "#000"; // Siyah yazı
+                ctx.font = "bold 13px sans-serif";
+                ctx.fillText(`🧬 ${bio.text}`, bio.x + 5, bio.y + bio.h + 17);
             });
         }
 
