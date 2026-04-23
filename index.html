@@ -128,7 +128,7 @@
             
             return await ObjectDetector.createFromOptions(visionData, {
                 baseOptions: { 
-                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float32/1/efficientdet_lite${modelLevel}.tflite`,
                     delegate: safeDelegate 
                 },
                 scoreThreshold: 0.4, runningMode: "VIDEO"
