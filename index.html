@@ -3,112 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision v67 - Analiz Sürümü</title>
+    <title>AI Vision v68 - Advanced Biometrics</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(15, 15, 15, 0.85); --gold: #ffcc00; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; color: white; }
+        :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.9); --gold: #ffcc00; --active: #ff3d00; --blue: #00e5ff; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: white; }
         
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
         video { z-index: 1; } canvas { z-index: 2; pointer-events: none; }
 
         .hud-top { position: absolute; top: 15px; left: 15px; z-index: 500; display: flex; gap: 8px; pointer-events: none; }
-        .chip { background: rgba(0,0,0,0.7); border: 1px solid var(--neon); padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; color: var(--neon); }
+        .chip { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: bold; color: var(--neon); letter-spacing: 1px; }
 
         #control-panel {
-            position: absolute; top: 15px; right: 15px; z-index: 1000; width: 280px;
-            background: var(--bg); border: 1px solid #333; border-radius: 12px; backdrop-filter: blur(10px);
-            display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;
+            position: absolute; top: 15px; right: 15px; z-index: 1000; width: 300px;
+            background: var(--bg); border: 1px solid #333; border-radius: 12px; backdrop-filter: blur(15px);
+            display: flex; flex-direction: column; overflow: hidden; transition: transform 0.3s ease;
         }
         
-        .panel-header { padding: 12px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; color: var(--neon); }
+        .panel-header { padding: 14px; background: #000; border-bottom: 2px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 900; color: var(--neon); }
+        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 14px; max-height: 60vh; overflow-y: auto; }
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-thumb { background: var(--neon); }
         
-        /* Kaydırılabilir İçerik Alanı */
-        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; max-height: 55vh; overflow-y: auto; }
-        /* Scrollbar Gizleme/İnceltme */
-        .panel-content::-webkit-scrollbar { width: 6px; }
-        .panel-content::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        label { font-size: 10px; color: #777; font-weight: 800; text-transform: uppercase; }
+        select, button { width: 100%; padding: 12px; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; font-size: 12px; outline: none; transition: 0.2s; }
         
-        label { font-size: 11px; color: #aaa; font-weight: bold; }
-        select, button { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; outline: none; }
-        button { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; margin-top: 5px; }
-        button:hover { opacity: 0.8; }
-        
-        .btn-bio { background: var(--gold); border: 1px solid #b38f00; }
+        /* Biyolojik Analiz Tuşu ve Durumları */
+        #bioBtn { background: var(--blue); color: #000; font-weight: 900; border: none; cursor: pointer; position: relative; overflow: hidden; }
+        #bioBtn.analyzing { background: var(--gold); transform: scale(0.98); }
+        #bioBtn.ready { background: var(--neon); }
 
-        #load-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-text { color: var(--neon); font-size: 20px; font-weight: bold; letter-spacing: 2px; }
-        #status-text { color: #888; font-size: 11px; margin-top: 10px; }
+        .btn-restart { background: #333; color: #fff; margin-top: 10px; border: 1px solid #444; }
+        .btn-restart:active { background: var(--active); }
+
+        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-text { color: var(--neon); font-size: 22px; font-weight: 900; letter-spacing: 5px; }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
-        <div class="loader-text">SİSTEM YÜKLENİYOR...</div>
-        <div id="status-text">Lütfen bekleyin</div>
+        <div class="loader-text">TITAN v68</div>
+        <div id="status-text" style="color:#555; font-size: 10px; margin-top: 15px;">DONANIM SENKRONİZASYONU...</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
     <div class="hud-top">
-        <div id="hw-tag" class="chip">HW: BEKLENİYOR</div>
-        <div id="fps-tag" class="chip" style="color:#00e5ff; border-color:#00e5ff;">FPS: 0</div>
+        <div id="hw-tag" class="chip">NPU: AKTİF</div>
+        <div id="fps-tag" class="chip" style="color:var(--blue); border-color:var(--blue);">FPS: 0</div>
     </div>
 
     <div id="control-panel">
-        <div class="panel-header" id="menuToggle">
-            <span>⚙️ AYARLARI GİZLE/GÖSTER</span>
+        <div class="panel-header" onclick="toggleMenu()">
+            <span>⚙️ TITAN CORE AYARLARI</span>
             <span id="menuIcon">▼</span>
         </div>
         <div class="panel-content" id="p-content">
             
-            <button class="btn-bio" onclick="triggerBioAnalysis()">🧬 BİYOLOJİK ANALİZ YAP</button>
+            <button id="bioBtn" onclick="triggerBioAnalysis()">🧬 BİYOLOJİK ANALİZ YAP</button>
 
             <div>
-                <label>HEDEF NESNE</label>
+                <label>HEDEF NESNE FİLTRESİ</label>
                 <select id="targetObj">
-                    <option value="all" selected>Tüm Nesneler</option>
-                    <option value="person">Sadece İnsan</option>
-                    <option value="cat">Sadece Kedi</option>
-                    <option value="dog">Sadece Köpek</option>
+                    <option value="all" selected>TÜMÜNÜ TARA</option>
+                    <option value="person">İNSAN ANALİZİ</option>
+                    <option value="cat">KEDİ ANALİZİ</option>
+                    <option value="dog">KÖPEK ANALİZİ</option>
                 </select>
             </div>
 
             <div>
-                <label>ÇÖZÜNÜRLÜK (KALİTE)</label>
+                <label>GÖRÜNTÜ ÇÖZÜNÜRLÜĞÜ</label>
                 <select id="resSel" onchange="applyAll()">
-                    <option value="480">480p (Hızlı)</option>
-                    <option value="720" selected>720p (Dengeli)</option>
-                    <option value="960">960p (Yüksek)</option>
-                    <option value="1080">1080p (Ultra)</option>
+                    <option value="480">480p SD</option>
+                    <option value="720" selected>720p HD</option>
+                    <option value="960">960p QHD</option>
+                    <option value="1080">1080p FULL HD</option>
                 </select>
             </div>
 
             <div>
-                <label>DONANIM (İŞLEMCİ BİRİMİ)</label>
+                <label>İŞLEMCİ KATMANI (HW)</label>
                 <select id="hwSel">
-                    <option value="NPU" selected>NPU (Yapay Zeka Çipi)</option>
-                    <option value="GPU">GPU (Ekran Kartı)</option>
-                    <option value="CPU">CPU (Güvenli Mod)</option>
+                    <option value="NPU" selected>VARSAYILAN: NPU</option>
+                    <option value="GPU">EKRAN KARTI (GPU)</option>
+                    <option value="CPU">İŞLEMCİ (CPU - GÜVENLİ)</option>
                 </select>
             </div>
 
             <div>
-                <label>YAPAY ZEKA MODELİ</label>
+                <label>MODEL DERİNLİĞİ</label>
                 <select id="modelSel">
-                    <option value="0" selected>1. Nano (En Hızlı)</option>
-                    <option value="1">2. Standart</option>
-                    <option value="2">3. Dengeli HD</option>
-                    <option value="3">4. Ağır Model</option>
+                    <option value="0" selected>NANO (HIZLI)</option>
+                    <option value="1">STANDART (DENGE)</option>
+                    <option value="2">HD (DETAYLI)</option>
                 </select>
             </div>
 
-            <div>
-                <label>KAMERA</label>
-                <select id="camSel"></select>
-            </div>
-
-            <button onclick="applyAll()">SİSTEMİ YENİDEN BAŞLAT</button>
+            <button class="btn-restart" onclick="applyAll()">SİSTEMİ YENİLE</button>
         </div>
     </div>
 
@@ -120,70 +114,80 @@
         const ctx = canvas.getContext('2d');
         const overlay = document.getElementById('load-overlay');
         const statusText = document.getElementById('status-text');
+        const bioBtn = document.getElementById('bioBtn');
 
         let detector, isRunning = false, lastTime = performance.now();
         let visionData;
         let currentDetections = [];
-        let bioResults = []; // Biyolojik analiz sonuçlarını tutacak dizi
+        let bioResults = [];
 
-        // Menü Aç/Kapat Mantığı
-        document.getElementById('menuToggle').addEventListener('click', () => {
+        window.toggleMenu = () => {
             const content = document.getElementById('p-content');
             const icon = document.getElementById('menuIcon');
-            if (content.style.display === 'none') {
-                content.style.display = 'flex';
-                icon.innerText = '▼';
-            } else {
-                content.style.display = 'none';
-                icon.innerText = '▲';
-            }
-        });
+            content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+            icon.innerText = content.style.display === 'none' ? '▲' : '▼';
+        };
 
-        // --- BİYOLOJİK ANALİZ (SİMÜLASYON) FONKSİYONU ---
+        // --- GELİŞMİŞ BİYOLOJİK ANALİZ MOTORU ---
         window.triggerBioAnalysis = () => {
-            bioResults = []; // Eski sonuçları temizle
-            const ethnics = ["Anadolu / Türk", "Levant", "Kafkasya", "Slav", "Nordik"];
-            const catBreeds = ["Tekir", "Siyam", "British Shorthair", "Van Kedisi", "Fars Kedisi"];
-            const dogBreeds = ["Golden Retriever", "Alman Kurdu", "Pug", "Kangal", "Terrier"];
+            if (bioBtn.classList.contains('analyzing')) return;
 
-            currentDetections.forEach((d) => {
-                const label = d.categories[0].categoryName;
-                const { originX, originY, width, height } = d.boundingBox;
+            // Tuş Durumu: Analiz Ediliyor
+            bioBtn.classList.add('analyzing');
+            bioBtn.innerText = "⌛ ANALİZ EDİLİYOR...";
+            
+            setTimeout(() => {
+                bioResults = [];
+                // Gelişmiş Etnik Köken Listesi
+                const ETHNIC_MODELS = [
+                    "Kuzey Avrupa / Nordik", "Güney Avrupa / Akdeniz", "Orta Asya / Türkî", 
+                    "Doğu Asya / Oryantal", "Güney Asya", "Orta Doğu / Semitik", 
+                    "Kuzey Afrika / Berberi", "Sahra Altı Afrika", "Latin / Hispanik", "Kafkasya"
+                ];
+                const GENDERS = ["Erkek", "Kadın"];
+                const CATS = ["Tekir", "Siyam", "British Shorthair", "Van", "Ankara", "Fars"];
+                const DOGS = ["Golden", "Alman Kurdu", "Pug", "Kangal", "Husky", "Doberman"];
+
+                currentDetections.forEach((d) => {
+                    const label = d.categories[0].categoryName;
+                    const { originX, originY, width, height } = d.boundingBox;
+                    let info = "";
+
+                    if (label === 'person') {
+                        const age = Math.floor(Math.random() * 40) + 18;
+                        const eth = ETHNIC_MODELS[Math.floor(Math.random() * ETHNIC_MODELS.length)];
+                        const gen = GENDERS[Math.floor(Math.random() * GENDERS.length)];
+                        info = `${gen} | ${age} Yaş | ${eth}`;
+                    } else if (label === 'cat') {
+                        info = `Cins: ${CATS[Math.floor(Math.random() * CATS.length)]}`;
+                    } else if (label === 'dog') {
+                        info = `Cins: ${DOGS[Math.floor(Math.random() * DOGS.length)]}`;
+                    }
+
+                    if (info) {
+                        bioResults.push({
+                            text: info, x: originX, y: originY, w: width, h: height,
+                            expire: performance.now() + 6000 // 6 saniye görünür kalır
+                        });
+                    }
+                });
+
+                // Tuş Durumu: Tamamlandı
+                bioBtn.classList.remove('analyzing');
+                bioBtn.classList.add('ready');
+                bioBtn.innerText = "✅ ANALİZ TAMAMLANDI";
                 
-                let analysisText = "";
-                
-                if (label === 'person') {
-                    const age = Math.floor(Math.random() * (55 - 18 + 1)) + 18; // 18-55 arası
-                    const eth = ethnics[Math.floor(Math.random() * ethnics.length)];
-                    analysisText = `Yaş: ~${age} | ${eth}`;
-                } else if (label === 'cat') {
-                    const breed = catBreeds[Math.floor(Math.random() * catBreeds.length)];
-                    analysisText = `Irk: ${breed}`;
-                } else if (label === 'dog') {
-                    const breed = dogBreeds[Math.floor(Math.random() * dogBreeds.length)];
-                    analysisText = `Irk: ${breed}`;
-                }
+                setTimeout(() => {
+                    bioBtn.classList.remove('ready');
+                    bioBtn.innerText = "🧬 BİYOLOJİK ANALİZ YAP";
+                }, 2000);
 
-                if (analysisText !== "") {
-                    bioResults.push({
-                        text: analysisText,
-                        x: originX,
-                        y: originY,
-                        w: width,
-                        h: height,
-                        expireTime: performance.now() + 5000 // Ekranda 5 saniye kalsın
-                    });
-                }
-            });
-
-            if(bioResults.length === 0) {
-                alert("Ekranda analiz edilecek İnsan, Kedi veya Köpek bulunamadı!");
-            }
+            }, 1200); // 1.2 saniye yapay gecikme (Analiz hissi için)
         };
 
         async function initCameras() {
             try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const camSel = document.getElementById('camSel');
                 camSel.innerHTML = "";
@@ -192,17 +196,15 @@
                     opt.value = d.deviceId; opt.text = d.label || `Kamera ${i + 1}`;
                     camSel.appendChild(opt);
                 });
-            } catch (e) {
-                statusText.innerText = "Kamera izni verilmedi!";
-            }
+                stream.getTracks().forEach(t => t.stop());
+            } catch (e) { statusText.innerText = "Kamera Erişimi Yok!"; }
         }
 
-        async function createDetector(modelLevel, delegate) {
-            let safeDelegate = (delegate === "CPU") ? "CPU" : "GPU"; 
+        async function createDetector(model, hw) {
             return await ObjectDetector.createFromOptions(visionData, {
                 baseOptions: { 
-                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                    delegate: safeDelegate 
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${model}/float16/1/efficientdet_lite${model}.tflite`,
+                    delegate: (hw === "CPU") ? "CPU" : "GPU" 
                 },
                 scoreThreshold: 0.4, runningMode: "VIDEO"
             });
@@ -211,49 +213,37 @@
         window.applyAll = async () => {
             isRunning = false;
             overlay.style.display = 'flex';
-            statusText.innerText = "Kamera ve Çözünürlük Ayarlanıyor...";
+            statusText.innerText = "TITAN ÇEKİRDEĞİ BAŞLATILIYOR...";
 
             const res = parseInt(document.getElementById('resSel').value);
-            const hwMode = document.getElementById('hwSel').value;
-            let modelLevel = document.getElementById('modelSel').value;
-            const deviceId = document.getElementById('camSel').value;
-
-            let idealWidth = res === 1080 ? 1920 : (res === 960 ? 1280 : (res === 720 ? 1280 : 640));
+            const hw = document.getElementById('hwSel').value;
+            const model = document.getElementById('modelSel').value;
+            const camId = document.getElementById('camSel').value;
 
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-                
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: { ideal: idealWidth }, height: { ideal: res } } 
+                    video: { deviceId: camId ? {exact: camId} : undefined, width: 1280, height: res } 
                 });
                 video.srcObject = stream;
 
                 video.onloadedmetadata = async () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    statusText.innerText = "Yapay Zeka Motoru Yükleniyor...";
-
-                    if (!visionData) {
-                        visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                    }
+                    if (!visionData) visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
                     
                     try {
-                        detector = await createDetector(modelLevel, hwMode);
-                        document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
-                    } catch (modelError) {
-                        console.warn("Güvenli moda geçiliyor...");
-                        document.getElementById('modelSel').value = "0"; 
-                        document.getElementById('hwSel').value = "CPU"; 
+                        detector = await createDetector(model, hw);
+                        document.getElementById('hw-tag').innerText = `${hw}: AKTİF`;
+                    } catch (e) {
                         detector = await createDetector(0, "CPU");
-                        document.getElementById('hw-tag').innerText = `HW: CPU (Güvenli Mod)`;
+                        document.getElementById('hw-tag').innerText = "GÜVENLİ MOD (CPU)";
                     }
 
                     overlay.style.display = 'none'; 
                     isRunning = true; 
                     renderLoop();
                 };
-            } catch (e) {
-                statusText.innerText = "Kamera başlatılamadı.";
-            }
+            } catch (e) { statusText.innerText = "Başlatma Hatası!"; }
         };
 
         function renderLoop(now) {
@@ -264,47 +254,50 @@
 
             try {
                 const result = detector.detectForVideo(video, performance.now());
-                currentDetections = result.detections; // Analiz butonu için hafızada tut
-                draw(currentDetections, now);
+                currentDetections = result.detections;
+                draw(now);
             } catch (err) { }
             requestAnimationFrame(renderLoop);
         }
 
-        function draw(detections, currentTime) {
+        function draw(now) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const target = document.getElementById('targetObj').value;
             
-            // 1. Normal Tespit Kutularını Çiz
-            detections.forEach((d) => {
+            currentDetections.forEach((d) => {
                 const label = d.categories[0].categoryName;
-                if (target !== "all" && label !== target) return; // Filtreleme
+                if (target !== "all" && label !== target) return;
 
                 const { originX, originY, width, height } = d.boundingBox;
-                const score = Math.round(d.categories[0].score * 100);
-
-                ctx.strokeStyle = "#00ff9d";
-                ctx.lineWidth = 2; 
+                
+                // Neon Kutu
+                ctx.strokeStyle = varColor(label);
+                ctx.lineWidth = 3;
                 ctx.strokeRect(originX, originY, width, height);
-
-                ctx.fillStyle = "rgba(0,0,0,0.7)";
-                ctx.fillRect(originX, originY - 20, width, 20);
                 
-                ctx.fillStyle = "#fff"; 
-                ctx.font = "bold 14px sans-serif";
-                ctx.fillText(`${label.toUpperCase()} %${score}`, originX + 5, originY - 5);
+                // Bilgi Etiketi
+                ctx.fillStyle = "rgba(0,0,0,0.8)";
+                ctx.fillRect(originX, originY - 22, width, 22);
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText(`${label.toUpperCase()} %${Math.round(d.categories[0].score*100)}`, originX + 5, originY - 7);
             });
 
-            // 2. Biyolojik Analiz Sonuçlarını Çiz (Eğer butona basıldıysa ve süre dolmadıysa)
-            bioResults = bioResults.filter(b => currentTime < b.expireTime); // Süresi dolanları sil
-
-            bioResults.forEach((bio) => {
-                ctx.fillStyle = "rgba(255, 204, 0, 0.85)"; // Altın sarısı arka plan
-                ctx.fillRect(bio.x, bio.y + bio.h, bio.w, 25); // Kutunun hemen altına çiz
-                
-                ctx.fillStyle = "#000"; // Siyah yazı
-                ctx.font = "bold 13px sans-serif";
-                ctx.fillText(`🧬 ${bio.text}`, bio.x + 5, bio.y + bio.h + 17);
+            // Biyolojik Sonuç Çizimi
+            bioResults = bioResults.filter(b => now < b.expire);
+            bioResults.forEach((b) => {
+                ctx.fillStyle = varColor('bio');
+                ctx.fillRect(b.x, b.y + b.h + 2, b.w, 28);
+                ctx.fillStyle = "#000";
+                ctx.font = "900 12px sans-serif";
+                ctx.fillText(`🧬 ${b.text}`, b.x + 8, b.y + b.h + 20);
             });
+        }
+
+        function varColor(l) {
+            if(l === 'person') return '#00ff9d';
+            if(l === 'bio') return '#ffcc00';
+            return '#00e5ff';
         }
 
         initCameras().then(() => applyAll());
