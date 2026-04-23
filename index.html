@@ -95,7 +95,7 @@
     </div>
 
     <script type="module">
-        import { ObjectDetector, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
+        import { ObjectDetector, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6";
 
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output');
@@ -161,7 +161,7 @@
                     statusText.innerText = "Yapay Zeka Motoru Yükleniyor...";
 
                     if (!visionData) {
-                        visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+                        visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
                     }
                     
                     try {
