@@ -2,127 +2,95 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AI Vision v65 Synchro-Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Vision v66 - Stabilize Sürüm</title>
     <style>
-        :root { --neon: #00ff9d; --accent: #00e5ff; --gold: #ffcc00; --danger: #ff3d00; --bg: rgba(5, 5, 5, 0.98); }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Inter', sans-serif; color: white; }
+        :root { --neon: #00ff9d; --bg: rgba(15, 15, 15, 0.85); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; color: white; }
         
-        video { position: absolute; width: 100%; height: 100%; object-fit: contain; z-index: 1; background: #000; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 2; pointer-events: none; }
+        video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+        video { z-index: 1; } canvas { z-index: 2; pointer-events: none; }
 
-        .hud { position: absolute; top: 15px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 500; pointer-events: none; }
-        .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 5px 8px; border-radius: 6px; font-size: 8px; font-weight: 900; color: var(--neon); text-transform: uppercase; }
+        /* Modernleştirilmiş ve Küçültülmüş UI */
+        .hud-top { position: absolute; top: 15px; left: 15px; z-index: 500; display: flex; gap: 8px; pointer-events: none; }
+        .chip { background: rgba(0,0,0,0.7); border: 1px solid var(--neon); padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; color: var(--neon); }
 
-        #showMenuBtn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1100; padding: 15px 45px; background: rgba(0,0,0,0.95); color: var(--neon); border: 2px solid var(--neon); border-radius: 30px; font-size: 11px; font-weight: 900; cursor: pointer; box-shadow: 0 0 25px var(--neon); }
-
-        #panel {
-            position: absolute; bottom: 15px; left: 10px; right: 10px; z-index: 1000;
-            background: var(--bg); border-radius: 20px; border: 1px solid #333; overflow: hidden;
-            max-height: 85vh; display: flex; flex-direction: column; backdrop-filter: blur(40px); transition: 0.4s ease-out; transform: translateY(120%);
+        #control-panel {
+            position: absolute; top: 15px; right: 15px; z-index: 1000; width: 280px;
+            background: var(--bg); border: 1px solid #333; border-radius: 12px; backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; overflow: hidden; transition: 0.3s;
         }
-        .panel-toolbar { display: flex; justify-content: space-between; padding: 15px 20px; background: #000; border-bottom: 1px solid var(--neon); }
-        .acc-item { border-bottom: 1px solid #222; }
-        .acc-header { padding: 16px; background: #111; cursor: pointer; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; }
-        .acc-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.4s ease; background: #080808; }
-        .active .acc-body { max-height: 600px; padding: 20px; overflow-y: auto; }
+        
+        .panel-header { padding: 12px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: bold; color: var(--neon); }
+        .panel-content { padding: 15px; display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; }
+        
+        label { font-size: 11px; color: #aaa; font-weight: bold; }
+        select, button { width: 100%; padding: 10px; background: #222; border: 1px solid #444; color: white; border-radius: 6px; font-size: 12px; outline: none; }
+        button { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; margin-top: 5px; }
+        button:hover { opacity: 0.8; }
 
-        .btn { width: 100%; padding: 14px; background: #1a1a1a; color: white; border: 1px solid #444; border-radius: 12px; font-size: 10px; font-weight: bold; margin-top: 8px; cursor: pointer; }
-        .btn-neon { background: var(--neon); color: #000; border: none; }
-        .btn-gold { background: var(--gold); color: #000; border: none; }
-        
-        select { width: 100%; padding: 15px; background: #111; border: 1px solid #333; color: white; border-radius: 10px; font-size: 11px; margin-top: 5px; appearance: none; }
-        
-        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-bar { width: 250px; height: 3px; background: #111; margin-top: 25px; border-radius: 10px; overflow: hidden; }
-        .loader-fill { width: 0%; height: 100%; background: var(--neon); transition: width 0.5s; }
+        #load-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-text { color: var(--neon); font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+        #status-text { color: #888; font-size: 11px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
-        <div style="color:var(--neon); font-weight: 900; letter-spacing: 8px; font-size:24px;">TITAN v65</div>
-        <div class="loader-bar"><div class="loader-fill" id="load-fill"></div></div>
-        <div id="status-text" style="color:#444; font-size: 9px; margin-top: 15px; text-transform: uppercase;">DONANIM SENKRONİZASYONU...</div>
-        <button id="forceCpu" class="btn" style="display:none; width:auto; margin-top:20px; border-color:var(--danger); color:var(--danger);" onclick="forceSafeMode()">⚠️ GÜVENLİ MODDA ZORLA (CPU)</button>
+        <div class="loader-text">SİSTEM YÜKLENİYOR...</div>
+        <div id="status-text">Lütfen bekleyin</div>
     </div>
 
     <video id="webcam" autoplay playsinline muted></video>
     <canvas id="output"></canvas>
 
-    <div class="hud">
-        <div id="hw-tag" class="chip">HW: --</div>
-        <div id="fps-tag" class="chip" style="color:var(--accent); border-color:var(--accent);">FPS: --</div>
-        <div id="count-tag" class="chip" style="color:var(--gold); border-color:var(--gold);">SAYAÇ: 0</div>
+    <div class="hud-top">
+        <div id="hw-tag" class="chip">HW: BEKLENİYOR</div>
+        <div id="fps-tag" class="chip" style="color:#00e5ff; border-color:#00e5ff;">FPS: 0</div>
     </div>
 
-    <button id="showMenuBtn" onclick="toggleMenu(true)">⚙️ TITAN MERKEZİ</button>
-
-    <div id="panel">
-        <div class="panel-toolbar">
-            <div style="color:var(--neon); font-size:12px; font-weight:900;">TITAN v65 CORE</div>
-            <button onclick="toggleMenu(false)" style="background:none; border:none; color:var(--danger); font-size:11px; font-weight:900;">GİZLE</button>
+    <div id="control-panel">
+        <div class="panel-header" onclick="document.getElementById('p-content').style.display = document.getElementById('p-content').style.display === 'none' ? 'flex' : 'none'">
+            <span>⚙️ AYARLAR</span>
+            <span>▼</span>
         </div>
+        <div class="panel-content" id="p-content">
+            
+            <div>
+                <label>ÇÖZÜNÜRLÜK (KALİTE)</label>
+                <select id="resSel" onchange="applyAll()">
+                    <option value="480">480p (Hızlı)</option>
+                    <option value="720" selected>720p (Dengeli)</option>
+                    <option value="960">960p (Yüksek)</option>
+                    <option value="1080">1080p (Ultra)</option>
+                </select>
+            </div>
 
-        <div class="acc-item active">
-            <div class="acc-header" onclick="toggleAcc(this)">⚡ DONANIM & 10 KADEME MODEL</div>
-            <div class="acc-body">
-                <label style="font-size:9px; color:#555;">DONANIM KATMANI</label>
+            <div>
+                <label>DONANIM (İŞLEMCİ BİRİMİ)</label>
                 <select id="hwSel">
-                    <option value="NPU">SADECE NPU</option>
-                    <option value="GPU">SADECE GPU</option>
-                    <option value="CPU">SADECE CPU (Stabil)</option>
-                    <option value="GPU_NPU" selected>GPU + NPU (Poco Optimized)</option>
-                    <option value="GPU_CPU">GPU + CPU</option>
+                    <option value="NPU" selected>NPU (Yapay Zeka Çipi)</option>
+                    <option value="GPU">GPU (Ekran Kartı)</option>
+                    <option value="CPU">CPU (Güvenli Mod)</option>
                 </select>
+            </div>
 
-                <label style="font-size:9px; color:#555; margin-top:10px; display:block;">MODEL DERİNLİĞİ (1-10)</label>
+            <div>
+                <label>YAPAY ZEKA MODELİ</label>
                 <select id="modelSel">
-                    <option value="0">1. Nano</option>
-                    <option value="0">2. Ultra-Light</option>
-                    <option value="1">4. Standard</option>
-                    <option value="2" selected>5. Balanced HD</option>
-                    <option value="3">7. Heavy-Neural</option>
-                    <option value="4">10. Titan-Core</option>
+                    <option value="0" selected>1. Nano (En Hızlı)</option>
+                    <option value="1">2. Standart</option>
+                    <option value="2">3. Dengeli HD</option>
+                    <option value="3">4. Ağır Model (Kasıntı Yapabilir)</option>
                 </select>
-
-                <label style="font-size:9px; color:#555; margin-top:10px; display:block;">KAMERA KAYNAĞI</label>
-                <select id="camSel" onchange="applyAll()"></select>
-
-                <button class="btn btn-neon" style="margin-top:20px;" onclick="applyAll()">SİSTEMİ BAŞLAT</button>
             </div>
-        </div>
 
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🎯 AKSİYON & TAKİP</div>
-            <div class="acc-body">
-                <label style="font-size:9px; color:#555;">HEDEF NESNE</label>
-                <select id="targetObj">
-                    <option value="all">TÜM NESNELER</option>
-                    <option value="person">İNSAN</option>
-                    <option value="car">ARAÇ</option>
-                    <option value="cell phone">TELEFON</option>
-                </select>
-
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:15px;">
-                    <button class="btn btn-gold" onclick="runAction('count')">🔢 NESNE SAYDIR</button>
-                    <button class="btn btn-gold" onclick="runAction('save_loc')">📍 KONUM KAYDET</button>
-                    <button class="btn" onclick="runAction('ask')">❓ AKSİYON SOR</button>
-                    <button class="btn" onclick="resetCounter()">🧹 SAYAÇ SIFIRLA</button>
-                </div>
+            <div>
+                <label>KAMERA</label>
+                <select id="camSel"></select>
             </div>
-        </div>
 
-        <div class="acc-item">
-            <div class="acc-header" onclick="toggleAcc(this)">🧬 BİYOMETRİ & RADAR</div>
-            <div class="acc-body">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button class="btn" id="bioBtn" onclick="toggleFeature('bio')">🧬 BİYOMETRİ: AÇIK</button>
-                    <button class="btn" id="gyroBtn" onclick="toggleFeature('gyro')">📍 RADAR: AÇIK</button>
-                </div>
-                <button class="btn" style="background:var(--accent); color:#000;" onclick="lockRadar()">📍 RADAR HEDEFİ ÇİVİLE</button>
-                <button class="btn" style="background:var(--danger);" onclick="localStorage.clear(); location.reload();">FABRİKA AYARLARI</button>
-            </div>
+            <button onclick="applyAll()">SİSTEMİ YENİDEN BAŞLAT</button>
         </div>
     </div>
 
@@ -133,82 +101,91 @@
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
         const overlay = document.getElementById('load-overlay');
-        const fill = document.getElementById('load-fill');
         const statusText = document.getElementById('status-text');
 
-        let detector, isRunning = false;
-        let detections = [], scanData = new Map();
-        let features = { bio: true, gyro: true };
-        let count = 0, lastTime = performance.now();
-        let targetLabel = "all", savedAnchors = [], deviceOri = { alpha: 0 };
-
-        const ETHNICS = ["Anadolu / Türk", "Levant", "Kafkasya", "Slav", "Nordik", "Cermen"];
-
-        // Takılma durumunda butonu göster (7 saniye)
-        const watchdog = setTimeout(() => { if(!isRunning) document.getElementById('forceCpu').style.display='block'; }, 7000);
-
-        window.forceSafeMode = () => {
-            document.getElementById('hwSel').value = "CPU";
-            applyAll();
-        };
+        let detector, isRunning = false, lastTime = performance.now();
+        let visionData;
 
         async function initCameras() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const camSel = document.getElementById('camSel');
-            camSel.innerHTML = "";
-            devices.filter(d => d.kind === 'videoinput').forEach((d, i) => {
-                const opt = document.createElement('option');
-                opt.value = d.deviceId;
-                opt.text = d.label || `Kamera ${i + 1}`;
-                camSel.appendChild(opt);
+            try {
+                await navigator.mediaDevices.getUserMedia({ video: true }); // İzin iste
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const camSel = document.getElementById('camSel');
+                camSel.innerHTML = "";
+                devices.filter(d => d.kind === 'videoinput').forEach((d, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = d.deviceId; opt.text = d.label || `Kamera ${i + 1}`;
+                    camSel.appendChild(opt);
+                });
+            } catch (e) {
+                statusText.innerText = "Kamera izni verilmedi!";
+            }
+        }
+
+        async function createDetector(modelLevel, delegate) {
+            // MediaPipe Web için NPU tam desteklenmediğinde GPU veya CPU'ya yönlendirmesi gerekir.
+            let safeDelegate = (delegate === "CPU") ? "CPU" : "GPU"; 
+            
+            return await ObjectDetector.createFromOptions(visionData, {
+                baseOptions: { 
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
+                    delegate: safeDelegate 
+                },
+                scoreThreshold: 0.4, runningMode: "VIDEO"
             });
         }
 
         window.applyAll = async () => {
             isRunning = false;
             overlay.style.display = 'flex';
-            fill.style.width = "20%";
-            statusText.innerText = "KAMERA BAŞLATILIYOR...";
+            statusText.innerText = "Kamera ve Çözünürlük Ayarlanıyor...";
 
+            const res = parseInt(document.getElementById('resSel').value);
             const hwMode = document.getElementById('hwSel').value;
-            const modelLevel = document.getElementById('modelSel').value;
+            let modelLevel = document.getElementById('modelSel').value;
             const deviceId = document.getElementById('camSel').value;
 
-            let delegate = (hwMode === "CPU") ? "CPU" : "GPU";
+            // Çözünürlük oranlarını belirle
+            let idealWidth = res === 1080 ? 1920 : (res === 960 ? 1280 : (res === 720 ? 1280 : 640));
 
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 
-                // 1. Kamera Akışını Başlat (Takılmayı Önlemek İçin Önce Görüntü)
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: 1280, height: 720 } 
+                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, width: { ideal: idealWidth }, height: { ideal: res } } 
                 });
                 video.srcObject = stream;
 
                 video.onloadedmetadata = async () => {
                     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                    fill.style.width = "50%";
-                    statusText.innerText = "ALGORİTMALAR BAĞLANIYOR...";
+                    statusText.innerText = "Yapay Zeka Motoru Yükleniyor...";
 
-                    // 2. AI Modeli Asenkron Yükle
-                    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
-                    fill.style.width = "80%";
+                    if (!visionData) {
+                        visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm");
+                    }
                     
-                    detector = await ObjectDetector.createFromOptions(vision, {
-                        baseOptions: { 
-                            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                            delegate: delegate 
-                        },
-                        scoreThreshold: 0.4, runningMode: "VIDEO"
-                    });
+                    try {
+                        // Seçilen modelle başlatmayı dene
+                        detector = await createDetector(modelLevel, hwMode);
+                        document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
+                    } catch (modelError) {
+                        // EĞER CİHAZIN GÜCÜ YETMEZ VE ÇÖKERSE BURASI ÇALIŞIR (Siyah ekran engelleme)
+                        console.warn("Seçilen model cihaz için çok ağır. Güvenli moda geçiliyor...");
+                        statusText.innerText = "GÜÇ AŞIMI! Güvenli Moda (CPU - Nano) Geçiliyor...";
+                        
+                        document.getElementById('modelSel').value = "0"; // En basit modele çek
+                        document.getElementById('hwSel').value = "CPU"; // CPU'ya çek
+                        
+                        detector = await createDetector(0, "CPU");
+                        document.getElementById('hw-tag').innerText = `HW: CPU (Güvenli Mod)`;
+                    }
 
-                    document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
-                    fill.style.width = "100%";
-                    setTimeout(() => { overlay.style.display = 'none'; isRunning = true; renderLoop(); }, 500);
+                    overlay.style.display = 'none'; 
+                    isRunning = true; 
+                    renderLoop();
                 };
             } catch (e) {
-                statusText.innerText = "ERİŞİM REDDEDİLDİ!";
-                document.getElementById('forceCpu').style.display='block';
+                statusText.innerText = "Kamera başlatılamadı. Cihaz desteklemiyor olabilir.";
             }
         };
 
@@ -220,83 +197,34 @@
 
             try {
                 const result = detector.detectForVideo(video, performance.now());
-                detections = result.detections;
-                targetLabel = document.getElementById('targetObj').value;
-
-                detections.forEach(d => {
-                    const label = d.categories[0].categoryName;
-                    if(targetLabel === "all" || label === targetLabel) {
-                        const sid = `${label}-${Math.floor(d.boundingBox.originX/50)}`;
-                        if(!window.tracked) window.tracked = new Set();
-                        if(!window.tracked.has(sid)) {
-                            window.tracked.add(sid); count++;
-                            document.getElementById('count-tag').innerText = `SAYAÇ: ${count}`;
-                        }
-                    }
-                });
-                draw();
+                draw(result.detections);
             } catch (err) { }
             requestAnimationFrame(renderLoop);
         }
 
-        function draw() {
+        function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            if(features.gyro) {
-                savedAnchors.forEach(a => {
-                    const x = (canvas.width/2) + (deviceOri.alpha - a.alpha) * 45;
-                    if(Math.abs(deviceOri.alpha - a.alpha) < 40) {
-                        ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(x, canvas.height/2, 10, 0, 7); ctx.fill();
-                    }
-                });
-            }
-
             detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
-                const score = d.categories[0].score;
-                const spatialId = `${label}_${Math.round(originX/20)}`;
+                const score = Math.round(d.categories[0].score * 100);
 
-                if(targetLabel !== "all" && label !== targetLabel) return;
+                // Kutu çizimi
+                ctx.strokeStyle = "#00ff9d";
+                ctx.lineWidth = 2; 
+                ctx.strokeRect(originX, originY, width, height);
 
-                ctx.strokeStyle = label === targetLabel ? "#00e5ff" : "#00ff9d";
-                ctx.lineWidth = 3; ctx.strokeRect(originX, originY, width, height);
-
-                if(features.bio) {
-                    ctx.fillStyle = "rgba(0,0,0,0.85)";
-                    const boxH = label === 'person' ? 60 : 25;
-                    ctx.fillRect(originX, originY, width, boxH);
-                    ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif";
-                    
-                    if(label === 'person') {
-                        if(!scanData.has(spatialId)) {
-                            const seed = Math.abs(Math.floor(originX + width));
-                            scanData.set(spatialId, {age: 18+(seed%45), eth: ETHNICS[seed%ETHNICS.length]});
-                        }
-                        const s = scanData.get(spatialId);
-                        ctx.fillText(`İNSAN | ~${s.age} YAŞ`, originX+5, originY+15);
-                        ctx.fillStyle = "#00ff9d"; ctx.fillText(s.eth, originX+5, originY+32);
-                        ctx.fillStyle = "#aaa"; ctx.fillText(`%${Math.round(score*100)}`, originX+5, originY+48);
-                    } else {
-                        ctx.fillText(`${label.toUpperCase()} %${Math.round(score*100)}`, originX+5, originY+17);
-                    }
-                }
+                // Yazı arka planı
+                ctx.fillStyle = "rgba(0,0,0,0.7)";
+                ctx.fillRect(originX, originY - 20, width, 20);
+                
+                // Gerçek Yapay Zeka Verisi (Sadece nesne türü ve güvenilirlik yüzdesi)
+                ctx.fillStyle = "#fff"; 
+                ctx.font = "bold 14px sans-serif";
+                ctx.fillText(`${label.toUpperCase()} %${score}`, originX + 5, originY - 5);
             });
         }
-
-        window.runAction = (type) => {
-            const current = targetLabel === "all" ? "GENEL" : targetLabel.toUpperCase();
-            if(type === 'count') alert(`Tespit Edilen: ${count} ${current}`);
-            if(type === 'save_loc') alert(`Konum verileri NPU belleğine mühürlendi.`);
-            if(type === 'ask') alert(`Seçili nesne davranışı: Aktif.`);
-        };
-
-        window.resetCounter = () => { count = 0; window.tracked.clear(); document.getElementById('count-tag').innerText = "SAYAÇ: 0"; };
-        window.toggleFeature = (f) => { features[f] = !features[f]; document.getElementById(f+'Btn').style.opacity = features[f]?"1":"0.5"; };
-        window.toggleMenu = (s) => document.getElementById('panel').style.transform = s ? "translateY(0)" : "translateY(120%)";
-        window.toggleAcc = (el) => { document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('active')); el.parentElement.classList.add('active'); };
-        window.lockRadar = () => { if(detections[0]) savedAnchors.push({ alpha: deviceOri.alpha }); };
-        window.addEventListener('deviceorientation', e => { if(e.alpha) deviceOri.alpha = e.alpha; });
 
         initCameras().then(() => applyAll());
     </script>
