@@ -245,12 +245,12 @@
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
                 
+                // ZOOM (KIRPMA) SORUNU ÇÖZÜMÜ: Sadece "height" ideal olarak verilir, "width" tarayıcıya bırakılır.
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         deviceId: deviceId ? {exact: deviceId} : undefined,
                         facingMode: "environment", // Arka kamera öncelikli
-                        width: { ideal: 1920 },
-                        height: { ideal: res }
+                        height: { ideal: res } // Orijinal sensör oranını koruması için genişliği serbest bıraktık
                     } 
                 });
                 video.srcObject = stream;
