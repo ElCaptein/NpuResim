@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision PRO - Ultimate v3</title>
+    <title>AI Vision ULTIMATE PRO v4</title>
     <style>
         :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.98); --accent: #ff3e3e; --blue: #00e5ff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
@@ -15,40 +15,43 @@
         .chip { background: rgba(0,0,0,0.85); border: 1px solid var(--neon); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: var(--neon); text-transform: uppercase; white-space: nowrap; }
 
         #control-panel {
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 95%; max-width: 450px;
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 95%; max-width: 500px;
             background: var(--bg); border: 1px solid #333; border-radius: 12px; backdrop-filter: blur(20px);
             display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
         }
         
         .panel-header { padding: 10px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; color: var(--neon); }
-        .panel-content { padding: 12px; display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
+        .panel-content { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 75vh; overflow-y: auto; }
         
-        label { font-size: 9px; color: #888; font-weight: bold; margin-bottom: 2px; display: block; text-transform: uppercase; letter-spacing: 1px; }
-        select, button { width: 100%; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 5px; font-size: 11px; outline: none; transition: 0.2s; }
-        select:focus { border-color: var(--blue); }
+        .section-label { font-size: 9px; color: var(--blue); font-weight: bold; margin: 5px 0 2px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #222; }
+        label { font-size: 9px; color: #888; display: block; margin-bottom: 2px; }
+        
+        select, button, input[type="range"] { width: 100%; padding: 8px; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 5px; font-size: 11px; outline: none; }
         
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .action-btn { background: #222; color: #ccc; border: 1px solid #444; text-align: left; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 10px; }
+        .action-btn { background: #222; color: #ccc; border: 1px solid #444; text-align: left; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 10px; height: 35px; }
         .action-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,157,0.05); }
         
-        .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; margin-top: 5px; padding: 10px; font-size: 12px; }
-        .danger-btn { background: #333; color: #ff3e3e; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 6px; border-radius: 4px; font-size: 9px; }
+        .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; padding: 12px; font-size: 12px; margin-top: 5px; }
+        .danger-btn { background: #1a1a1a; color: #ff3e3e; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 6px; font-size: 9px; border-radius: 4px; }
 
         #dynamic-save-btn {
-            position: absolute; top: 120px; left: 50%; transform: translateX(-50%); z-index: 1500;
+            position: absolute; top: 130px; left: 50%; transform: translateX(-50%); z-index: 1500;
             background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 25px;
             font-weight: bold; display: none; box-shadow: 0 0 20px rgba(255,62,62,0.4); cursor: pointer; font-size: 12px;
         }
 
-        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .loader-text { color: var(--neon); font-size: 14px; font-weight: bold; letter-spacing: 3px; margin-top: 15px; text-align: center; }
+        #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .loader-text { color: var(--neon); font-size: 14px; font-weight: bold; letter-spacing: 3px; margin-top: 15px; }
+        
+        .slider-val { float: right; color: var(--neon); }
     </style>
 </head>
 <body>
 
     <div id="load-overlay">
         <div style="width:50px; height:50px; border:4px solid #111; border-top-color:var(--neon); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-        <div class="loader-text">SİSTEM BAŞLATILIYOR...<br><span style="font-size: 9px; color: #555; letter-spacing: 1px;">MODÜLLER YÜKLENİYOR</span></div>
+        <div class="loader-text">SİSTEM ANALİZ EDİLİYOR...<br><span id="load-status" style="font-size: 9px; color: #555; letter-spacing: 1px;">MODÜLLER BAŞLATILIYOR</span></div>
     </div>
 
     <button id="dynamic-save-btn" onclick="saveCurrentObjectCoords()">📍 KONUMU KAYDET</button>
@@ -67,36 +70,46 @@
 
     <div id="control-panel">
         <div class="panel-header" onclick="togglePanel()">
-            <span>⚙️ AI VISION KOMUTA MERKEZİ</span>
+            <span>⚙️ AI VISION ULTIMATE CONTROL</span>
             <span id="toggle-icon">▼</span>
         </div>
         <div class="panel-content" id="p-content">
             
-            <label>AKSİYON MODLARI</label>
+            <div class="section-label">Aksiyon ve Takip</div>
             <div class="action-grid">
                 <button class="action-btn" id="btn-select" onclick="toggleMode('select')">🎯 HEDEF KİLİTLE <span id="ind-select">○</span></button>
-                <button class="action-btn" id="btn-count" onclick="toggleMode('count')">🔢 TAKİPLİ SAYICI <span id="ind-count">OFF</span></button>
-                <button class="action-btn" id="btn-pin" onclick="toggleMode('pin')">📍 KAYDEDİCİ <span id="ind-pin">OFF</span></button>
-                <button class="action-btn" id="btn-sound" onclick="toggleMode('sound')">🔊 SESLİ UYARI <span id="ind-sound">OFF</span></button>
-                <button class="action-btn" id="btn-sensors" onclick="toggleMode('sensors')">🧭 SENSÖR/IMU <span id="ind-sensors">ON</span></button>
+                <button class="action-btn" id="btn-count" onclick="toggleMode('count')">🔢 NESNE SAYICI <span id="ind-count">OFF</span></button>
+                <button class="action-btn" id="btn-pin" onclick="toggleMode('pin')">📍 KONUM KAYDET <span id="ind-pin">OFF</span></button>
+                <button class="action-btn" id="btn-sensors" onclick="toggleMode('sensors')">🧭 IMU/JİROSKOP <span id="ind-sensors">ON</span></button>
+            </div>
+            
+            <div style="display: flex; gap: 5px;">
+                <button class="action-btn" id="btn-sound" style="flex:1" onclick="toggleMode('sound')">🔊 SESLİ UYARI <span id="ind-sound">OFF</span></button>
+                <button class="danger-btn" style="flex:1" onclick="resetCounter()">🔄 SAYACI SIFIRLA</button>
             </div>
 
-            <div style="display: flex; gap: 5px; margin-top: 2px;">
-                <button class="danger-btn" style="flex: 1;" onclick="resetCounter()">🔄 SAYIMI SIFIRLA</button>
-                <button class="danger-btn" style="flex: 1; color: #aaa;" onclick="clearPins()">🗑️ PİNLERİ SİL</button>
-            </div>
-
-            <hr style="border: 0; border-top: 1px solid #222; margin: 8px 0;">
-
+            <div class="section-label">Hassasiyet Ayarları</div>
             <div class="action-grid">
                 <div>
-                    <label>DONANIM (DELEGATE)</label>
+                    <label>DOĞRULUK EŞİĞİ (%) <span id="conf-val" class="slider-val">45</span></label>
+                    <input type="range" id="confSlider" min="10" max="95" value="45" oninput="updateSliderLabels()">
+                </div>
+                <div>
+                    <label>TAKİP HASSASİYETİ <span id="sens-val" class="slider-val">50</span></label>
+                    <input type="range" id="sensSlider" min="10" max="200" value="50" oninput="updateSliderLabels()">
+                </div>
+            </div>
+
+            <div class="section-label">Donanım ve Çözünürlük</div>
+            <div class="action-grid">
+                <div>
+                    <label>DONANIM MODU</label>
                     <select id="hwSel">
-                        <option value="GPU">GPU (Grafik)</option>
-                        <option value="CPU">CPU (İşlemci)</option>
-                        <option value="GPU">NPU (AI - Deneysel)</option>
-                        <option value="GPU">GPU + NPU (Hibrit)</option>
-                        <option value="GPU">GPU + CPU (Dengeli)</option>
+                        <option value="GPU">GPU (Yüksek Performans)</option>
+                        <option value="CPU">CPU (Düşük Güç)</option>
+                        <option value="GPU">NPU (AI İşlemci)</option>
+                        <option value="GPU">NPU + GPU (Maksimum)</option>
+                        <option value="GPU">GPU + CPU (Hibrit)</option>
                     </select>
                 </div>
                 <div>
@@ -115,20 +128,20 @@
 
             <div class="action-grid">
                 <div>
-                    <label>AI MODEL SEVİYESİ</label>
+                    <label>AI MODEL TİPİ</label>
                     <select id="modelSel">
-                        <option value="0">Lite 0 (Hızlı)</option>
-                        <option value="2" selected>Lite 2 (Orta)</option>
-                        <option value="4">Lite 4 (Keskin)</option>
+                        <option value="0">EfficientDet Lite 0</option>
+                        <option value="2" selected>EfficientDet Lite 2</option>
+                        <option value="4">EfficientDet Lite 4</option>
                     </select>
                 </div>
                 <div>
-                    <label>KAMERA KAYNAĞI</label>
+                    <label>AKTİF KAMERA</label>
                     <select id="camSel"></select>
                 </div>
             </div>
 
-            <button class="primary-btn" onclick="applySettings()">SİSTEMİ YENİDEN BAŞLAT</button>
+            <button class="primary-btn" onclick="applySettings()">YENİ AYARLARLA BAŞLAT</button>
         </div>
     </div>
 
@@ -139,37 +152,21 @@
         const canvas = document.getElementById('output');
         const ctx = canvas.getContext('2d');
         const overlay = document.getElementById('load-overlay');
+        const loadStatus = document.getElementById('load-status');
         const dynamicBtn = document.getElementById('dynamic-save-btn');
 
         const trLabels = {
             "person": "İnsan", "bicycle": "Bisiklet", "car": "Araba", "motorcycle": "Motor", "airplane": "Uçak",
-            "bus": "Otobüs", "train": "Tren", "truck": "Kamyon", "boat": "Tekne", "traffic light": "Trafik Işığı",
-            "fire hydrant": "Musluk", "stop sign": "Dur", "parking meter": "Parkmetre", "bench": "Bank",
-            "bird": "Kuş", "cat": "Kedi", "dog": "Köpek", "horse": "At", "sheep": "Koyun", "cow": "İnek",
-            "elephant": "Fil", "bear": "Ayı", "zebra": "Zebra", "giraffe": "Zürafa", "backpack": "Çanta",
-            "umbrella": "Şemsiye", "handbag": "El Çantası", "tie": "Kravat", "suitcase": "Bavul", "frisbee": "Frizbi",
-            "skis": "Kayak", "snowboard": "Snowboard", "sports ball": "Top", "kite": "Uçurtma", "baseball bat": "Sopa",
-            "baseball glove": "Eldiven", "skateboard": "Kaykay", "surfboard": "Sörf", "tennis racket": "Raket",
-            "bottle": "Şişe", "wine glass": "Kadeh", "cup": "Fincan", "fork": "Çatal", "knife": "Bıçak", "spoon": "Kaşık",
-            "bowl": "Kase", "banana": "Muz", "apple": "Elma", "sandwich": "Sandviç", "orange": "Portakal", "broccoli": "Brokoli",
-            "carrot": "Havuç", "hot dog": "Sosisli", "pizza": "Pizza", "donut": "Donat", "cake": "Kek", "chair": "Sandalye",
-            "couch": "Kanepe", "potted plant": "Saksı", "bed": "Yatak", "dining table": "Masa", "toilet": "Tuvalet",
-            "tv": "TV", "laptop": "Laptop", "mouse": "Fare", "remote": "Kumanda", "keyboard": "Klavye", "cell phone": "Telefon",
-            "microwave": "Mikrodalga", "oven": "Fırın", "toaster": "Ekmek Kızartma", "sink": "Lavabo", "refrigerator": "Buzdolabı",
-            "book": "Kitap", "clock": "Saat", "vase": "Vazo", "scissors": "Makas", "teddy bear": "Ayıcık", "hair drier": "Kurutma", "toothbrush": "Diş Fırçası"
+            "bus": "Otobüs", "train": "Tren", "truck": "Kamyon", "boat": "Tekne", "traffic light": "Lamba",
+            "bird": "Kuş", "cat": "Kedi", "dog": "Köpek", "bottle": "Şişe", "cup": "Bardak", "cell phone": "Telefon",
+            "laptop": "Dizüstü", "mouse": "Fare", "remote": "Kumanda", "keyboard": "Klavye", "book": "Kitap"
         };
 
         let detector, isRunning = false, lastTime = performance.now();
-        let visionData;
-        let sensorData = { alpha: 0, beta: 0 };
-        
+        let visionData, sensorData = { alpha: 0, beta: 0 };
         let modes = { select: false, count: false, pin: false, sound: false, sensors: true };
         let selectedObjectLabel = null;
-        
-        let totalCount = 0;
-        let objectHistory = []; 
-        let savedPins = []; 
-        let lastDetections = [];
+        let totalCount = 0, objectHistory = [], savedPins = [], lastDetections = [];
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playBeep() {
@@ -177,9 +174,14 @@
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.value = 900; gain.gain.value = 0.03;
-            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+            osc.frequency.value = 1000; gain.gain.value = 0.02;
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
+
+        window.updateSliderLabels = () => {
+            document.getElementById('conf-val').innerText = document.getElementById('confSlider').value;
+            document.getElementById('sens-val').innerText = document.getElementById('sensSlider').value;
+        };
 
         async function initSensors() {
             if (!modes.sensors) return;
@@ -187,12 +189,7 @@
                 try { await DeviceOrientationEvent.requestPermission(); } catch(e) {}
             }
             window.addEventListener('deviceorientation', (e) => {
-                if(modes.sensors) {
-                    sensorData.alpha = e.alpha || 0;
-                    sensorData.beta = e.beta || 0;
-                } else {
-                    sensorData.alpha = 0; sensorData.beta = 0;
-                }
+                if(modes.sensors) { sensorData.alpha = e.alpha || 0; sensorData.beta = e.beta || 0; }
             });
         }
 
@@ -209,23 +206,16 @@
                     opt.text = d.label || `Kamera ${i + 1}`;
                     camSel.appendChild(opt);
                 });
-            } catch (e) { console.error("Kamera listesi alınamadı."); }
+            } catch (e) { loadStatus.innerText = "Kamera erişimi reddedildi."; }
         }
 
         window.toggleMode = (m) => {
             modes[m] = !modes[m];
-            if(m === 'pin' && modes[m]) {
-                initSensors();
-                dynamicBtn.style.display = 'block';
-            } else if(m === 'pin' && !modes[m]) {
-                dynamicBtn.style.display = 'none';
-            }
+            if(m === 'pin' && modes[m]) { initSensors(); dynamicBtn.style.display = 'block'; }
+            else if(m === 'pin') dynamicBtn.style.display = 'none';
             
-            if(m === 'sensors' && !modes[m]) {
-                sensorData.alpha = 0; sensorData.beta = 0;
-            } else if(m === 'sensors' && modes[m]) {
-                initSensors();
-            }
+            if(m === 'sensors' && modes[m]) initSensors();
+            else if(m === 'sensors') { sensorData.alpha = 0; sensorData.beta = 0; }
 
             document.getElementById(`btn-${m}`).classList.toggle('active', modes[m]);
             document.getElementById(`ind-${m}`).innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
@@ -237,12 +227,9 @@
         };
 
         window.resetCounter = () => {
-            totalCount = 0;
-            objectHistory = [];
+            totalCount = 0; objectHistory = [];
             document.getElementById('total-tag').innerText = `TOPLAM: 0`;
         };
-
-        window.clearPins = () => { savedPins = []; };
 
         window.togglePanel = () => {
             const content = document.getElementById('p-content');
@@ -273,40 +260,30 @@
             const target = lastDetections.find(d => !selectedObjectLabel || d.categories[0].categoryName === selectedObjectLabel);
             if(target) {
                 const { originX, originY, width, height } = target.boundingBox;
-                pushPin(originX + width/2, originY + height/2, target.categories[0].categoryName);
+                savedPins.push({ x: originX + width/2, y: originY + height/2, label: target.categories[0].categoryName, a: sensorData.alpha, b: sensorData.beta });
+                playBeep();
             }
         };
 
-        function pushPin(x, y, label) {
-            savedPins.push({ x, y, label, a: sensorData.alpha, b: sensorData.beta });
-            playBeep();
-        }
-
         window.applySettings = async () => {
-            isRunning = false; 
-            overlay.style.display = 'flex';
-            const hwMode = document.getElementById('hwSel').value; // Tarayıcıda NPU, GPU delegesine eşlenir
+            isRunning = false; overlay.style.display = 'flex';
+            loadStatus.innerText = "Donanım Yapılandırılıyor...";
+            
+            const hwMode = document.getElementById('hwSel').value;
             const modelLevel = document.getElementById('modelSel').value;
             const resHeight = parseInt(document.getElementById('resSel').value);
+            const confidence = parseInt(document.getElementById('confSlider').value) / 100;
             const deviceId = document.getElementById('camSel').value;
 
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
-                
-                const constraints = { 
-                    video: { 
-                        deviceId: deviceId ? {exact: deviceId} : undefined, 
-                        facingMode: "environment", 
-                        height: { ideal: resHeight } 
-                    } 
-                };
-
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { deviceId: deviceId ? {exact: deviceId} : undefined, facingMode: "environment", height: { ideal: resHeight } } 
+                });
                 video.srcObject = stream;
 
                 video.onloadedmetadata = async () => {
-                    canvas.width = video.videoWidth; 
-                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     document.getElementById('res-tag').innerText = `${video.videoWidth}x${video.videoHeight}`;
                     
                     if (!visionData) visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
@@ -316,25 +293,19 @@
                             modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
                             delegate: hwMode 
                         },
-                        scoreThreshold: 0.45, runningMode: "VIDEO"
+                        scoreThreshold: confidence, runningMode: "VIDEO"
                     });
 
-                    document.getElementById('hw-tag').innerText = `HW: ${document.getElementById('hwSel').options[document.getElementById('hwSel').selectedIndex].text}`;
-                    overlay.style.display = 'none'; 
-                    isRunning = true; 
-                    renderLoop();
+                    document.getElementById('hw-tag').innerText = `HW: ${document.getElementById('hwSel').options[document.getElementById('hwSel').selectedIndex].text.split(' ')[0]}`;
+                    overlay.style.display = 'none'; isRunning = true; renderLoop();
                 };
-            } catch (e) { 
-                alert("Başlatma Hatası: " + e.message); 
-                overlay.style.display = 'none';
-            }
+            } catch (e) { alert("Hata: " + e.message); overlay.style.display = 'none'; }
         };
 
         function renderLoop(now) {
             if(!isRunning || !detector) return;
-            const fps = 1000 / (now - lastTime);
-            lastTime = now;
-            if(now % 40 < 5) document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fps)}`;
+            const fps = 1000 / (now - lastTime); lastTime = now;
+            if(now % 50 < 10) document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fps)}`;
 
             try {
                 const result = detector.detectForVideo(video, performance.now());
@@ -344,53 +315,39 @@
                     ? lastDetections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
                     : lastDetections;
 
-                // TAKİPLİ SAYIM ALGORİTMASI
                 if(modes.count) {
+                    const trackingSens = parseInt(document.getElementById('sensSlider').value);
                     activeDetections.forEach(det => {
                         const { originX, originY, width, height } = det.boundingBox;
-                        const cX = originX + width/2;
-                        const cY = originY + height/2;
+                        const cX = originX + width/2, cY = originY + height/2;
                         const label = det.categories[0].categoryName;
 
                         let found = objectHistory.findIndex(obj => {
                             const dist = Math.sqrt(Math.pow(cX - obj.x, 2) + Math.pow(cY - obj.y, 2));
-                            return dist < (canvas.width * 0.12) && obj.label === label; 
+                            return dist < trackingSens && obj.label === label;
                         });
 
-                        if(found !== -1) {
-                            objectHistory[found].x = cX;
-                            objectHistory[found].y = cY;
-                            objectHistory[found].t = now;
-                        } else {
-                            totalCount++;
-                            objectHistory.push({ x: cX, y: cY, label: label, t: now });
-                            if(modes.sound) playBeep();
-                        }
+                        if(found !== -1) { objectHistory[found].x = cX; objectHistory[found].y = cY; objectHistory[found].t = now; }
+                        else { totalCount++; objectHistory.push({ x: cX, y: cY, label: label, t: now }); playBeep(); }
                     });
-                    objectHistory = objectHistory.filter(obj => now - obj.t < 1000);
+                    objectHistory = objectHistory.filter(obj => now - obj.t < 1200);
                     document.getElementById('count-tag').innerText = `ANLIK: ${activeDetections.length}`;
                     document.getElementById('total-tag').innerText = `TOPLAM: ${totalCount}`;
                 }
-
                 draw(activeDetections);
-            } catch (err) { }
+            } catch (err) {}
             requestAnimationFrame(renderLoop);
         }
 
         function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // IMU Destekli Pinler
             savedPins.forEach(p => {
-                const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width / 45) : 0;
-                const yOff = modes.sensors ? (sensorData.beta - p.b) * (canvas.height / 45) : 0;
-                ctx.fillStyle = "rgba(255, 62, 62, 0.8)";
-                ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 8, 0, 7); ctx.fill();
-                ctx.fillStyle = "white"; ctx.font = "bold 10px sans-serif";
-                ctx.fillText(trLabels[p.label]?.toUpperCase() || p.label.toUpperCase(), p.x + xOff + 10, p.y + yOff + 3);
+                const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width / 50) : 0;
+                const yOff = modes.sensors ? (sensorData.beta - p.b) * (canvas.height / 50) : 0;
+                ctx.fillStyle = "var(--accent)"; ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 6, 0, 7); ctx.fill();
             });
 
-            // Nesne Kutuları
             detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
@@ -401,13 +358,14 @@
                 ctx.strokeRect(originX, originY, width, height);
 
                 ctx.fillStyle = "rgba(0,0,0,0.6)";
-                ctx.fillRect(originX, originY - 20, width > 80 ? 80 : width, 20);
-                ctx.fillStyle = "#fff"; ctx.font = "bold 11px sans-serif";
-                ctx.fillText(`%${score} ${trLabels[label] || label}`, originX + 4, originY - 6);
+                ctx.fillRect(originX, originY - 18, 70, 18);
+                ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif";
+                ctx.fillText(`%${score} ${trLabels[label] || label}`, originX + 4, originY - 5);
             });
         }
 
         getCameras().then(() => applySettings());
+        updateSliderLabels();
     </script>
 </body>
 </html>
