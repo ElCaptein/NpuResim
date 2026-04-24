@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision ULTIMATE PRO v5</title>
+    <title>AI Vision ULTIMATE PRO v6</title>
     <style>
         :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.98); --accent: #ff0000; --blue: #00e5ff; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
@@ -12,7 +12,7 @@
         video { z-index: 1; } canvas { z-index: 2; pointer-events: auto; }
 
         .hud-top { position: absolute; top: 10px; left: 10px; z-index: 500; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; width: calc(100% - 20px); }
-        .chip { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 3px 6px; border-radius: 3px; font-size: 9px; font-weight: bold; color: var(--neon); text-transform: uppercase; }
+        .chip { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; color: var(--neon); text-transform: uppercase; }
 
         #control-panel {
             position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 95%; max-width: 500px;
@@ -23,18 +23,17 @@
         .panel-header { padding: 10px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; color: var(--neon); }
         .panel-content { padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
         
-        .section-label { font-size: 8px; color: var(--blue); font-weight: bold; margin-top: 4px; text-transform: uppercase; border-bottom: 1px solid #222; }
-        label { font-size: 9px; color: #888; display: block; }
+        .section-label { font-size: 9px; color: var(--blue); font-weight: bold; margin-top: 4px; text-transform: uppercase; border-bottom: 1px solid #222; }
+        label { font-size: 9px; color: #888; display: block; margin-bottom: 2px;}
         
         select, button, input[type="range"] { width: 100%; padding: 7px; background: #151515; border: 1px solid #333; color: white; border-radius: 4px; font-size: 10px; outline: none; }
         
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         .action-btn { background: #1a1a1a; color: #ccc; border: 1px solid #444; text-align: left; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 10px; height: 32px; }
         .action-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,157,0.05); }
-        .action-btn.target-active { border-color: var(--accent); color: var(--accent); }
         
         .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; padding: 10px; font-size: 11px; margin-top: 4px; }
-        .danger-btn { background: #1a1a1a; color: #ff4444; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 5px; font-size: 8px; }
+        .danger-btn { background: #1a1a1a; color: #ff4444; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 5px; font-size: 9px; }
 
         #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-text { color: var(--neon); font-size: 13px; font-weight: bold; letter-spacing: 2px; margin-top: 15px; text-align: center; }
@@ -46,7 +45,7 @@
 
     <div id="load-overlay">
         <div style="width:40px; height:40px; border:3px solid #111; border-top-color:var(--neon); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <div class="loader-text">SİSTEM BAŞLATILIYOR...<br><span id="load-status" style="font-size: 8px; color: #555;">BELLEK TEMİZLENİYOR</span></div>
+        <div class="loader-text">SİSTEM BAŞLATILIYOR...<br><span id="load-status" style="font-size: 8px; color: #555;">MODÜLLER HAZIRLANIYOR</span></div>
     </div>
 
     <button id="dynamic-save-btn" style="position: absolute; top: 120px; left: 50%; transform: translateX(-50%); z-index: 1500; background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: none; cursor: pointer;" onclick="saveCurrentObjectCoords()">📍 KONUMU KAYDET</button>
@@ -57,15 +56,16 @@
     <div class="hud-top">
         <div id="hw-tag" class="chip">HW: --</div>
         <div id="fps-tag" class="chip" style="color:var(--blue); border-color:var(--blue);">FPS: 0</div>
-        <div id="count-tag" class="chip" style="color:#ffcc00; border-color:#ffcc00;">ANLIK: 0</div>
-        <div id="total-tag" class="chip" style="color:var(--neon); border-color:var(--neon);">TOPLAM: 0</div>
         <div id="res-tag" class="chip" style="color:#fff; border-color:#555;">--</div>
-        <div id="target-tag" class="chip" style="color:var(--accent); border-color:var(--accent); display:none;">HEDEF: --</div>
+        <div id="target-info-tag" class="chip" style="display:none; color:var(--accent); border-color:var(--accent); background: rgba(0,0,0,0.9);">HEDEF: YOK</div>
+        
+        <div style="flex-basis: 100%; height: 0;"></div> <div id="count-tag" class="chip" style="color:#ffcc00; border-color:#ffcc00;">ANLIK SAYI: 0</div>
+        <div id="total-tag" class="chip" style="color:var(--neon); border-color:var(--neon);">TOPLAM SAYI: 0</div>
     </div>
 
     <div id="control-panel">
         <div class="panel-header" onclick="togglePanel()">
-            <span>⚙️ AI VISION V5 | ULTIMATE</span>
+            <span>⚙️ AI VISION V6 | KONTROL PANELİ</span>
             <span id="toggle-icon">▼</span>
         </div>
         <div class="panel-content" id="p-content">
@@ -93,9 +93,10 @@
             <div class="section-label">Donanım & Görüntü</div>
             <div class="action-grid">
                 <div>
-                    <label>DONANIM (DELEGATE)</label>
+                    <label>DONANIM MODU</label>
                     <select id="hwSel">
                         <option value="GPU">GPU + NPU (Hızlandırılmış)</option>
+                        <option value="GPU">Sadece GPU</option>
                         <option value="CPU">Sadece CPU (Güvenli Mod)</option>
                         <option value="GPU">GPU + CPU (Hibrit)</option>
                     </select>
@@ -122,7 +123,7 @@
                         <option value="1">Lite 1 (Hızlı)</option>
                         <option value="2" selected>Lite 2 (Dengeli)</option>
                         <option value="3">Lite 3 (Yüksek)</option>
-                        <option value="4">Lite 4 (Maksimum Hassasiyet)</option>
+                        <option value="4">Lite 4 (Maks. Hassasiyet)</option>
                     </select>
                 </div>
                 <div>
@@ -149,23 +150,22 @@
         const overlay = document.getElementById('load-overlay');
         const loadStatus = document.getElementById('load-status');
 
-        // GENİŞLETİLMİŞ TÜRKÇE KÜTÜPHANESİ
         const trLabels = {
             "person": "İnsan", "bicycle": "Bisiklet", "car": "Araba", "motorcycle": "Motosiklet", "airplane": "Uçak",
             "bus": "Otobüs", "train": "Tren", "truck": "Kamyon", "boat": "Tekne", "traffic light": "Trafik Lambası",
-            "fire hydrant": "Yangın Musluğu", "stop sign": "Dur İşareti", "bench": "Bank", "bird": "Kuş", "cat": "Kedi",
+            "fire hydrant": "Musluk", "stop sign": "Dur İşareti", "bench": "Bank", "bird": "Kuş", "cat": "Kedi",
             "dog": "Köpek", "horse": "At", "sheep": "Koyun", "cow": "İnek", "elephant": "Fil", "bear": "Ayı",
-            "zebra": "Zebra", "giraffe": "Zürafa", "backpack": "Sırt Çantası", "umbrella": "Şemsiye", "handbag": "El Çantası",
+            "zebra": "Zebra", "giraffe": "Zürafa", "backpack": "Çanta", "umbrella": "Şemsiye", "handbag": "El Çantası",
             "tie": "Kravat", "suitcase": "Bavul", "frisbee": "Frizbi", "skis": "Kayak", "snowboard": "Snowboard",
-            "sports ball": "Spor Topu", "kite": "Uçurtma", "baseball bat": "Beyzbol Sopası", "skateboard": "Kaykay",
-            "surfboard": "Sörf Tahtası", "tennis racket": "Raket", "bottle": "Şişe", "wine glass": "Kadeh", "cup": "Kupa",
+            "sports ball": "Top", "kite": "Uçurtma", "baseball bat": "Beyzbol Sopası", "skateboard": "Kaykay",
+            "surfboard": "Sörf", "tennis racket": "Raket", "bottle": "Şişe", "wine glass": "Kadeh", "cup": "Kupa",
             "fork": "Çatal", "knife": "Bıçak", "spoon": "Kaşık", "bowl": "Kase", "banana": "Muz", "apple": "Elma",
             "sandwich": "Sandviç", "orange": "Portakal", "broccoli": "Brokoli", "carrot": "Havuç", "hot dog": "Sosisli",
             "pizza": "Pizza", "donut": "Donat", "cake": "Kek", "chair": "Sandalye", "couch": "Kanepe", "potted plant": "Saksı",
-            "bed": "Yatak", "dining table": "Masa", "toilet": "Tuvalet", "tv": "Televizyon", "laptop": "Dizüstü",
+            "bed": "Yatak", "dining table": "Masa", "toilet": "Tuvalet", "tv": "TV", "laptop": "Laptop",
             "mouse": "Fare", "remote": "Kumanda", "keyboard": "Klavye", "cell phone": "Telefon", "microwave": "Mikrodalga",
             "oven": "Fırın", "toaster": "Ekmek Kızartma", "sink": "Lavabo", "refrigerator": "Buzdolabı", "book": "Kitap",
-            "clock": "Saat", "vase": "Vazo", "scissors": "Makas", "teddy bear": "Oyuncak Ayı", "hair drier": "Saç Kurutma", "toothbrush": "Diş Fırçası"
+            "clock": "Saat", "vase": "Vazo", "scissors": "Makas", "teddy bear": "Ayıcık", "hair drier": "Kurutma Mk.", "toothbrush": "Diş Fırçası"
         };
 
         let detector, isRunning = false, lastTime = performance.now();
@@ -174,8 +174,21 @@
         let selectedObjectLabel = null;
         let totalCount = 0, objectHistory = [], savedPins = [], lastDetections = [];
 
-        // Renk Paleti (Farklı nesneler için)
-        const colors = ["#00ff9d", "#00e5ff", "#ffff00", "#ff00ff", "#ff8800", "#ffffff", "#0088ff"];
+        // Renk Paleti (Sabit renk ataması için)
+        const colors = ["#00ff9d", "#00e5ff", "#ffff00", "#ff00ff", "#ff8800", "#ffffff", "#0088ff", "#aaff00", "#ffaa00", "#ff00aa"];
+
+        function hashCode(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return Math.abs(hash);
+        }
+
+        // Aynı tür nesnelere her zaman aynı rengi verir
+        function getStableColor(label) {
+            return colors[hashCode(label) % colors.length];
+        }
 
         window.updateUI = () => {
             document.getElementById('conf-val').innerText = document.getElementById('confSlider').value;
@@ -213,17 +226,18 @@
             else if(m === 'pin') document.getElementById('dynamic-save-btn').style.display = 'none';
             
             if(m === 'sensors' && modes[m]) initSensors();
+            else if(m === 'sensors' && !modes[m]) { sensorData.alpha = 0; sensorData.beta = 0; }
             
             document.getElementById(`btn-${m}`).classList.toggle('active', modes[m]);
             document.getElementById(`ind-${m}`).innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
             
             if(m === 'select' && !modes[m]) {
                 selectedObjectLabel = null;
-                document.getElementById('target-tag').style.display = 'none';
+                document.getElementById('target-info-tag').style.display = 'none';
             }
         };
 
-        window.resetCounter = () => { totalCount = 0; objectHistory = []; document.getElementById('total-tag').innerText = `TOPLAM: 0`; };
+        window.resetCounter = () => { totalCount = 0; objectHistory = []; document.getElementById('total-tag').innerText = `TOPLAM SAYI: 0`; };
 
         window.togglePanel = () => {
             const content = document.getElementById('p-content');
@@ -231,6 +245,7 @@
             document.getElementById('toggle-icon').innerText = content.style.display === 'none' ? '▲' : '▼';
         };
 
+        // EKRANDAN NESNE SEÇME VE HUD GÜNCELLEME
         canvas.addEventListener('click', (e) => {
             if(!modes.select) return;
             const rect = canvas.getBoundingClientRect();
@@ -241,9 +256,13 @@
                 const { originX, originY, width, height } = d.boundingBox;
                 if(x > originX && x < originX + width && y > originY && y < originY + height) {
                     selectedObjectLabel = d.categories[0].categoryName;
-                    const tag = document.getElementById('target-tag');
-                    tag.innerText = `HEDEF: ${trLabels[selectedObjectLabel]?.toUpperCase() || selectedObjectLabel.toUpperCase()}`;
-                    tag.style.display = 'block';
+                    
+                    // Üst Sol Bilgi Panelini Güncelle
+                    const trName = trLabels[selectedObjectLabel] || selectedObjectLabel;
+                    const infoTag = document.getElementById('target-info-tag');
+                    infoTag.innerText = `HEDEF: ${trName.toUpperCase()} (KIRMIZI)`;
+                    infoTag.style.display = 'block';
+                    
                     resetCounter();
                 }
             });
@@ -260,9 +279,8 @@
         window.applySettings = async () => {
             isRunning = false; 
             overlay.style.display = 'flex';
-            loadStatus.innerText = "Bellek ve Dedektör Temizleniyor...";
+            loadStatus.innerText = "Sistem Yeniden Başlatılıyor...";
             
-            // BELLEK TEMİZLİĞİ: Eski dedektörü imha et
             if(detector) { detector.close(); detector = null; }
 
             const hwMode = document.getElementById('hwSel').value;
@@ -284,7 +302,7 @@
                     canvas.height = video.videoHeight;
                     document.getElementById('res-tag').innerText = `${video.videoWidth}x${video.videoHeight}`;
                     
-                    loadStatus.innerText = "AI Modeli Yükleniyor...";
+                    loadStatus.innerText = "Yapay Zeka Modeli Yükleniyor...";
                     if (!visionData) visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
                     
                     detector = await ObjectDetector.createFromOptions(visionData, {
@@ -301,7 +319,7 @@
                     renderLoop();
                 };
             } catch (e) { 
-                alert("Kritik Hata: " + e.message + "\nÇözünürlüğü veya Model Seviyesini düşürmeyi deneyin."); 
+                alert("Kamera veya Model Hatası: " + e.message); 
                 overlay.style.display = 'none'; 
             }
         };
@@ -317,10 +335,14 @@
                 
                 if(modes.count) {
                     const trackingSens = parseInt(document.getElementById('sensSlider').value);
-                    lastDetections.forEach(det => {
-                        const label = det.categories[0].categoryName;
-                        if(selectedObjectLabel && label !== selectedObjectLabel) return;
+                    
+                    // Sadece seçili hedefi say, hedef yoksa hepsini say
+                    let objectsToCount = selectedObjectLabel 
+                        ? lastDetections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
+                        : lastDetections;
 
+                    objectsToCount.forEach(det => {
+                        const label = det.categories[0].categoryName;
                         const { originX, originY, width, height } = det.boundingBox;
                         const cX = originX + width/2, cY = originY + height/2;
 
@@ -332,18 +354,14 @@
                         if(found !== -1) { objectHistory[found].x = cX; objectHistory[found].y = cY; objectHistory[found].t = now; }
                         else { totalCount++; objectHistory.push({ x: cX, y: cY, label: label, t: now }); }
                     });
-                    objectHistory = objectHistory.filter(obj => now - obj.t < 1000);
-                    document.getElementById('count-tag').innerText = `ANLIK: ${lastDetections.length}`;
-                    document.getElementById('total-tag').innerText = `TOPLAM: ${totalCount}`;
+                    
+                    objectHistory = objectHistory.filter(obj => now - obj.t < 1500); // 1.5 sn görülmeyenleri temizle
+                    document.getElementById('count-tag').innerText = `ANLIK SAYI: ${objectsToCount.length}`;
+                    document.getElementById('total-tag').innerText = `TOPLAM SAYI: ${totalCount}`;
                 }
                 draw(lastDetections);
             } catch (err) {}
             requestAnimationFrame(renderLoop);
-        }
-
-        function getLabelColor(label, index) {
-            if(selectedObjectLabel && label === selectedObjectLabel) return "#ff0000"; // Seçili tür KIRMIZI
-            return colors[index % colors.length]; // Diğerleri farklı renk
         }
 
         function draw(detections) {
@@ -351,31 +369,45 @@
             
             // Pinler (Jiroskop Destekli)
             savedPins.forEach(p => {
-                const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width / 55) : 0;
-                const yOff = modes.sensors ? (sensorData.beta - p.b) * (canvas.height / 55) : 0;
-                ctx.fillStyle = "rgba(255, 0, 0, 0.7)";
-                ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 6, 0, 7); ctx.fill();
+                const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width / 50) : 0;
+                const yOff = modes.sensors ? (sensorData.beta - p.b) * (canvas.height / 50) : 0;
+                ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+                ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 8, 0, 7); ctx.fill();
             });
 
-            // Nesne Kutuları ve Etiketler
-            detections.forEach((d, i) => {
+            // Nesneleri Ekrana Çizme Mantığı
+            detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
                 const score = Math.round(d.categories[0].score * 100);
-                const color = getLabelColor(label, label.length + i);
+                const isTarget = selectedObjectLabel && label === selectedObjectLabel;
 
-                ctx.strokeStyle = color;
-                ctx.lineWidth = (label === selectedObjectLabel) ? 5 : 2; 
+                let boxColor, bgColor, textColor;
+
+                // RENK VE KUTU BELİRLEME
+                if (isTarget) {
+                    boxColor = "#ff0000"; // Seçili nesne: Kırmızı
+                    bgColor = "rgba(15, 0, 0, 0.85)"; // Koyu siyah-kırmızı arkaplan
+                    textColor = "#ff3e3e"; // Kırmızımtırak beyaz/parlak kırmızı yazı
+                } else {
+                    boxColor = getStableColor(label); // Diğerleri sabit benzersiz renginde
+                    bgColor = boxColor; // Kutu arkaplanı aynı renk
+                    textColor = "#000000"; // Siyah yazı (kontrast için)
+                }
+
+                // Çerçeve
+                ctx.strokeStyle = boxColor;
+                ctx.lineWidth = isTarget ? 4 : 2; 
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Etiket Arka Planı
-                ctx.fillStyle = color;
-                ctx.fillRect(originX, originY - 15, 65, 15);
+                // Yazı Arkaplanı
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(originX, originY - 18, 75, 18);
                 
-                // Yazı (Yazı rengi kutu rengine göre kontrast oluşturur)
-                ctx.fillStyle = "#000"; 
-                ctx.font = "bold 9px sans-serif";
-                ctx.fillText(`%${score} ${trLabels[label] || label}`, originX + 3, originY - 4);
+                // Yazı
+                ctx.fillStyle = textColor; 
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillText(`%${score} ${trLabels[label] || label}`, originX + 4, originY - 5);
             });
         }
 
