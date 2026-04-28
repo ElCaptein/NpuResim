@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision ULTIMATE PRO v9.2</title>
+    <title>AI Vision ULTIMATE PRO v9.5</title>
     <style>
         :root {
             --neon: #00ff9d; --bg: rgba(8,8,8,0.97); --accent: #ff2244;
@@ -48,8 +48,8 @@
         }
         .panel-content { padding: 10px; display: flex; flex-direction: column; gap: 7px; max-height: 70vh; overflow-y: auto; }
         .sec { font-size: 9px; color: var(--blue); font-weight: 700; margin-top: 2px; text-transform: uppercase; border-bottom: 1px solid #1c1c1c; padding-bottom: 3px; }
-        label { font-size: 9px; color: #777; margin-bottom: 2px; }
-        select, input[type="range"] { width: 100%; padding: 6px; background: #111; border: 1px solid #2c2c2c; color: #eee; border-radius: 4px; font-size: 10px; outline: none; }
+        label { font-size: 9px; color: #777; }
+        select, input[type="range"] { width: 100%; padding: 6px; background: #111; border: 1px solid #2c2c2c; color: #eee; border-radius: 4px; font-size: 10px; }
 
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         .act-btn {
@@ -62,10 +62,7 @@
         .hw-btn { background: #141414; color: #999; border: 1px solid #2a2a2a; border-radius: 5px; cursor: pointer; font-size: 9px; padding: 6px 2px; }
         .hw-btn.hw-sel { border-color: var(--blue); color: var(--blue); background: rgba(0,229,255,.07); }
 
-        .primary-btn { background: var(--neon); color: #000; font-weight: 800; border: none; cursor: pointer; padding: 11px; font-size: 11px; border-radius: 5px; margin-top: 5px; }
-        .danger-btn { background: #111; color: #ff5555; border: 1px solid #2a2a2a; cursor: pointer; padding: 6px; font-size: 9px; border-radius: 4px; }
-
-        .model-info { font-size: 8px; color: #5a5a5a; margin-top: 3px; padding: 4px; background: #090909; border-left: 2px solid var(--blue); }
+        .primary-btn { background: var(--neon); color: #000; font-weight: 800; border: none; cursor: pointer; padding: 11px; border-radius: 5px; margin-top: 5px; }
 
         #load-overlay {
             position: absolute; inset: 0; background: #000; z-index: 3000;
@@ -94,21 +91,21 @@
 <canvas id="output"></canvas>
 
 <div class="hud-top">
-    <div id="hw-tag" class="chip">HW: --</div>
-    <div id="fps-tag" class="chip chip-blue">FPS: 0</div>
-    <div id="res-tag" class="chip chip-white">--</div>
-    <div id="model-tag" class="chip chip-gold">MODEL: --</div>
+    <div id="hw-tag"     class="chip">HW: --</div>
+    <div id="fps-tag"    class="chip chip-blue">FPS: 0</div>
+    <div id="res-tag"    class="chip chip-white">--</div>
+    <div id="model-tag"  class="chip chip-gold">MODEL: --</div>
     <div id="target-tag" class="chip chip-red" style="display:none">HEDEF: YOK</div>
     <div class="row-break"></div>
-    <div id="cur-tag" class="chip chip-yellow">ANLİK: 0</div>
-    <div id="uniq-tag" class="chip chip-purple">BENZERSİZ: 0</div>
+    <div id="cur-tag"    class="chip chip-yellow">ANLİK: 0</div>
+    <div id="uniq-tag"   class="chip chip-purple">BENZERSİZ: 0</div>
 </div>
 
 <div id="unique-badge"></div>
 
 <div id="control-panel">
     <div class="panel-header" onclick="togglePanel()">
-        <span>⚙️ AI VISION V9.2 PRO · ULTIMATE</span>
+        <span>⚙️ AI VISION V9.5 PRO · ULTIMATE</span>
         <span id="toggle-icon">▼</span>
     </div>
     <div class="panel-content" id="p-content">
@@ -127,41 +124,34 @@
             <button class="hw-btn" id="hw-NPU" onclick="selectHW('NPU')">NPU</button>
         </div>
 
-        <div class="sec">Hassasiyet</div>
+        <div class="sec">Hassasiyet & Takip</div>
         <div class="grid2">
             <div><label>EŞİK (%)</label><input type="range" id="confSlider" min="5" max="95" value="40"></div>
             <div><label>TAKİP (px)</label><input type="range" id="sensSlider" min="10" max="400" value="100"></div>
         </div>
 
-        <div class="sec">🤖 Model Seçimi</div>
+        <div class="sec">🤖 AI Modeli</div>
         <select id="modelSel">
             <optgroup label="SSD MobileNet V2">
-                <option value="ssd_f32">SSD V2 · Float32 (En Hızlı)</option>
-                <option value="ssd_int8">SSD V2 · INT8</option>
+                <option value="ssd_f32">SSD V2 · Float32 (Hızlı)</option>
+                <option value="ssd_int8">SSD V2 · INT8 (CPU Dostu)</option>
             </optgroup>
             <optgroup label="EfficientDet Lite">
                 <option value="edet0_f16">Lite 0 · F16</option>
                 <option value="edet1_f16" selected>Lite 1 · F16 (Dengeli)</option>
-                <option value="edet2_f16">Lite 2 · F16</option>
-                <option value="edet3_f16">Lite 3 · F16</option>
+                <option value="edet2_f16">Lite 2 · F16 (Hassas)</option>
+                <option value="edet3_f16">Lite 3 · F16 (Yüksek)</option>
             </optgroup>
         </select>
 
-        <div class="sec">Kamera & Çözünürlük</div>
-        <div class="grid2">
-            <select id="resSel">
-                <option value="480">480p</option>
-                <option value="720" selected>720p HD</option>
-                <option value="1080">1080p FHD</option>
-            </select>
-            <select id="camSel"></select>
-        </div>
+        <div class="sec">Kamera</div>
+        <select id="camSel"></select>
 
         <div class="grid2">
-            <button class="danger-btn" onclick="resetCounter()">🔄 SIFIRLA</button>
-            <button class="danger-btn" onclick="location.reload()">⚠ YENİLE</button>
+            <button class="act-btn" style="color:#ff5555" onclick="resetCounter()">🔄 SIFIRLA</button>
+            <button class="act-btn" onclick="location.reload()">⚠ YENİLE</button>
         </div>
-        <button class="primary-btn" onclick="applySettings()">AYARLARI UYGULA VE BAŞLAT</button>
+        <button class="primary-btn" onclick="applySettings()">AYARLARI UYGULA & BAŞLAT</button>
     </div>
 </div>
 
@@ -175,19 +165,19 @@ const overlay = document.getElementById('load-overlay');
 const loadStatus = document.getElementById('load-status');
 
 let detector, isRunning = false, vision = null;
-let lastDetections = [];
 let sensorData = { alpha: 0, beta: 0 };
 let modes = { select: false, count: false, pin: false, sensors: true };
 let selectedObjectLabel = null;
-let savedPins = [];
+let savedPins = [], lastDetections = [];
 
-// Gelişmiş ID ve Sayım Sistemi
+// ID ve Takip State
 let nextId = 1;
 let trackedObjects = []; // { id, label, box, cx, cy, lastSeen, color }
+let cooldownMap = new Map(); 
 let perClassCount = new Map();
 let totalUniqueCount = 0;
 
-const TR = {"person":"İnsan","bicycle":"Bisiklet","car":"Araba","motorcycle":"Motosiklet","dog":"Köpek","cat":"Kedi","bottle":"Şişe","cell phone":"Telefon","chair":"Sandalye","laptop":"Dizüstü","tv":"Televizyon"};
+const TR = {"person":"İnsan","car":"Araba","dog":"Köpek","cat":"Kedi","bottle":"Şişe","cell phone":"Telefon","chair":"Sandalye","tv":"Televizyon"};
 const COLORS = ["#00ff9d","#00e5ff","#ffd700","#ff2244","#bf5fff","#ff8800","#ffffff"];
 
 let selectedHW = "GPU";
@@ -222,7 +212,7 @@ window.resetCounter = () => {
     document.getElementById('unique-badge').innerHTML = "";
 };
 
-async function start() {
+async function init() {
     const devs = await navigator.mediaDevices.enumerateDevices();
     const sel = document.getElementById('camSel');
     devs.filter(d => d.kind === 'videoinput').forEach(d => {
@@ -233,6 +223,7 @@ async function start() {
 
 window.applySettings = async () => {
     isRunning = false; overlay.style.display = 'flex';
+    loadStatus.innerText = "Model Modülleri Hazırlanıyor...";
     if(detector) detector.close();
 
     const modelUrls = {
@@ -245,10 +236,9 @@ window.applySettings = async () => {
     };
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { deviceId: document.getElementById('camSel').value, height: document.getElementById('resSel').value } 
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: document.getElementById('camSel').value } });
         video.srcObject = stream;
+        
         if(!vision) vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
 
         detector = await ObjectDetector.createFromOptions(vision, {
@@ -273,7 +263,7 @@ function loop(now) {
     lastDetections = res.detections;
     
     updateTracking(lastDetections, now);
-    draw(now);
+    draw();
     requestAnimationFrame(loop);
 }
 
@@ -296,11 +286,14 @@ function updateTracking(detections, now) {
 
         if(best) {
             best.box = box; best.cx = cx; best.cy = cy; best.lastSeen = now;
-        } else if (modes.count) {
+        } else {
+            // Yeni Nesne mi yoksa Cooldown'dan mı dönüyor?
             const id = nextId++;
             trackedObjects.push({ id, label: lbl, box, cx, cy, lastSeen: now, color: COLORS[id % COLORS.length] });
-            totalUniqueCount++;
-            perClassCount.set(lbl, (perClassCount.get(lbl) || 0) + 1);
+            if(modes.count) {
+                totalUniqueCount++;
+                perClassCount.set(lbl, (perClassCount.get(lbl) || 0) + 1);
+            }
         }
     });
 
@@ -314,9 +307,8 @@ function updateTracking(detections, now) {
     });
 }
 
-function draw(now) {
+function draw() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    
     trackedObjects.forEach(obj => {
         const isTarget = selectedObjectLabel === obj.label;
         ctx.strokeStyle = isTarget ? "#ff2244" : obj.color;
@@ -339,12 +331,12 @@ canvas.addEventListener('click', (e) => {
             selectedObjectLabel = d.categories[0].categoryName;
             document.getElementById('target-tag').innerText = "HEDEF: " + (TR[selectedObjectLabel]||selectedObjectLabel).toUpperCase();
             document.getElementById('target-tag').style.display = "block";
+            resetCounter();
         }
     });
 });
 
-window.addEventListener('deviceorientation', (e) => { if(modes.sensors) { sensorData.alpha = e.alpha; sensorData.beta = e.beta; }});
-start();
+init();
 </script>
 </body>
 </html>
