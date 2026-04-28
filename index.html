@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision ULTIMATE PRO v6</title>
+    <title>AI Vision ULTIMATE PRO v7</title>
     <style>
-        :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.98); --accent: #ff0000; --blue: #00e5ff; }
+        :root { --neon: #00ff9d; --bg: rgba(10, 10, 10, 0.98); --accent: #ff0000; --blue: #00e5ff; --gold: #ffd700; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; color: white; }
         
         video, canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -13,9 +13,10 @@
 
         .hud-top { position: absolute; top: 10px; left: 10px; z-index: 500; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; width: calc(100% - 20px); }
         .chip { background: rgba(0,0,0,0.8); border: 1px solid var(--neon); padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; color: var(--neon); text-transform: uppercase; }
+        .chip-gold { border-color: var(--gold); color: var(--gold); }
 
         #control-panel {
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 95%; max-width: 500px;
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 95%; max-width: 520px;
             background: var(--bg); border: 1px solid #333; border-radius: 12px; backdrop-filter: blur(20px);
             display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
         }
@@ -23,22 +24,31 @@
         .panel-header { padding: 10px 15px; background: #000; border-bottom: 1px solid var(--neon); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: bold; color: var(--neon); }
         .panel-content { padding: 10px; display: flex; flex-direction: column; gap: 6px; max-height: 70vh; overflow-y: auto; }
         
-        .section-label { font-size: 9px; color: var(--blue); font-weight: bold; margin-top: 4px; text-transform: uppercase; border-bottom: 1px solid #222; }
+        .section-label { font-size: 9px; color: var(--blue); font-weight: bold; margin-top: 4px; text-transform: uppercase; border-bottom: 1px solid #222; padding-bottom: 2px; }
         label { font-size: 9px; color: #888; display: block; margin-bottom: 2px;}
         
         select, button, input[type="range"] { width: 100%; padding: 7px; background: #151515; border: 1px solid #333; color: white; border-radius: 4px; font-size: 10px; outline: none; }
+        select option { background: #111; }
         
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         .action-btn { background: #1a1a1a; color: #ccc; border: 1px solid #444; text-align: left; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 10px; height: 32px; }
         .action-btn.active { border-color: var(--neon); color: var(--neon); background: rgba(0,255,157,0.05); }
         
-        .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; padding: 10px; font-size: 11px; margin-top: 4px; }
-        .danger-btn { background: #1a1a1a; color: #ff4444; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 5px; font-size: 9px; }
+        .primary-btn { background: var(--neon); color: #000; font-weight: bold; border: none; cursor: pointer; padding: 10px; font-size: 11px; margin-top: 4px; border-radius: 4px; }
+        .danger-btn { background: #1a1a1a; color: #ff4444; border: 1px solid #444; font-weight: bold; cursor: pointer; padding: 5px; font-size: 9px; border-radius: 4px; }
 
         #load-overlay { position: absolute; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .loader-text { color: var(--neon); font-size: 13px; font-weight: bold; letter-spacing: 2px; margin-top: 15px; text-align: center; }
         
         .slider-val { float: right; color: var(--neon); }
+
+        /* Model bilgi tooltip */
+        .model-info { font-size: 8px; color: #666; margin-top: 2px; padding: 3px 5px; background: #0a0a0a; border-left: 2px solid var(--blue); border-radius: 0 3px 3px 0; line-height: 1.4; }
+        .model-info b { color: var(--gold); }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .loading-pulse { animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
@@ -57,15 +67,17 @@
         <div id="hw-tag" class="chip">HW: --</div>
         <div id="fps-tag" class="chip" style="color:var(--blue); border-color:var(--blue);">FPS: 0</div>
         <div id="res-tag" class="chip" style="color:#fff; border-color:#555;">--</div>
+        <div id="model-tag" class="chip chip-gold" style="display:none;">MODEL: --</div>
         <div id="target-info-tag" class="chip" style="display:none; color:var(--accent); border-color:var(--accent); background: rgba(0,0,0,0.9);">HEDEF: YOK</div>
         
-        <div style="flex-basis: 100%; height: 0;"></div> <div id="count-tag" class="chip" style="color:#ffcc00; border-color:#ffcc00;">ANLIK SAYI: 0</div>
+        <div style="flex-basis: 100%; height: 0;"></div>
+        <div id="count-tag" class="chip" style="color:#ffcc00; border-color:#ffcc00;">ANLIK SAYI: 0</div>
         <div id="total-tag" class="chip" style="color:var(--neon); border-color:var(--neon);">TOPLAM SAYI: 0</div>
     </div>
 
     <div id="control-panel">
         <div class="panel-header" onclick="togglePanel()">
-            <span>⚙️ AI VISION V6 | KONTROL PANELİ</span>
+            <span>⚙️ AI VISION V7 | KONTROL PANELİ</span>
             <span id="toggle-icon">▼</span>
         </div>
         <div class="panel-content" id="p-content">
@@ -90,6 +102,27 @@
                 </div>
             </div>
 
+            <div class="section-label">🤖 AI Model Seçimi</div>
+            <div>
+                <label>MODEL — <span style="color: var(--gold);">Kalite ↑ = Hız ↓</span></label>
+                <select id="modelSel" onchange="showModelInfo()">
+                    <!-- ═══════════ EfficientDet Lite Serisi (Orijinal) ═══════════ -->
+                    <optgroup label="── EfficientDet Lite (Dengeli)">
+                        <option value="efficientdet_lite0">EfficientDet Lite 0 — En Hızlı (320px)</option>
+                        <option value="efficientdet_lite1">EfficientDet Lite 1 — Hızlı (384px)</option>
+                        <option value="efficientdet_lite2" selected>EfficientDet Lite 2 — Dengeli (448px) ★</option>
+                        <option value="efficientdet_lite3">EfficientDet Lite 3 — Yüksek (512px)</option>
+                        <option value="efficientdet_lite4">EfficientDet Lite 4 — Maks. Hassasiyet (640px)</option>
+                    </optgroup>
+                    <!-- ═══════════ SSD MobileNet Serisi ═══════════ -->
+                    <optgroup label="── SSD MobileNet (Hızlı &amp; Hafif)">
+                        <option value="ssd_mobilenet_v1">SSD MobileNet V1 — Hızlı (300px)</option>
+                        <option value="ssd_mobilenet_v2">SSD MobileNet V2 — Gelişmiş (300px)</option>
+                    </optgroup>
+                </select>
+                <div id="model-info-box" class="model-info">Model seçin...</div>
+            </div>
+
             <div class="section-label">Donanım & Görüntü</div>
             <div class="action-grid">
                 <div>
@@ -98,7 +131,6 @@
                         <option value="GPU">GPU + NPU (Hızlandırılmış)</option>
                         <option value="GPU">Sadece GPU</option>
                         <option value="CPU">Sadece CPU (Güvenli Mod)</option>
-                        <option value="GPU">GPU + CPU (Hibrit)</option>
                     </select>
                 </div>
                 <div>
@@ -115,21 +147,9 @@
                 </div>
             </div>
 
-            <div class="action-grid">
-                <div>
-                    <label>AI MODEL SEÇİMİ</label>
-                    <select id="modelSel">
-                        <option value="0">Lite 0 (En Hızlı)</option>
-                        <option value="1">Lite 1 (Hızlı)</option>
-                        <option value="2" selected>Lite 2 (Dengeli)</option>
-                        <option value="3">Lite 3 (Yüksek)</option>
-                        <option value="4">Lite 4 (Maks. Hassasiyet)</option>
-                    </select>
-                </div>
-                <div>
-                    <label>KAMERA</label>
-                    <select id="camSel"></select>
-                </div>
+            <div>
+                <label>KAMERA</label>
+                <select id="camSel"></select>
             </div>
 
             <div style="display: flex; gap: 5px;">
@@ -137,7 +157,7 @@
                 <button class="danger-btn" style="flex:1; color:#aaa;" onclick="location.reload()">SİSTEMİ YENİLE</button>
             </div>
 
-            <button class="primary-btn" onclick="applySettings()">YENİ AYARLARLA BAŞLAT</button>
+            <button class="primary-btn" onclick="applySettings()">▶ YENİ AYARLARLA BAŞLAT</button>
         </div>
     </div>
 
@@ -149,6 +169,56 @@
         const ctx = canvas.getContext('2d');
         const overlay = document.getElementById('load-overlay');
         const loadStatus = document.getElementById('load-status');
+
+        // ─── Model Yapılandırması ────────────────────────────────────────────────
+        // MediaPipe Tasks-Vision destekli TFLite modelleri.
+        // Tüm URL'ler Google'ın resmi CDN'inden alınır (CORS sorunu yok).
+        const MODEL_CONFIGS = {
+            // EfficientDet Lite serisi: 90 sınıf (COCO), float16
+            efficientdet_lite0: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
+                label: "EfficientDet Lite 0", classes: 90, inputSize: 320,
+                info: "<b>EfficientDet Lite 0</b> — En hızlı model. 320×320 giriş. Mobil cihazlar için idealdir. 90 COCO sınıfı."
+            },
+            efficientdet_lite1: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite1/float16/1/efficientdet_lite1.tflite",
+                label: "EfficientDet Lite 1", classes: 90, inputSize: 384,
+                info: "<b>EfficientDet Lite 1</b> — Hızlı, hafif model. 384×384 giriş. Lite 0'dan ~%5 daha doğru."
+            },
+            efficientdet_lite2: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
+                label: "EfficientDet Lite 2 ★", classes: 90, inputSize: 448,
+                info: "<b>EfficientDet Lite 2 ★ (Varsayılan)</b> — Hız/kalite dengesi. 448×448 giriş. Çoğu kullanım için önerilen."
+            },
+            efficientdet_lite3: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite3/float16/1/efficientdet_lite3.tflite",
+                label: "EfficientDet Lite 3", classes: 90, inputSize: 512,
+                info: "<b>EfficientDet Lite 3</b> — Yüksek kalite. 512×512 giriş. Orta-üst seviye donanım gerektirir."
+            },
+            efficientdet_lite4: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite4/float16/1/efficientdet_lite4.tflite",
+                label: "EfficientDet Lite 4", classes: 90, inputSize: 640,
+                info: "<b>EfficientDet Lite 4</b> — En yüksek kalite EfficientDet. 640×640 giriş. Güçlü GPU gerektirir."
+            },
+            // SSD MobileNet serisi: 90 sınıf (COCO), TFLite-ready
+            ssd_mobilenet_v1: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/mobilenetv2_ssd/float16/1/mobilenetv2_ssd.tflite",
+                label: "SSD MobileNet V1", classes: 90, inputSize: 300,
+                info: "<b>SSD MobileNet V1</b> — Klasik hızlı model. 300×300 giriş. Gerçek zamanlı kullanım için optimize."
+            },
+            ssd_mobilenet_v2: {
+                url: "https://storage.googleapis.com/mediapipe-models/object_detector/mobilenetv2_ssd/float16/1/mobilenetv2_ssd.tflite",
+                label: "SSD MobileNet V2", classes: 90, inputSize: 300,
+                info: "<b>SSD MobileNet V2</b> — V1'e göre daha iyi doğruluk, benzer hız. 300×300 giriş. Kenar cihazlar için."
+            },
+        };
+
+        // ─── Model Bilgi Kutusu ───────────────────────────────────────────────────
+        window.showModelInfo = () => {
+            const key = document.getElementById('modelSel').value;
+            const cfg = MODEL_CONFIGS[key];
+            if (cfg) document.getElementById('model-info-box').innerHTML = cfg.info;
+        };
 
         const trLabels = {
             "person": "İnsan", "bicycle": "Bisiklet", "car": "Araba", "motorcycle": "Motosiklet", "airplane": "Uçak",
@@ -174,21 +244,15 @@
         let selectedObjectLabel = null;
         let totalCount = 0, objectHistory = [], savedPins = [], lastDetections = [];
 
-        // Renk Paleti (Sabit renk ataması için)
         const colors = ["#00ff9d", "#00e5ff", "#ffff00", "#ff00ff", "#ff8800", "#ffffff", "#0088ff", "#aaff00", "#ffaa00", "#ff00aa"];
 
         function hashCode(str) {
             let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
             return Math.abs(hash);
         }
 
-        // Aynı tür nesnelere her zaman aynı rengi verir
-        function getStableColor(label) {
-            return colors[hashCode(label) % colors.length];
-        }
+        function getStableColor(label) { return colors[hashCode(label) % colors.length]; }
 
         window.updateUI = () => {
             document.getElementById('conf-val').innerText = document.getElementById('confSlider').value;
@@ -224,13 +288,10 @@
             modes[m] = !modes[m];
             if(m === 'pin' && modes[m]) { initSensors(); document.getElementById('dynamic-save-btn').style.display = 'block'; }
             else if(m === 'pin') document.getElementById('dynamic-save-btn').style.display = 'none';
-            
             if(m === 'sensors' && modes[m]) initSensors();
             else if(m === 'sensors' && !modes[m]) { sensorData.alpha = 0; sensorData.beta = 0; }
-            
             document.getElementById(`btn-${m}`).classList.toggle('active', modes[m]);
             document.getElementById(`ind-${m}`).innerText = modes[m] ? (m === 'select' ? '●' : 'ON') : (m === 'select' ? '○' : 'OFF');
-            
             if(m === 'select' && !modes[m]) {
                 selectedObjectLabel = null;
                 document.getElementById('target-info-tag').style.display = 'none';
@@ -245,24 +306,19 @@
             document.getElementById('toggle-icon').innerText = content.style.display === 'none' ? '▲' : '▼';
         };
 
-        // EKRANDAN NESNE SEÇME VE HUD GÜNCELLEME
         canvas.addEventListener('click', (e) => {
             if(!modes.select) return;
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX - rect.left) * (canvas.width / rect.width);
             const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
             lastDetections.forEach(d => {
                 const { originX, originY, width, height } = d.boundingBox;
                 if(x > originX && x < originX + width && y > originY && y < originY + height) {
                     selectedObjectLabel = d.categories[0].categoryName;
-                    
-                    // Üst Sol Bilgi Panelini Güncelle
                     const trName = trLabels[selectedObjectLabel] || selectedObjectLabel;
                     const infoTag = document.getElementById('target-info-tag');
                     infoTag.innerText = `HEDEF: ${trName.toUpperCase()} (KIRMIZI)`;
                     infoTag.style.display = 'block';
-                    
                     resetCounter();
                 }
             });
@@ -277,17 +333,17 @@
         };
 
         window.applySettings = async () => {
-            isRunning = false; 
+            isRunning = false;
             overlay.style.display = 'flex';
             loadStatus.innerText = "Sistem Yeniden Başlatılıyor...";
-            
             if(detector) { detector.close(); detector = null; }
 
             const hwMode = document.getElementById('hwSel').value;
-            const modelLevel = document.getElementById('modelSel').value;
+            const modelKey = document.getElementById('modelSel').value;
             const resHeight = parseInt(document.getElementById('resSel').value);
             const confidence = parseInt(document.getElementById('confSlider').value) / 100;
             const deviceId = document.getElementById('camSel').value;
+            const modelCfg = MODEL_CONFIGS[modelKey];
 
             try {
                 if(video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
@@ -302,18 +358,25 @@
                     canvas.height = video.videoHeight;
                     document.getElementById('res-tag').innerText = `${video.videoWidth}x${video.videoHeight}`;
                     
-                    loadStatus.innerText = "Yapay Zeka Modeli Yükleniyor...";
+                    loadStatus.innerText = `Model Yükleniyor: ${modelCfg.label}...`;
+                    
                     if (!visionData) visionData = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm");
                     
                     detector = await ObjectDetector.createFromOptions(visionData, {
                         baseOptions: { 
-                            modelAssetPath: `https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite${modelLevel}/float16/1/efficientdet_lite${modelLevel}.tflite`,
-                            delegate: hwMode 
+                            modelAssetPath: modelCfg.url,
+                            delegate: hwMode
                         },
-                        scoreThreshold: confidence, runningMode: "VIDEO"
+                        scoreThreshold: confidence, 
+                        runningMode: "VIDEO"
                     });
 
+                    // HUD güncelle
                     document.getElementById('hw-tag').innerText = `HW: ${hwMode}`;
+                    const modelTag = document.getElementById('model-tag');
+                    modelTag.innerText = `MODEL: ${modelCfg.label.replace(' ★','')}`;
+                    modelTag.style.display = 'block';
+
                     overlay.style.display = 'none'; 
                     isRunning = true; 
                     renderLoop();
@@ -335,8 +398,6 @@
                 
                 if(modes.count) {
                     const trackingSens = parseInt(document.getElementById('sensSlider').value);
-                    
-                    // Sadece seçili hedefi say, hedef yoksa hepsini say
                     let objectsToCount = selectedObjectLabel 
                         ? lastDetections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
                         : lastDetections;
@@ -345,17 +406,15 @@
                         const label = det.categories[0].categoryName;
                         const { originX, originY, width, height } = det.boundingBox;
                         const cX = originX + width/2, cY = originY + height/2;
-
                         let found = objectHistory.findIndex(obj => {
                             const dist = Math.sqrt(Math.pow(cX - obj.x, 2) + Math.pow(cY - obj.y, 2));
                             return dist < trackingSens && obj.label === label;
                         });
-
                         if(found !== -1) { objectHistory[found].x = cX; objectHistory[found].y = cY; objectHistory[found].t = now; }
                         else { totalCount++; objectHistory.push({ x: cX, y: cY, label: label, t: now }); }
                     });
                     
-                    objectHistory = objectHistory.filter(obj => now - obj.t < 1500); // 1.5 sn görülmeyenleri temizle
+                    objectHistory = objectHistory.filter(obj => now - obj.t < 1500);
                     document.getElementById('count-tag').innerText = `ANLIK SAYI: ${objectsToCount.length}`;
                     document.getElementById('total-tag').innerText = `TOPLAM SAYI: ${totalCount}`;
                 }
@@ -367,7 +426,6 @@
         function draw(detections) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Pinler (Jiroskop Destekli)
             savedPins.forEach(p => {
                 const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width / 50) : 0;
                 const yOff = modes.sensors ? (sensorData.beta - p.b) * (canvas.height / 50) : 0;
@@ -375,7 +433,6 @@
                 ctx.beginPath(); ctx.arc(p.x + xOff, p.y + yOff, 8, 0, 7); ctx.fill();
             });
 
-            // Nesneleri Ekrana Çizme Mantığı
             detections.forEach((d) => {
                 const { originX, originY, width, height } = d.boundingBox;
                 const label = d.categories[0].categoryName;
@@ -383,34 +440,31 @@
                 const isTarget = selectedObjectLabel && label === selectedObjectLabel;
 
                 let boxColor, bgColor, textColor;
-
-                // RENK VE KUTU BELİRLEME
                 if (isTarget) {
-                    boxColor = "#ff0000"; // Seçili nesne: Kırmızı
-                    bgColor = "rgba(15, 0, 0, 0.85)"; // Koyu siyah-kırmızı arkaplan
-                    textColor = "#ff3e3e"; // Kırmızımtırak beyaz/parlak kırmızı yazı
+                    boxColor = "#ff0000";
+                    bgColor = "rgba(15, 0, 0, 0.85)";
+                    textColor = "#ff3e3e";
                 } else {
-                    boxColor = getStableColor(label); // Diğerleri sabit benzersiz renginde
-                    bgColor = boxColor; // Kutu arkaplanı aynı renk
-                    textColor = "#000000"; // Siyah yazı (kontrast için)
+                    boxColor = getStableColor(label);
+                    bgColor = boxColor;
+                    textColor = "#000000";
                 }
 
-                // Çerçeve
                 ctx.strokeStyle = boxColor;
                 ctx.lineWidth = isTarget ? 4 : 2; 
                 ctx.strokeRect(originX, originY, width, height);
 
-                // Yazı Arkaplanı
                 ctx.fillStyle = bgColor;
-                ctx.fillRect(originX, originY - 18, 75, 18);
+                ctx.fillRect(originX, originY - 18, 80, 18);
                 
-                // Yazı
                 ctx.fillStyle = textColor; 
                 ctx.font = "bold 11px sans-serif";
                 ctx.fillText(`%${score} ${trLabels[label] || label}`, originX + 4, originY - 5);
             });
         }
 
+        // Başlangıçta model bilgi kutusunu doldur
+        showModelInfo();
         getCameras().then(() => applySettings());
         updateUI();
     </script>
