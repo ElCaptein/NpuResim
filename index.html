@@ -340,13 +340,13 @@ const MODEL_CONFIGS = {
 
     // ── SSD MobileNet V2 ─────────────────────────────────────────
     ssd_mv2_f32: {
-        url: BASE + "mobilenetv2_ssd/float32/1/mobilenetv2_ssd.tflite",
+        url: BASE + "mobilenetv2_ssd/float32/latest/mobilenetv2_ssd.tflite",
         label: "SSD MobileNet V2 · F32", inputSize: 300, quant: "float32",
         info: "<b>SSD MobileNet V2 · Float32 ★</b> — 300×300 px. En hızlı genel amaçlı model. 90 COCO sınıfı. " +
               "Tüm cihazlarda sorunsuz çalışır. Gerçek zamanlı takip için idealdir. <b>Önerilen başlangıç modeli.</b>"
     },
     ssd_mv2_int8: {
-        url: BASE + "mobilenetv2_ssd/int8/1/mobilenetv2_ssd.tflite",
+        url: BASE + "mobilenetv2_ssd/int8/latest/mobilenetv2_ssd.tflite",
         label: "SSD MobileNet V2 · INT8", inputSize: 300, quant: "int8",
         info: "<b>SSD MobileNet V2 · INT8</b> — 300×300 px. CPU modunda F32'den ~%20 daha hızlı. " +
               "GPU modunda F32 kadar hızlı. Küçük doğruluk kaybı var. Düşük bellekli cihazlar için uygundur."
@@ -354,19 +354,19 @@ const MODEL_CONFIGS = {
 
     // ── EfficientDet Lite 0 ────────────────────────────────────────
     edet0_int8: {
-        url: BASE + "efficientdet_lite0/int8/1/efficientdet_lite0.tflite",
+        url: BASE + "efficientdet_lite0/int8/latest/efficientdet_lite0.tflite",
         label: "EfficientDet Lite 0 · INT8", inputSize: 320, quant: "int8",
         info: "<b>EfficientDet Lite 0 · INT8</b> — 320×320 px. CPU'da en hızlı EfficientDet. " +
               "BiFPN özellik ağı. SSD'ye göre daha iyi küçük nesne tespiti. 80 COCO sınıfı."
     },
     edet0_f16: {
-        url: BASE + "efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
+        url: BASE + "efficientdet_lite0/float16/latest/efficientdet_lite0.tflite",
         label: "EfficientDet Lite 0 · F16", inputSize: 320, quant: "float16",
         info: "<b>EfficientDet Lite 0 · Float16</b> — 320×320 px. GPU delegate ile optimize. " +
               "INT8'den daha doğru, F32'den daha hızlı. Mobil GPU için en iyi denge. 80 COCO sınıfı."
     },
     edet0_f32: {
-        url: BASE + "efficientdet_lite0/float32/1/efficientdet_lite0.tflite",
+        url: BASE + "efficientdet_lite0/float32/latest/efficientdet_lite0.tflite",
         label: "EfficientDet Lite 0 · F32", inputSize: 320, quant: "float32",
         info: "<b>EfficientDet Lite 0 · Float32</b> — 320×320 px. Tam hassasiyet, en büyük model boyutu. " +
               "Doğruluk öncelikli kullanım için. 80 COCO sınıfı."
@@ -374,19 +374,19 @@ const MODEL_CONFIGS = {
 
     // ── EfficientDet Lite 1 ────────────────────────────────────────
     edet1_int8: {
-        url: BASE + "efficientdet_lite1/int8/1/efficientdet_lite1.tflite",
+        url: BASE + "efficientdet_lite1/int8/latest/efficientdet_lite1.tflite",
         label: "EfficientDet Lite 1 · INT8", inputSize: 384, quant: "int8",
         info: "<b>EfficientDet Lite 1 · INT8</b> — 384×384 px. Lite 0'a göre ~%5 daha doğru. " +
               "CPU için quantize edilmiş, hızlı ve hafif."
     },
     edet1_f16: {
-        url: BASE + "efficientdet_lite1/float16/1/efficientdet_lite1.tflite",
+        url: BASE + "efficientdet_lite1/float16/latest/efficientdet_lite1.tflite",
         label: "EfficientDet Lite 1 · F16 ★", inputSize: 384, quant: "float16",
         info: "<b>EfficientDet Lite 1 · Float16 ★ (Varsayılan)</b> — 384×384 px. Hız ve kalite dengesi. " +
               "GPU+NPU modunda en verimli. Çoğu senaryo için önerilen model."
     },
     edet1_f32: {
-        url: BASE + "efficientdet_lite1/float32/1/efficientdet_lite1.tflite",
+        url: BASE + "efficientdet_lite1/float32/latest/efficientdet_lite1.tflite",
         label: "EfficientDet Lite 1 · F32", inputSize: 384, quant: "float32",
         info: "<b>EfficientDet Lite 1 · Float32</b> — 384×384 px. Yüksek hassasiyet. " +
               "CPU modunda yavaş, güçlü GPU ile iyi performans."
@@ -394,19 +394,19 @@ const MODEL_CONFIGS = {
 
     // ── EfficientDet Lite 2 ────────────────────────────────────────
     edet2_int8: {
-        url: BASE + "efficientdet_lite2/int8/1/efficientdet_lite2.tflite",
+        url: BASE + "efficientdet_lite2/int8/latest/efficientdet_lite2.tflite",
         label: "EfficientDet Lite 2 · INT8", inputSize: 448, quant: "int8",
         info: "<b>EfficientDet Lite 2 · INT8</b> — 448×448 px. Yüksek kalite, CPU optimize. " +
               "Orta büyüklükte nesnelerde güçlü. Bellek ve işlemci yükü orta seviye."
     },
     edet2_f16: {
-        url: BASE + "efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
+        url: BASE + "efficientdet_lite2/float16/latest/efficientdet_lite2.tflite",
         label: "EfficientDet Lite 2 · F16", inputSize: 448, quant: "float16",
         info: "<b>EfficientDet Lite 2 · Float16</b> — 448×448 px. GPU optimize yüksek kalite. " +
               "Nesne tespitinde Lite 1'e göre belirgin iyileşme. Güçlü mobil GPU önerilir."
     },
     edet2_f32: {
-        url: BASE + "efficientdet_lite2/float32/1/efficientdet_lite2.tflite",
+        url: BASE + "efficientdet_lite2/float32/latest/efficientdet_lite2.tflite",
         label: "EfficientDet Lite 2 · F32", inputSize: 448, quant: "float32",
         info: "<b>EfficientDet Lite 2 · Float32</b> — 448×448 px. En hassas Lite 2. " +
               "Doğruluk kritik uygulamalar için. Güçlü donanım gerektirir."
@@ -414,19 +414,19 @@ const MODEL_CONFIGS = {
 
     // ── EfficientDet Lite 3 ────────────────────────────────────────
     edet3_int8: {
-        url: BASE + "efficientdet_lite3/int8/1/efficientdet_lite3.tflite",
+        url: BASE + "efficientdet_lite3/int8/latest/efficientdet_lite3.tflite",
         label: "EfficientDet Lite 3 · INT8", inputSize: 512, quant: "int8",
         info: "<b>EfficientDet Lite 3 · INT8</b> — 512×512 px. Yüksek kalite, CPU için sıkıştırılmış. " +
               "Orta-üst donanımda iyi FPS. Büyük nesnelerde mükemmel."
     },
     edet3_f16: {
-        url: BASE + "efficientdet_lite3/float16/1/efficientdet_lite3.tflite",
+        url: BASE + "efficientdet_lite3/float16/latest/efficientdet_lite3.tflite",
         label: "EfficientDet Lite 3 · F16", inputSize: 512, quant: "float16",
         info: "<b>EfficientDet Lite 3 · Float16</b> — 512×512 px. Üst seviye kalite. " +
               "GPU delegate şart. Flagship mobil veya masaüstü için."
     },
     edet3_f32: {
-        url: BASE + "efficientdet_lite3/float32/1/efficientdet_lite3.tflite",
+        url: BASE + "efficientdet_lite3/float32/latest/efficientdet_lite3.tflite",
         label: "EfficientDet Lite 3 · F32", inputSize: 512, quant: "float32",
         info: "<b>EfficientDet Lite 3 · Float32</b> — 512×512 px. Maksimum Lite 3 kalitesi. " +
               "Güçlü GPU zorunlu. Gerçek zamanlı kullanımda 10–20 FPS beklenir."
@@ -434,19 +434,19 @@ const MODEL_CONFIGS = {
 
     // ── EfficientDet Lite 4 ────────────────────────────────────────
     edet4_int8: {
-        url: BASE + "efficientdet_lite4/int8/1/efficientdet_lite4.tflite",
+        url: BASE + "efficientdet_lite4/int8/latest/efficientdet_lite4.tflite",
         label: "EfficientDet Lite 4 · INT8", inputSize: 640, quant: "int8",
         info: "<b>EfficientDet Lite 4 · INT8</b> — 640×640 px. En büyük model, CPU sıkıştırılmış. " +
               "Çok güçlü donanım gerektirir. Yüksek doğruluk, düşük FPS."
     },
     edet4_f16: {
-        url: BASE + "efficientdet_lite4/float16/1/efficientdet_lite4.tflite",
+        url: BASE + "efficientdet_lite4/float16/latest/efficientdet_lite4.tflite",
         label: "EfficientDet Lite 4 · F16", inputSize: 640, quant: "float16",
         info: "<b>EfficientDet Lite 4 · Float16</b> — 640×640 px. Seri içinde en kaliteli GPU modeli. " +
               "Masaüstü/yüksek GPU şart. Sahne analizi, gözetleme gibi uygulamalar için."
     },
     edet4_f32: {
-        url: BASE + "efficientdet_lite4/float32/1/efficientdet_lite4.tflite",
+        url: BASE + "efficientdet_lite4/float32/latest/efficientdet_lite4.tflite",
         label: "EfficientDet Lite 4 · F32", inputSize: 640, quant: "float32",
         info: "<b>EfficientDet Lite 4 · Float32</b> — 640×640 px. Mümkün olan en yüksek hassasiyet. " +
               "Yalnızca güçlü masaüstü GPU'larda gerçek zamanlı çalışır."
