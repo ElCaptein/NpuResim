@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision ULTIMATE PRO v8</title>
+    <title>AI Vision ULTIMATE PRO v10</title>
     <style>
         :root {
             --neon: #00ff9d; --bg: rgba(8,8,8,0.97); --accent: #ff2244;
@@ -142,6 +142,10 @@
     <div class="loader-text">SİSTEM BAŞLATILIYOR<br>
         <span id="load-status" style="font-size:8px;color:#444;letter-spacing:1px;">MODÜLLER HAZIRLANIYOR</span>
     </div>
+    <div style="margin-top:18px;font-size:9px;color:#333;text-align:center;line-height:1.7;max-width:260px;">
+        ⚠ Kamera izni için tarayıcı sorarsa <b style="color:#555">İzin Ver</b>'e tıklayın<br>
+        Sayfa <b style="color:#555">HTTPS</b> üzerinden açılmalıdır
+    </div>
 </div>
 
 <!-- PIN SAVE BTN -->
@@ -173,7 +177,7 @@
 <!-- PANEL -->
 <div id="control-panel">
     <div class="panel-header" onclick="togglePanel()">
-        <span>⚙️ AI VISION V8 · KONTROL PANELİ</span>
+        <span>⚙️ AI VISION V10 · KONTROL PANELİ</span>
         <span id="toggle-icon">▼</span>
     </div>
     <div class="panel-content" id="p-content">
@@ -208,8 +212,8 @@
                 <input type="range" id="confSlider" min="5" max="95" value="40" oninput="updateUI()">
             </div>
             <div>
-                <label>TAKİP YARIÇAPI (px) <span class="slider-val" id="sens-val">60</span></label>
-                <input type="range" id="sensSlider" min="10" max="300" value="60" oninput="updateUI()">
+                <label>IoU EŞİK (örtüşme) <span class="slider-val" id="sens-val">0.15</span></label>
+                <input type="range" id="sensSlider" min="5" max="60" value="15" oninput="updateUI()">
             </div>
         </div>
         <div class="grid2">
@@ -226,18 +230,44 @@
         <!-- MODEL -->
         <div class="sec">🤖 AI Modeli</div>
         <div>
-            <label>MODEL — <span style="color:var(--gold)">Kalite ↑ = Hız ↓</span></label>
+            <label>MODEL — <span style="color:var(--gold)">Kalite ↑ = Hız ↓ &nbsp;|&nbsp; INT8=Hızlı · F16=GPU · F32=Hassas</span></label>
             <select id="modelSel" onchange="showModelInfo()">
-                <optgroup label="── EfficientDet Lite">
-                    <option value="efficientdet_lite0">EfficientDet Lite 0 — En Hızlı (320px)</option>
-                    <option value="efficientdet_lite1">EfficientDet Lite 1 — Hızlı (384px)</option>
-                    <option value="efficientdet_lite2" selected>EfficientDet Lite 2 — Dengeli (448px) ★</option>
-                    <option value="efficientdet_lite3">EfficientDet Lite 3 — Yüksek (512px)</option>
-                    <option value="efficientdet_lite4">EfficientDet Lite 4 — Maks. (640px)</option>
+
+                <optgroup label="⚡ SSD MobileNet V2 — Ultra Hızlı (300px)">
+                    <option value="ssd_mv2_f32">SSD MobileNet V2 · Float32 — En Hızlı &amp; Hafif ★</option>
+                    <option value="ssd_mv2_int8">SSD MobileNet V2 · INT8 — CPU'da Hızlı</option>
                 </optgroup>
-                <optgroup label="── SSD MobileNet">
-                    <option value="ssd_mobilenet_v2">SSD MobileNet V2 — Hızlı (300px)</option>
+
+                <optgroup label="🔵 EfficientDet Lite 0 — Hızlı (320px)">
+                    <option value="edet0_int8">EfficientDet Lite 0 · INT8 — En Hızlı Lite</option>
+                    <option value="edet0_f16">EfficientDet Lite 0 · Float16 — GPU Optimize</option>
+                    <option value="edet0_f32">EfficientDet Lite 0 · Float32 — Tam Hassasiyet</option>
                 </optgroup>
+
+                <optgroup label="🟡 EfficientDet Lite 1 — Dengeli (384px)">
+                    <option value="edet1_int8">EfficientDet Lite 1 · INT8 — Hızlı</option>
+                    <option value="edet1_f16" selected>EfficientDet Lite 1 · Float16 — Dengeli ★</option>
+                    <option value="edet1_f32">EfficientDet Lite 1 · Float32 — Hassas</option>
+                </optgroup>
+
+                <optgroup label="🟠 EfficientDet Lite 2 — Kaliteli (448px)">
+                    <option value="edet2_int8">EfficientDet Lite 2 · INT8 — Hızlı</option>
+                    <option value="edet2_f16">EfficientDet Lite 2 · Float16 — GPU Optimize</option>
+                    <option value="edet2_f32">EfficientDet Lite 2 · Float32 — En Hassas</option>
+                </optgroup>
+
+                <optgroup label="🔴 EfficientDet Lite 3 — Yüksek (512px)">
+                    <option value="edet3_int8">EfficientDet Lite 3 · INT8</option>
+                    <option value="edet3_f16">EfficientDet Lite 3 · Float16</option>
+                    <option value="edet3_f32">EfficientDet Lite 3 · Float32 — Maks. Kalite</option>
+                </optgroup>
+
+                <optgroup label="💀 EfficientDet Lite 4 — Maksimum (640px)">
+                    <option value="edet4_int8">EfficientDet Lite 4 · INT8</option>
+                    <option value="edet4_f16">EfficientDet Lite 4 · Float16</option>
+                    <option value="edet4_f32">EfficientDet Lite 4 · Float32 — Güçlü GPU Şart</option>
+                </optgroup>
+
             </select>
             <div id="model-info-box" class="model-info">Model bilgisi yükleniyor...</div>
         </div>
@@ -298,38 +328,128 @@ window.selectHW = (key) => {
 };
 
 // ═══════════════════════════════════════════════════════════
-//  MODEL TANIMLARI
+//  MODEL TANIMLARI — Tüm Varyantlar
+//  Kaynak: storage.googleapis.com/mediapipe-models (resmi CORS-free CDN)
+//  Quantization:
+//    INT8   → CPU'da en hızlı, küçük model, hafif doğruluk kaybı
+//    Float16 → GPU delegate ile optimal, INT8'den daha doğru
+//    Float32 → En yüksek hassasiyet, daha yavaş / büyük model
 // ═══════════════════════════════════════════════════════════
+const BASE = "https://storage.googleapis.com/mediapipe-models/object_detector/";
 const MODEL_CONFIGS = {
-    efficientdet_lite0: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
-        label: "EfficientDet Lite 0", inputSize: 320,
-        info: "<b>EfficientDet Lite 0</b> — 320×320 px giriş. En hızlı, mobil için optimize. 90 COCO sınıfı. GPU'da ~30+ FPS."
+
+    // ── SSD MobileNet V2 ─────────────────────────────────────────
+    ssd_mv2_f32: {
+        url: BASE + "mobilenetv2_ssd/float32/1/mobilenetv2_ssd.tflite",
+        label: "SSD MobileNet V2 · F32", inputSize: 300, quant: "float32",
+        info: "<b>SSD MobileNet V2 · Float32 ★</b> — 300×300 px. En hızlı genel amaçlı model. 90 COCO sınıfı. " +
+              "Tüm cihazlarda sorunsuz çalışır. Gerçek zamanlı takip için idealdir. <b>Önerilen başlangıç modeli.</b>"
     },
-    efficientdet_lite1: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite1/float16/1/efficientdet_lite1.tflite",
-        label: "EfficientDet Lite 1", inputSize: 384,
-        info: "<b>EfficientDet Lite 1</b> — 384×384 px. Lite 0'a göre ~%5 daha doğru, hafif hız kaybı."
+    ssd_mv2_int8: {
+        url: BASE + "mobilenetv2_ssd/int8/1/mobilenetv2_ssd.tflite",
+        label: "SSD MobileNet V2 · INT8", inputSize: 300, quant: "int8",
+        info: "<b>SSD MobileNet V2 · INT8</b> — 300×300 px. CPU modunda F32'den ~%20 daha hızlı. " +
+              "GPU modunda F32 kadar hızlı. Küçük doğruluk kaybı var. Düşük bellekli cihazlar için uygundur."
     },
-    efficientdet_lite2: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-        label: "EfficientDet Lite 2 ★", inputSize: 448,
-        info: "<b>EfficientDet Lite 2 ★ (Varsayılan)</b> — 448×448 px. Hız/kalite dengesi. Çoğu kullanım senaryosu için önerilen."
+
+    // ── EfficientDet Lite 0 ────────────────────────────────────────
+    edet0_int8: {
+        url: BASE + "efficientdet_lite0/int8/1/efficientdet_lite0.tflite",
+        label: "EfficientDet Lite 0 · INT8", inputSize: 320, quant: "int8",
+        info: "<b>EfficientDet Lite 0 · INT8</b> — 320×320 px. CPU'da en hızlı EfficientDet. " +
+              "BiFPN özellik ağı. SSD'ye göre daha iyi küçük nesne tespiti. 80 COCO sınıfı."
     },
-    efficientdet_lite3: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite3/float16/1/efficientdet_lite3.tflite",
-        label: "EfficientDet Lite 3", inputSize: 512,
-        info: "<b>EfficientDet Lite 3</b> — 512×512 px. Yüksek doğruluk. Orta-üst seviye GPU gerektirir."
+    edet0_f16: {
+        url: BASE + "efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
+        label: "EfficientDet Lite 0 · F16", inputSize: 320, quant: "float16",
+        info: "<b>EfficientDet Lite 0 · Float16</b> — 320×320 px. GPU delegate ile optimize. " +
+              "INT8'den daha doğru, F32'den daha hızlı. Mobil GPU için en iyi denge. 80 COCO sınıfı."
     },
-    efficientdet_lite4: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite4/float16/1/efficientdet_lite4.tflite",
-        label: "EfficientDet Lite 4", inputSize: 640,
-        info: "<b>EfficientDet Lite 4</b> — 640×640 px. Maksimum hassasiyet. Güçlü GPU şart."
+    edet0_f32: {
+        url: BASE + "efficientdet_lite0/float32/1/efficientdet_lite0.tflite",
+        label: "EfficientDet Lite 0 · F32", inputSize: 320, quant: "float32",
+        info: "<b>EfficientDet Lite 0 · Float32</b> — 320×320 px. Tam hassasiyet, en büyük model boyutu. " +
+              "Doğruluk öncelikli kullanım için. 80 COCO sınıfı."
     },
-    ssd_mobilenet_v2: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/mobilenetv2_ssd/float16/1/mobilenetv2_ssd.tflite",
-        label: "SSD MobileNet V2", inputSize: 300,
-        info: "<b>SSD MobileNet V2</b> — 300×300 px. Klasik gerçek zamanlı model. Çok düşük gecikme, geniş cihaz desteği."
+
+    // ── EfficientDet Lite 1 ────────────────────────────────────────
+    edet1_int8: {
+        url: BASE + "efficientdet_lite1/int8/1/efficientdet_lite1.tflite",
+        label: "EfficientDet Lite 1 · INT8", inputSize: 384, quant: "int8",
+        info: "<b>EfficientDet Lite 1 · INT8</b> — 384×384 px. Lite 0'a göre ~%5 daha doğru. " +
+              "CPU için quantize edilmiş, hızlı ve hafif."
+    },
+    edet1_f16: {
+        url: BASE + "efficientdet_lite1/float16/1/efficientdet_lite1.tflite",
+        label: "EfficientDet Lite 1 · F16 ★", inputSize: 384, quant: "float16",
+        info: "<b>EfficientDet Lite 1 · Float16 ★ (Varsayılan)</b> — 384×384 px. Hız ve kalite dengesi. " +
+              "GPU+NPU modunda en verimli. Çoğu senaryo için önerilen model."
+    },
+    edet1_f32: {
+        url: BASE + "efficientdet_lite1/float32/1/efficientdet_lite1.tflite",
+        label: "EfficientDet Lite 1 · F32", inputSize: 384, quant: "float32",
+        info: "<b>EfficientDet Lite 1 · Float32</b> — 384×384 px. Yüksek hassasiyet. " +
+              "CPU modunda yavaş, güçlü GPU ile iyi performans."
+    },
+
+    // ── EfficientDet Lite 2 ────────────────────────────────────────
+    edet2_int8: {
+        url: BASE + "efficientdet_lite2/int8/1/efficientdet_lite2.tflite",
+        label: "EfficientDet Lite 2 · INT8", inputSize: 448, quant: "int8",
+        info: "<b>EfficientDet Lite 2 · INT8</b> — 448×448 px. Yüksek kalite, CPU optimize. " +
+              "Orta büyüklükte nesnelerde güçlü. Bellek ve işlemci yükü orta seviye."
+    },
+    edet2_f16: {
+        url: BASE + "efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
+        label: "EfficientDet Lite 2 · F16", inputSize: 448, quant: "float16",
+        info: "<b>EfficientDet Lite 2 · Float16</b> — 448×448 px. GPU optimize yüksek kalite. " +
+              "Nesne tespitinde Lite 1'e göre belirgin iyileşme. Güçlü mobil GPU önerilir."
+    },
+    edet2_f32: {
+        url: BASE + "efficientdet_lite2/float32/1/efficientdet_lite2.tflite",
+        label: "EfficientDet Lite 2 · F32", inputSize: 448, quant: "float32",
+        info: "<b>EfficientDet Lite 2 · Float32</b> — 448×448 px. En hassas Lite 2. " +
+              "Doğruluk kritik uygulamalar için. Güçlü donanım gerektirir."
+    },
+
+    // ── EfficientDet Lite 3 ────────────────────────────────────────
+    edet3_int8: {
+        url: BASE + "efficientdet_lite3/int8/1/efficientdet_lite3.tflite",
+        label: "EfficientDet Lite 3 · INT8", inputSize: 512, quant: "int8",
+        info: "<b>EfficientDet Lite 3 · INT8</b> — 512×512 px. Yüksek kalite, CPU için sıkıştırılmış. " +
+              "Orta-üst donanımda iyi FPS. Büyük nesnelerde mükemmel."
+    },
+    edet3_f16: {
+        url: BASE + "efficientdet_lite3/float16/1/efficientdet_lite3.tflite",
+        label: "EfficientDet Lite 3 · F16", inputSize: 512, quant: "float16",
+        info: "<b>EfficientDet Lite 3 · Float16</b> — 512×512 px. Üst seviye kalite. " +
+              "GPU delegate şart. Flagship mobil veya masaüstü için."
+    },
+    edet3_f32: {
+        url: BASE + "efficientdet_lite3/float32/1/efficientdet_lite3.tflite",
+        label: "EfficientDet Lite 3 · F32", inputSize: 512, quant: "float32",
+        info: "<b>EfficientDet Lite 3 · Float32</b> — 512×512 px. Maksimum Lite 3 kalitesi. " +
+              "Güçlü GPU zorunlu. Gerçek zamanlı kullanımda 10–20 FPS beklenir."
+    },
+
+    // ── EfficientDet Lite 4 ────────────────────────────────────────
+    edet4_int8: {
+        url: BASE + "efficientdet_lite4/int8/1/efficientdet_lite4.tflite",
+        label: "EfficientDet Lite 4 · INT8", inputSize: 640, quant: "int8",
+        info: "<b>EfficientDet Lite 4 · INT8</b> — 640×640 px. En büyük model, CPU sıkıştırılmış. " +
+              "Çok güçlü donanım gerektirir. Yüksek doğruluk, düşük FPS."
+    },
+    edet4_f16: {
+        url: BASE + "efficientdet_lite4/float16/1/efficientdet_lite4.tflite",
+        label: "EfficientDet Lite 4 · F16", inputSize: 640, quant: "float16",
+        info: "<b>EfficientDet Lite 4 · Float16</b> — 640×640 px. Seri içinde en kaliteli GPU modeli. " +
+              "Masaüstü/yüksek GPU şart. Sahne analizi, gözetleme gibi uygulamalar için."
+    },
+    edet4_f32: {
+        url: BASE + "efficientdet_lite4/float32/1/efficientdet_lite4.tflite",
+        label: "EfficientDet Lite 4 · F32", inputSize: 640, quant: "float32",
+        info: "<b>EfficientDet Lite 4 · Float32</b> — 640×640 px. Mümkün olan en yüksek hassasiyet. " +
+              "Yalnızca güçlü masaüstü GPU'larda gerçek zamanlı çalışır."
     },
 };
 
@@ -386,8 +506,7 @@ let savedPins = [], lastDetections = [];
 // perClassCount  : Map<label, count>  — sınıf başına benzersiz sayı
 let nextId = 1;
 let trackedObjects   = [];   // { id, label, cx, cy, lastSeen }
-let seenIds          = new Set();
-let cooldownMap      = new Map(); // id -> timestamp (ne zamana kadar bloklu)
+let cooldownMap      = new Map(); // id -> { expiry, cx, cy, label }
 let perClassCount    = new Map();
 let totalUniqueCount = 0;
 let instantCount     = 0;
@@ -405,7 +524,7 @@ function getColor(label) { return PALETTE[hashStr(label) % PALETTE.length]; }
 // ═══════════════════════════════════════════════════════════
 window.updateUI = () => {
     document.getElementById('conf-val').innerText  = document.getElementById('confSlider').value;
-    document.getElementById('sens-val').innerText  = document.getElementById('sensSlider').value;
+    document.getElementById('sens-val').innerText  = (parseInt(document.getElementById('sensSlider').value) / 100).toFixed(2);
     document.getElementById('ttl-val').innerText   = (document.getElementById('ttlSlider').value / 10).toFixed(1);
     document.getElementById('block-val').innerText = (document.getElementById('blockSlider').value / 10).toFixed(1);
 };
@@ -429,7 +548,6 @@ window.toggleMode = (m) => {
 
 window.resetCounter = () => {
     trackedObjects   = [];
-    seenIds          = new Set();
     cooldownMap      = new Map();
     perClassCount    = new Map();
     totalUniqueCount = 0;
@@ -488,8 +606,8 @@ window.saveCurrentObjectCoords = () => {
 window.applySettings = async () => {
     isRunning = false;
     overlay.style.display = 'flex';
-    loadStatus.innerText = 'Sistem Yeniden Başlatılıyor...';
-    if (detector) { detector.close(); detector = null; }
+    loadStatus.innerText = 'Kamera başlatılıyor...';
+    if (detector) { try { detector.close(); } catch(e){} detector = null; }
 
     const hwCfg     = HW_CONFIGS[selectedHW];
     const modelKey  = document.getElementById('modelSel').value;
@@ -499,122 +617,262 @@ window.applySettings = async () => {
     const modelCfg  = MODEL_CONFIGS[modelKey];
 
     try {
-        if (video.srcObject) video.srcObject.getTracks().forEach(t => t.stop());
+        // Eski stream'i durdur
+        if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
 
         const stream = await navigator.mediaDevices.getUserMedia({
-            video: { deviceId: deviceId ? { exact: deviceId } : undefined, facingMode: 'environment', height: { ideal: resHeight } }
+            video: {
+                deviceId: deviceId ? { exact: deviceId } : undefined,
+                facingMode: { ideal: 'environment' },
+                height: { ideal: resHeight }
+            }
         });
         video.srcObject = stream;
 
-        video.onloadedmetadata = async () => {
-            canvas.width  = video.videoWidth;
-            canvas.height = video.videoHeight;
-            document.getElementById('res-tag').innerText = `${video.videoWidth}×${video.videoHeight}`;
+        // SSL + GitHub Pages — çok katmanlı güvenli başlatma
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error(
+                'Kamera zaman aşımı (10 sn) — İzin verildiğini ve sayfanın HTTPS üzerinden çalıştığını kontrol edin.'
+            )), 10000);
+            const done = () => {
+                clearTimeout(timeout);
+                video.onloadeddata = video.oncanplaythrough = video.onloadedmetadata = video.onerror = null;
+                resolve();
+            };
+            // Zaten yüklendiyse anında geç (GitHub Pages'te sık karşılaşılan durum)
+            if (video.readyState >= 3) { clearTimeout(timeout); resolve(); return; }
+            video.onloadeddata     = done;
+            video.oncanplaythrough = done;
+            video.onloadedmetadata = () => { if (video.readyState >= 3) done(); };
+            video.onerror = () => { clearTimeout(timeout); reject(new Error('Kamera akışı başlatılamadı — Tarayıcı izinlerini kontrol edin.')); };
+            video.play().catch(err => { clearTimeout(timeout); reject(err); });
+        });
 
-            loadStatus.innerText = `Model: ${modelCfg.label} yükleniyor...`;
-            if (!visionData) visionData = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm');
+        canvas.width  = video.videoWidth  || 640;
+        canvas.height = video.videoHeight || 480;
+        document.getElementById('res-tag').innerText = `${canvas.width}×${canvas.height}`;
 
-            detector = await ObjectDetector.createFromOptions(visionData, {
-                baseOptions: { modelAssetPath: modelCfg.url, delegate: hwCfg.delegate },
-                scoreThreshold: conf,
-                runningMode: 'VIDEO'
-            });
+        loadStatus.innerText = `Model yükleniyor: ${modelCfg.label}...`;
 
-            document.getElementById('hw-tag').innerText = `HW: ${hwCfg.label}`;
-            const mt = document.getElementById('model-tag');
-            mt.innerText = `MODEL: ${modelCfg.label.replace(' ★','')}`;
-            mt.style.display = 'block';
+        if (!visionData) {
+            loadStatus.innerText = 'MediaPipe WASM yükleniyor...';
+            visionData = await Promise.race([
+                FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.6/wasm'),
+                new Promise((_, r) => setTimeout(() => r(new Error('WASM indirme zaman aşımı (30 sn) — İnternet bağlantısı kontrol edin.')), 30000))
+            ]);
+        }
 
-            overlay.style.display = 'none';
-            isRunning = true;
-            lastFrameTime = performance.now();
-            requestAnimationFrame(renderLoop);
-        };
-    } catch(e) {
-        alert('Kamera veya Model Hatası: ' + e.message);
+        loadStatus.innerText = `Model indiriliyor: ${modelCfg.label}...`;
+
+        // GPU delegate başarısız olursa CPU'ya otomatik düş
+        const modelOpts = { baseOptions: { modelAssetPath: modelCfg.url, delegate: hwCfg.delegate }, scoreThreshold: conf, runningMode: 'VIDEO', maxResults: 20 };
+        const cpuOpts   = { baseOptions: { modelAssetPath: modelCfg.url, delegate: 'CPU' },          scoreThreshold: conf, runningMode: 'VIDEO', maxResults: 20 };
+        const MODEL_TIMEOUT = 45000;
+        try {
+            detector = await Promise.race([
+                ObjectDetector.createFromOptions(visionData, modelOpts),
+                new Promise((_, r) => setTimeout(() => r(new Error(`Model yükleme zaman aşımı (${MODEL_TIMEOUT/1000} sn) — Daha hafif bir model seçin veya internet bağlantısını kontrol edin.`)), MODEL_TIMEOUT))
+            ]);
+        } catch(delegateErr) {
+            loadStatus.innerText = 'GPU başarısız, CPU deneniyor...';
+            detector = await Promise.race([
+                ObjectDetector.createFromOptions(visionData, cpuOpts),
+                new Promise((_, r) => setTimeout(() => r(new Error('CPU modunda da model yüklenemedi.')), MODEL_TIMEOUT))
+            ]);
+        }
+
+        document.getElementById('hw-tag').innerText = `HW: ${hwCfg.label}`;
+        const mt = document.getElementById('model-tag');
+        const qb = modelCfg.quant === 'int8' ? '⚡INT8' : modelCfg.quant === 'float16' ? '🔷F16' : '🔶F32';
+        mt.innerText = `${modelCfg.label.replace(/ [·★].*$/,'')} [${qb}] ${modelCfg.inputSize}px`;
+        mt.style.display = 'block';
+
         overlay.style.display = 'none';
+        isRunning = true;
+        lastFrameTime = performance.now();
+        requestAnimationFrame(renderLoop);
+
+    } catch(e) {
+        loadStatus.innerHTML =
+            `❌ ${e.message || e}<br><small style="color:#555;font-size:9px;letter-spacing:0;line-height:1.6;display:block;margin-top:6px">` +
+            `Sorun devam ederse: CPU modunu ve daha hafif bir modeli deneyin.</small>`;
+        // Mevcut "Tekrar Dene" butonunu temizle
+        const old = overlay.querySelector('.retry-btn');
+        if (old) old.remove();
+        const retBtn = document.createElement('button');
+        retBtn.className = 'retry-btn';
+        retBtn.textContent = '↺  Tekrar Dene';
+        retBtn.style.cssText = 'margin-top:18px;padding:11px 30px;background:var(--neon);color:#000;' +
+            'font-weight:800;border:none;border-radius:7px;font-size:13px;cursor:pointer;letter-spacing:.5px;';
+        retBtn.onclick = () => { retBtn.remove(); applySettings(); };
+        overlay.appendChild(retBtn);
     }
 };
 
 // ═══════════════════════════════════════════════════════════
-//  GELİŞMİŞ NESNE TAKİP & SAYIM
-//  — Her nesne benzersiz bir ID alır
-//  — Görüş alanından çıkan nesne cooldown süresi boyunca bloklanır
-//  — Cooldown bitmeden aynı konumdan gelen nesne YENİDEN SAYILMAZ
-//  — Cooldown bittikten sonra geri gelen nesne YENİ nesne sayılır
+//  IoU (Intersection over Union) TABANLI TAKİP & SAYIM
+//
+//  Neden IoU?
+//  — Piksel mesafesi kamera/nesne hareketi ile büyür → yanlış yeni nesne
+//  — IoU kutu örtüşmesine bakar: %0 = hiç örtüşme yok, %1 = tam aynı kutu
+//  — IoU > 0.2 ise aynı nesne — hareket büyük olsa bile örtüşme var
+//  — Kamera sallansa, nesne koşsa: yine de doğru eşleşir
+//
+//  trackedObjects : { id, label, box{x,y,w,h}, lastSeen }
+//  cooldownMap    : { id → { expiry, box, label } }
 // ═══════════════════════════════════════════════════════════
-function processDetections(detections, now) {
-    const trackR  = parseInt(document.getElementById('sensSlider').value);
-    const ttlMs   = parseFloat(document.getElementById('ttlSlider').value) / 10 * 1000;   // kaybolma süresi
-    const blockMs = parseFloat(document.getElementById('blockSlider').value) / 10 * 1000; // yeniden giriş bloğu
 
-    // Filtrele: hedef seçildiyse sadece o
+// Kutu örtüşme hesabı
+function iou(a, b) {
+    const x1 = Math.max(a.x, b.x), y1 = Math.max(a.y, b.y);
+    const x2 = Math.min(a.x+a.w, b.x+b.w), y2 = Math.min(a.y+a.h, b.y+b.h);
+    const inter = Math.max(0, x2-x1) * Math.max(0, y2-y1);
+    if (inter === 0) return 0;
+    return inter / (a.w*a.h + b.w*b.h - inter);
+}
+
+// ── Gelişmiş benzerlik: IoU + merkez mesafesi ──────────────────────
+// Kamera hareket ettiğinde kutular kayar → IoU sıfıra düşer.
+// Merkez mesafesi fallback'i aynı nesneyi tanımayı sürdürür.
+function similarity(a, b) {
+    const iouScore = iou(a, b);
+    if (iouScore > 0) return iouScore;          // Örtüşme varsa IoU yeterli
+
+    // Merkez-merkez normalise mesafesi
+    const dist = Math.hypot(
+        (a.x + a.w/2) - (b.x + b.w/2),
+        (a.y + a.h/2) - (b.y + b.h/2)
+    );
+    const refSize = (Math.sqrt(a.w * a.h) + Math.sqrt(b.w * b.h)) / 2;
+    // Obje kendi boyutunun %120'si içindeyse eşleşmiş say
+    return dist < refSize * 1.2 ? Math.max(0, 1 - dist / (refSize * 1.2)) * 0.25 : 0;
+}
+
+// ── Kamera hareketi tahmini ────────────────────────────────────────
+// Mevcut tüm tracked nesnelerin en yakın tespitle kaymasına bakarak
+// global bir dx/dy vektörü çıkarır. Çoğu nesne aynı yönde kaymışsa
+// → kamera hareketi; bu vektör cooldown eşleşmesinde kompanzasyon için kullanılır.
+function estimateCameraMotion(detections, tracked) {
+    if (tracked.length < 1) return { dx: 0, dy: 0 };
+    const shifts = [];
+    tracked.forEach(obj => {
+        let best = Infinity, bdx = 0, bdy = 0;
+        detections.forEach(det => {
+            if (det.categories[0].categoryName !== obj.label) return;
+            const { originX: x, originY: y, width: w, height: h } = det.boundingBox;
+            const dx = (x + w/2) - (obj.box.x + obj.box.w/2);
+            const dy = (y + h/2) - (obj.box.y + obj.box.h/2);
+            const d  = Math.hypot(dx, dy);
+            if (d < best) { best = d; bdx = dx; bdy = dy; }
+        });
+        const refSize = Math.sqrt(obj.box.w * obj.box.h);
+        if (best < refSize * 2) shifts.push({ dx: bdx, dy: bdy }); // makul kayma
+    });
+    if (shifts.length < 2) return { dx: 0, dy: 0 };
+    return {
+        dx: shifts.reduce((s, v) => s + v.dx, 0) / shifts.length,
+        dy: shifts.reduce((s, v) => s + v.dy, 0) / shifts.length
+    };
+}
+
+function processDetections(detections, now) {
+    const IOU_THRESH   = parseInt(document.getElementById('sensSlider').value) / 100;
+    const ttlMs        = parseFloat(document.getElementById('ttlSlider').value)   / 10 * 1000;
+    const blockMs      = parseFloat(document.getElementById('blockSlider').value) / 10 * 1000;
+    // Kamera hareketi eşiği: ekranın %8'inden büyük kayma → kamera hareketi
+    const CAM_MOTION_THRESH = Math.min(canvas.width, canvas.height) * 0.08;
+
+    // Süresi dolmuş cooldown'ları temizle
+    cooldownMap.forEach((data, id) => { if (data.expiry < now) cooldownMap.delete(id); });
+
+    // Filtre: sadece hedef seçildiyse o sınıf
     const toTrack = selectedObjectLabel
         ? detections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
         : detections;
 
     instantCount = toTrack.length;
 
-    // Her algılanan nesneyi mevcut tracked nesnelerle eşleştir
+    // ── Kamera hareketi tahmini ─────────────────────────────────────
+    // Tracked nesnelerin en yakın deteksiyona kaç piksel kaydığını ölçeriz.
+    // Çoğunluk aynı yönde kaymışsa global kamera hareketi (dx, dy) çıkar.
+    const camShift = estimateCameraMotion(toTrack, trackedObjects);
+    const isCameraMoving = Math.hypot(camShift.dx, camShift.dy) > CAM_MOTION_THRESH;
+
+    // Kamera hareket ediyorsa cooldown kutularını da kaydır (geriye dönük kompanzasyon)
+    if (isCameraMoving) {
+        cooldownMap.forEach((data) => {
+            data.box = {
+                x: data.box.x + camShift.dx,
+                y: data.box.y + camShift.dy,
+                w: data.box.w,
+                h: data.box.h
+            };
+        });
+    }
+
     const matched = new Set();
+
     toTrack.forEach(det => {
         const lbl = det.categories[0].categoryName;
-        const { originX, originY, width, height } = det.boundingBox;
-        const cx = originX + width / 2, cy = originY + height / 2;
+        const { originX: x, originY: y, width: w, height: h } = det.boundingBox;
+        const box = { x, y, w, h };
 
-        // En yakın mevcut nesneyi bul (aynı sınıf + mesafe < trackR)
-        let best = null, bestDist = Infinity;
+        // ── ADIM 1: Aktif tracked nesnelerle benzerlik eşleştirmesi ──
+        // similarity() = IoU + merkez-mesafesi fallback (kamera kaymasına dayanıklı)
+        let bestObj = null, bestScore = IOU_THRESH * 0.6; // aktif takip için daha geniş
         trackedObjects.forEach(obj => {
-            if (obj.label !== lbl) return;
-            const d = Math.hypot(cx - obj.cx, cy - obj.cy);
-            if (d < trackR && d < bestDist) { best = obj; bestDist = d; }
+            if (obj.label !== lbl || matched.has(obj.id)) return;
+            const score = similarity(box, obj.box);
+            if (score > bestScore) { bestObj = obj; bestScore = score; }
         });
 
-        if (best && !matched.has(best.id)) {
-            // Mevcut nesne güncelle
-            best.cx = cx; best.cy = cy; best.lastSeen = now;
-            matched.add(best.id);
-        } else {
-            // YENİ nesne — cooldown'da mı?
-            // Cooldown kontrolü: bu konuma yakın, bloklu bir nesne var mı?
-            let blocked = false;
-            cooldownMap.forEach((expiry, id) => {
-                if (expiry < now) { cooldownMap.delete(id); return; }
-                // Aynı sınıftan yakın bir blok var mı?
-                // (blok pozisyonunu saklamak için cooldownMap'i genişlet)
-            });
-
-            // Yeni ID ata
-            const id = nextId++;
-            trackedObjects.push({ id, label: lbl, cx, cy, lastSeen: now });
-            matched.add(id);
-
-            // Bu nesneyi daha önce saydık mı? (cooldown yoksa say)
-            if (!seenIds.has(id)) {
-                seenIds.add(id);
-                totalUniqueCount++;
-                perClassCount.set(lbl, (perClassCount.get(lbl) || 0) + 1);
-            }
+        if (bestObj) {
+            bestObj.box = box;
+            bestObj.lastSeen = now;
+            matched.add(bestObj.id);
+            return; // Mevcut nesne — SAYMA
         }
+
+        // ── ADIM 2: Cooldown'da benzerlik eşleşmesi var mı? ──────────
+        // Kamera hareketi varsa cooldown kutuları yukarıda kaydırıldı → eşleşme devam eder
+        let blockedId = null, blockedScore = IOU_THRESH * 0.35;
+        cooldownMap.forEach((data, id) => {
+            if (data.label !== lbl) return;
+            const score = similarity(box, data.box);
+            if (score > blockedScore) { blockedId = id; blockedScore = score; }
+        });
+
+        if (blockedId !== null) {
+            // Aynı nesne geri döndü — bloku kaldır, tracked'e al, SAYMA
+            const data = cooldownMap.get(blockedId);
+            cooldownMap.delete(blockedId);
+            trackedObjects.push({ id: blockedId, label: lbl, box, lastSeen: now });
+            matched.add(blockedId);
+            return;
+        }
+
+        // ── ADIM 3: Gerçekten yeni nesne — SAY ─────────────────────
+        const id = nextId++;
+        trackedObjects.push({ id, label: lbl, box, lastSeen: now });
+        matched.add(id);
+        totalUniqueCount++;
+        perClassCount.set(lbl, (perClassCount.get(lbl) || 0) + 1);
     });
 
-    // Kaybolmuş nesneleri temizle
-    const nowMs = now;
+    // ── ADIM 4: TTL biten aktif nesneleri cooldown'a taşı ──────────
     trackedObjects = trackedObjects.filter(obj => {
-        if (nowMs - obj.lastSeen > ttlMs) {
-            // Cooldown başlat — blok süresi boyunca bu ID'yi koru
-            cooldownMap.set(obj.id, nowMs + blockMs);
+        if (now - obj.lastSeen > ttlMs) {
+            cooldownMap.set(obj.id, { expiry: now + blockMs, box: obj.box, label: obj.label });
             return false;
         }
         return true;
     });
 
-    // HUD güncelle
+    // ── HUD ────────────────────────────────────────────────────────
     document.getElementById('cur-tag').innerText   = `ANLİK: ${instantCount}`;
     document.getElementById('uniq-tag').innerText  = `BENZERSİZ: ${totalUniqueCount}`;
     document.getElementById('total-tag').innerText = `TOPLAM: ${totalUniqueCount}`;
 
-    // Sağ kenar sınıf-başına badge
     const badge = document.getElementById('unique-badge');
     badge.innerHTML = '';
     perClassCount.forEach((cnt, lbl) => {
@@ -679,24 +937,33 @@ function draw(detections, now) {
         const color  = isTarget ? '#ff2244' : getColor(label);
         const trName = TR[label] || label;
 
-        // Kutu — köşe çizgileri (daha modern görünüm)
+        // Tracked ID bul (sayaç açıksa)
+        let trkId = '';
+        if (modes.count) {
+            const box = { x: originX, y: originY, w: width, h: height };
+            let bestScore = 0.05, found = null;
+            trackedObjects.forEach(obj => {
+                if (obj.label !== label) return;
+                const s = similarity(box, obj.box);
+                if (s > bestScore) { bestScore = s; found = obj; }
+            });
+            if (found) trkId = ` #${found.id}`;
+        }
+
+        // Köşe kutusu
         const cLen = Math.min(width, height) * 0.22;
         ctx.strokeStyle = color; ctx.lineWidth = isTarget ? 3 : 2;
-        ctx.shadowColor = color; ctx.shadowBlur = isTarget ? 8 : 4;
+        ctx.shadowColor = color; ctx.shadowBlur = isTarget ? 10 : 4;
 
-        // Sol üst
-        ctx.beginPath(); ctx.moveTo(originX, originY + cLen); ctx.lineTo(originX, originY); ctx.lineTo(originX + cLen, originY); ctx.stroke();
-        // Sağ üst
-        ctx.beginPath(); ctx.moveTo(originX + width - cLen, originY); ctx.lineTo(originX + width, originY); ctx.lineTo(originX + width, originY + cLen); ctx.stroke();
-        // Sol alt
-        ctx.beginPath(); ctx.moveTo(originX, originY + height - cLen); ctx.lineTo(originX, originY + height); ctx.lineTo(originX + cLen, originY + height); ctx.stroke();
-        // Sağ alt
-        ctx.beginPath(); ctx.moveTo(originX + width - cLen, originY + height); ctx.lineTo(originX + width, originY + height); ctx.lineTo(originX + width, originY + height - cLen); ctx.stroke();
-
+        ctx.beginPath(); ctx.moveTo(originX, originY+cLen); ctx.lineTo(originX, originY); ctx.lineTo(originX+cLen, originY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(originX+width-cLen, originY); ctx.lineTo(originX+width, originY); ctx.lineTo(originX+width, originY+cLen); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(originX, originY+height-cLen); ctx.lineTo(originX, originY+height); ctx.lineTo(originX+cLen, originY+height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(originX+width-cLen, originY+height); ctx.lineTo(originX+width, originY+height); ctx.lineTo(originX+width, originY+height-cLen); ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Etiket arkaplan
-        const lw = ctx.measureText(`${score}% ${trName}`).width + 10;
+        // Etiket
+        const labelText = `${score}% ${trName}${trkId}`;
+        const lw = ctx.measureText(labelText).width + 10;
         if (isTarget) {
             ctx.fillStyle = 'rgba(20,0,0,.9)';
             ctx.fillRect(originX, originY - 20, lw, 20);
@@ -706,10 +973,9 @@ function draw(detections, now) {
             ctx.fillStyle = color + 'cc';
             ctx.fillRect(originX, originY - 18, lw, 18);
         }
-
         ctx.fillStyle = isTarget ? '#ff6666' : '#000';
         ctx.font = `bold ${isTarget ? 11 : 10}px 'Segoe UI', sans-serif`;
-        ctx.fillText(`${score}% ${trName}`, originX + 5, originY - (isTarget ? 6 : 5));
+        ctx.fillText(labelText, originX + 5, originY - (isTarget ? 6 : 5));
     });
 }
 
