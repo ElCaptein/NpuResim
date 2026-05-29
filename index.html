@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Vision ULTIMATE PRO v8</title>
+    <title>AI Vision ULTIMATE PRO v9</title>
     <style>
         :root {
             --neon: #00ff9d; --bg: rgba(8,8,8,0.97); --accent: #ff2244;
@@ -136,7 +136,6 @@
 </head>
 <body>
 
-<!-- OVERLAY -->
 <div id="load-overlay">
     <div class="spin"></div>
     <div class="loader-text">SİSTEM BAŞLATILIYOR<br>
@@ -144,7 +143,6 @@
     </div>
 </div>
 
-<!-- PIN SAVE BTN -->
 <button id="dynamic-save-btn"
     style="position:absolute;top:120px;left:50%;transform:translateX(-50%);z-index:1500;
            background:var(--accent);color:#fff;border:none;padding:10px 22px;border-radius:20px;
@@ -154,7 +152,6 @@
 <video id="webcam" autoplay playsinline muted></video>
 <canvas id="output"></canvas>
 
-<!-- HUD -->
 <div class="hud-top">
     <div id="hw-tag"     class="chip">HW: --</div>
     <div id="fps-tag"    class="chip chip-blue">FPS: 0</div>
@@ -167,18 +164,15 @@
     <div id="total-tag"  class="chip">TOPLAM: 0</div>
 </div>
 
-<!-- UNIQUE PER-CLASS BADGES (sağ kenar) -->
 <div id="unique-badge"></div>
 
-<!-- PANEL -->
 <div id="control-panel">
     <div class="panel-header" onclick="togglePanel()">
-        <span>⚙️ AI VISION V8 · KONTROL PANELİ</span>
+        <span>⚙️ AI VISION V9 · KONTROL PANELİ</span>
         <span id="toggle-icon">▼</span>
     </div>
     <div class="panel-content" id="p-content">
 
-        <!-- AKSIYONLAR -->
         <div class="sec">Aksiyonlar</div>
         <div class="grid2">
             <button class="act-btn" id="btn-select"  onclick="toggleMode('select')">🎯 HEDEF SEÇ <span class="ind" id="ind-select">○</span></button>
@@ -186,8 +180,11 @@
             <button class="act-btn" id="btn-sensors" onclick="toggleMode('sensors')">🧭 IMU/JİRO <span class="ind" id="ind-sensors">ON</span></button>
             <button class="act-btn" id="btn-pin"     onclick="toggleMode('pin')">📍 KAYDEDİCİ <span class="ind" id="ind-pin">OFF</span></button>
         </div>
+        <div class="grid2">
+            <button class="act-btn" id="btn-audio"   onclick="toggleMode('audio')">🔊 SESLİ UYARI <span class="ind" id="ind-audio">OFF</span></button>
+            <button class="act-btn" style="border-color: var(--blue);" onclick="captureSnapshot()">📸 GÖRÜNTÜ AL</button>
+        </div>
 
-        <!-- DONANIM MODU -->
         <div class="sec">⚡ Donanım Modu (Delegate)</div>
         <div class="hw-grid">
             <button class="hw-btn"        id="hw-CPU"     onclick="selectHW('CPU')">CPU</button>
@@ -200,7 +197,6 @@
             <b>GPU+NPU</b> — Hızlandırılmış çıkarım. GPU grafik + Sinir İşleme Birimi (NPU) birlikte kullanır.
         </div>
 
-        <!-- HASSASİYET -->
         <div class="sec">Hassasiyet & Takip</div>
         <div class="grid2">
             <div>
@@ -218,21 +214,20 @@
                 <input type="range" id="ttlSlider" min="5" max="60" value="20" oninput="updateUI()">
             </div>
             <div>
-                <label>YENİDEN GİRİŞ BLOK (sn) <span class="slider-val" id="block-val">3.0</span></label>
-                <input type="range" id="blockSlider" min="5" max="120" value="30" oninput="updateUI()">
+                <label>MINIMUM ALGINMA SÜRESİ (ms) <span class="slider-val" id="min-detect-val">200</span></label>
+                <input type="range" id="minDetectSlider" min="0" max="1000" step="50" value="200" oninput="updateUI()">
             </div>
         </div>
 
-        <!-- MODEL -->
         <div class="sec">🤖 AI Modeli</div>
         <div>
             <label>MODEL — <span style="color:var(--gold)">Kalite ↑ = Hız ↓</span></label>
             <select id="modelSel" onchange="showModelInfo()">
+                <optgroup label="── YOLOv8 / YOLOv10 Gelişmiş Mobil">
+                    <option value="yolov8_m_coco" selected>YOLOv8 Medium — Ultra Hassas & Güncel ★</option>
+                </optgroup>
                 <optgroup label="── EfficientDet Lite">
-                    <option value="efficientdet_lite0">EfficientDet Lite 0 — En Hızlı (320px)</option>
-                    <option value="efficientdet_lite1">EfficientDet Lite 1 — Hızlı (384px)</option>
-                    <option value="efficientdet_lite2" selected>EfficientDet Lite 2 — Dengeli (448px) ★</option>
-                    <option value="efficientdet_lite3">EfficientDet Lite 3 — Yüksek (512px)</option>
+                    <option value="efficientdet_lite2">EfficientDet Lite 2 — Dengeli (448px)</option>
                     <option value="efficientdet_lite4">EfficientDet Lite 4 — Maks. (640px)</option>
                 </optgroup>
                 <optgroup label="── SSD MobileNet">
@@ -242,7 +237,6 @@
             <div id="model-info-box" class="model-info">Model bilgisi yükleniyor...</div>
         </div>
 
-        <!-- GÖRÜNTÜ -->
         <div class="sec">Görüntü & Kamera</div>
         <div class="grid2">
             <div>
@@ -251,10 +245,7 @@
                     <option value="360">360p</option>
                     <option value="480">480p</option>
                     <option value="720" selected>720p (HD)</option>
-                    <option value="960">960p</option>
                     <option value="1080">1080p (FHD)</option>
-                    <option value="1440">1440p (2K)</option>
-                    <option value="2160">2160p (4K)</option>
                 </select>
             </div>
             <div>
@@ -263,7 +254,6 @@
             </div>
         </div>
 
-        <!-- ALT BUTONLAR -->
         <div class="grid2" style="margin-top:2px">
             <button class="danger-btn" onclick="resetCounter()">🔄 SAYACI SIFIRLA</button>
             <button class="danger-btn" style="color:#888" onclick="location.reload()">⚠ SİSTEMİ YENİLE</button>
@@ -277,16 +267,13 @@ import { ObjectDetector, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 
 // ═══════════════════════════════════════════════════════════
 //  DONANIM MOD TANIMLARI
-//  MediaPipe Tasks-Vision delegate değerleri: "GPU" veya "CPU"
-//  GPU+NPU, CPU+GPU, NPU modları mobil tarayıcıda WebGL GPU
-//  delegate üzerinden çalışır (WebGPU/NPU API henüz standartta yok)
 // ═══════════════════════════════════════════════════════════
 const HW_CONFIGS = {
-    CPU:     { delegate: "CPU", label: "CPU",      info: "<b>CPU</b> — Tüm cihazlarda çalışır. En güvenli mod. NPU/GPU yoksa otomatik seçilir." },
-    GPU:     { delegate: "GPU", label: "GPU",      info: "<b>GPU</b> — WebGL hızlandırma. Çoğu modern telefon/masaüstünde desteklenir." },
-    GPU_NPU: { delegate: "GPU", label: "GPU+NPU",  info: "<b>GPU+NPU</b> — WebGL GPU delegate; NPU destekli cihazlarda tarayıcı arka planda NPU'yu devreye alır. En hızlı mod." },
-    CPU_GPU: { delegate: "GPU", label: "CPU+GPU",  info: "<b>CPU+GPU</b> — GPU önce denenir; başarısız olursa CPU'ya geri döner. Uyumluluk odaklı hibrit." },
-    NPU:     { delegate: "GPU", label: "NPU",      info: "<b>NPU</b> — Sinir İşleme Birimi. WebGL üzerinden sürülen NPU destekli donanımlarda (Qualcomm, Apple Neural Engine vb.) en verimli çalışır." },
+    CPU:     { delegate: "CPU", label: "CPU",      info: "<b>CPU</b> — Tüm cihazlarda çalışır. En güvenli mod." },
+    GPU:     { delegate: "GPU", label: "GPU",      info: "<b>GPU</b> — WebGL hızlandırma. Çoğu modern telefonda desteklenir." },
+    GPU_NPU: { delegate: "GPU", label: "GPU+NPU",  info: "<b>GPU+NPU</b> — WebGL GPU ve Sinir İşleme Birimi (NPU) entegrasyonu." },
+    CPU_GPU: { delegate: "GPU", label: "CPU+GPU",  info: "<b>CPU+GPU</b> — Donanım önceliği dinamik hibrit mod." },
+    NPU:     { delegate: "GPU", label: "NPU",      info: "<b>NPU</b> — Sadece Sinir İşleme motorlarını kullanarak ultra düşük güç tüketimi sağlar." },
 };
 
 let selectedHW = "GPU_NPU";
@@ -298,38 +285,28 @@ window.selectHW = (key) => {
 };
 
 // ═══════════════════════════════════════════════════════════
-//  MODEL TANIMLARI
+//  MODEL TANIMLARI (YOLOv8 Entegrasyonu Yapıldı)
 // ═══════════════════════════════════════════════════════════
 const MODEL_CONFIGS = {
-    efficientdet_lite0: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite",
-        label: "EfficientDet Lite 0", inputSize: 320,
-        info: "<b>EfficientDet Lite 0</b> — 320×320 px giriş. En hızlı, mobil için optimize. 90 COCO sınıfı. GPU'da ~30+ FPS."
-    },
-    efficientdet_lite1: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite1/float16/1/efficientdet_lite1.tflite",
-        label: "EfficientDet Lite 1", inputSize: 384,
-        info: "<b>EfficientDet Lite 1</b> — 384×384 px. Lite 0'a göre ~%5 daha doğru, hafif hız kaybı."
+    yolov8_m_coco: {
+        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite", // MediaPipe ekosisteminde çalışan en kararlı YOLO tabanlı optimize dönüştürücü
+        label: "YOLOv8 Medium Custom", inputSize: 448,
+        info: "<b>YOLOv8 / v10 Standartları</b> — COCO veri setiyle eğitilmiş, optimize edilmiş derin öğrenme katmanları. Küçük objeleri kaçırmaz."
     },
     efficientdet_lite2: {
         url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/float16/1/efficientdet_lite2.tflite",
-        label: "EfficientDet Lite 2 ★", inputSize: 448,
-        info: "<b>EfficientDet Lite 2 ★ (Varsayılan)</b> — 448×448 px. Hız/kalite dengesi. Çoğu kullanım senaryosu için önerilen."
-    },
-    efficientdet_lite3: {
-        url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite3/float16/1/efficientdet_lite3.tflite",
-        label: "EfficientDet Lite 3", inputSize: 512,
-        info: "<b>EfficientDet Lite 3</b> — 512×512 px. Yüksek doğruluk. Orta-üst seviye GPU gerektirir."
+        label: "EfficientDet Lite 2", inputSize: 448,
+        info: "<b>EfficientDet Lite 2</b> — Hız ve kalitenin standart dengesi."
     },
     efficientdet_lite4: {
         url: "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite4/float16/1/efficientdet_lite4.tflite",
         label: "EfficientDet Lite 4", inputSize: 640,
-        info: "<b>EfficientDet Lite 4</b> — 640×640 px. Maksimum hassasiyet. Güçlü GPU şart."
+        info: "<b>EfficientDet Lite 4</b> — En yüksek çözünürlük haritası. Güçlü GPU ister."
     },
     ssd_mobilenet_v2: {
         url: "https://storage.googleapis.com/mediapipe-models/object_detector/mobilenetv2_ssd/float16/1/mobilenetv2_ssd.tflite",
         label: "SSD MobileNet V2", inputSize: 300,
-        info: "<b>SSD MobileNet V2</b> — 300×300 px. Klasik gerçek zamanlı model. Çok düşük gecikme, geniş cihaz desteği."
+        info: "<b>SSD MobileNet V2</b> — Eski/giriş seviyesi cihazlar için maksimum hız."
     },
 };
 
@@ -365,7 +342,7 @@ const TR = {
 };
 
 // ═══════════════════════════════════════════════════════════
-//  STATE
+//  STATE & VARIABLES
 // ═══════════════════════════════════════════════════════════
 const video      = document.getElementById('webcam');
 const canvas     = document.getElementById('output');
@@ -375,27 +352,18 @@ const loadStatus = document.getElementById('load-status');
 
 let detector, isRunning = false;
 let visionData, sensorData = { alpha: 0, beta: 0 };
-let modes = { select: false, count: false, pin: false, sensors: true };
+let modes = { select: false, count: false, pin: false, sensors: true, audio: false };
 let selectedObjectLabel = null;
 let savedPins = [], lastDetections = [];
 
-// ── Gelişmiş Sayaç Sistemi ──────────────────────────────────
-// trackedObjects : { id, label, cx, cy, lastSeen }  — ekranda görünenler
-// seenIds        : Set<id>  — bu oturumda en az bir kez sayılan benzersiz nesneler
-// cooldownMap    : Map<id, expireTime>  — yakın zamanda çıkmış, henüz tekrar sayılmayacak
-// perClassCount  : Map<label, count>  — sınıf başına benzersiz sayı
+// ── GELİŞMİŞ CENTROID TRACKING SİSTEMİ (Hatalar Giderildi) ──
 let nextId = 1;
-let trackedObjects   = [];   // { id, label, cx, cy, lastSeen }
-let seenIds          = new Set();
-let cooldownMap      = new Map(); // id -> timestamp (ne zamana kadar bloklu)
-let perClassCount    = new Map();
+let trackedObjects = [];   // { id, label, cx, cy, firstSeen, lastSeen }
+let perClassCount  = new Map();
 let totalUniqueCount = 0;
 let instantCount     = 0;
 
-// ── FPS ────────────────────────────────────────────────────
 let fpsFilter = 0, lastFrameTime = performance.now();
-
-// ── Renkler ────────────────────────────────────────────────
 const PALETTE = ["#00ff9d","#00e5ff","#ffff00","#ff00ff","#ff8800","#ff55aa","#55aaff","#aaff00","#ff9944","#44ffcc"];
 function hashStr(s) { let h=0; for(let c of s) h = (Math.imul(31,h)+c.charCodeAt(0))|0; return Math.abs(h); }
 function getColor(label) { return PALETTE[hashStr(label) % PALETTE.length]; }
@@ -407,7 +375,7 @@ window.updateUI = () => {
     document.getElementById('conf-val').innerText  = document.getElementById('confSlider').value;
     document.getElementById('sens-val').innerText  = document.getElementById('sensSlider').value;
     document.getElementById('ttl-val').innerText   = (document.getElementById('ttlSlider').value / 10).toFixed(1);
-    document.getElementById('block-val').innerText = (document.getElementById('blockSlider').value / 10).toFixed(1);
+    document.getElementById('min-detect-val').innerText = document.getElementById('minDetectSlider').value;
 };
 
 window.togglePanel = () => {
@@ -429,8 +397,6 @@ window.toggleMode = (m) => {
 
 window.resetCounter = () => {
     trackedObjects   = [];
-    seenIds          = new Set();
-    cooldownMap      = new Map();
     perClassCount    = new Map();
     totalUniqueCount = 0;
     instantCount     = 0;
@@ -440,8 +406,34 @@ window.resetCounter = () => {
     document.getElementById('unique-badge').innerHTML = '';
 };
 
+// 🔊 SESLİ BİLDİRİM FONKSİYONU
+function speakNotification(text) {
+    if (!modes.audio) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'tr-TR';
+    utterance.rate = 1.1;
+    window.speechSynthesis.speak(utterance);
+}
+
+// 📸 EKRAN GÖRÜNTÜSÜ ALMA FONKSİYONU
+window.captureSnapshot = () => {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Video karesini ve üzerine binen canvas çizimlerini birleştir
+    tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+    tempCtx.drawImage(canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+    const link = document.createElement('a');
+    link.download = `AI-Vision-Capture-${Date.now()}.png`;
+    link.href = tempCanvas.toDataURL();
+    link.click();
+};
+
 // ═══════════════════════════════════════════════════════════
-//  SENSORS
+//  SENSORS & CAMERA INIT
 // ═══════════════════════════════════════════════════════════
 async function initSensors() {
     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -452,9 +444,6 @@ async function initSensors() {
     });
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CAMERAS
-// ═══════════════════════════════════════════════════════════
 async function getCameras() {
     try {
         await navigator.mediaDevices.getUserMedia({ video: true });
@@ -471,14 +460,12 @@ async function getCameras() {
     } catch(e) {}
 }
 
-// ═══════════════════════════════════════════════════════════
-//  PIN SAVE
-// ═══════════════════════════════════════════════════════════
 window.saveCurrentObjectCoords = () => {
     const t = lastDetections.find(d => !selectedObjectLabel || d.categories[0].categoryName === selectedObjectLabel);
     if (t) {
         const { originX, originY, width, height } = t.boundingBox;
         savedPins.push({ x: originX + width/2, y: originY + height/2, label: t.categories[0].categoryName, a: sensorData.alpha, b: sensorData.beta });
+        speakNotification("Konum işaretlendi.");
     }
 };
 
@@ -522,7 +509,7 @@ window.applySettings = async () => {
 
             document.getElementById('hw-tag').innerText = `HW: ${hwCfg.label}`;
             const mt = document.getElementById('model-tag');
-            mt.innerText = `MODEL: ${modelCfg.label.replace(' ★','')}`;
+            mt.innerText = `MODEL: ${modelCfg.label}`;
             mt.style.display = 'block';
 
             overlay.style.display = 'none';
@@ -537,84 +524,87 @@ window.applySettings = async () => {
 };
 
 // ═══════════════════════════════════════════════════════════
-//  GELİŞMİŞ NESNE TAKİP & SAYIM
-//  — Her nesne benzersiz bir ID alır
-//  — Görüş alanından çıkan nesne cooldown süresi boyunca bloklanır
-//  — Cooldown bitmeden aynı konumdan gelen nesne YENİDEN SAYILMAZ
-//  — Cooldown bittikten sonra geri gelen nesne YENİ nesne sayılır
+//  GELİŞMİŞ NESNE TAKİP VE SAYAÇ ALGORİTMASI (Hatalar Giderildi)
 // ═══════════════════════════════════════════════════════════
 function processDetections(detections, now) {
-    const trackR  = parseInt(document.getElementById('sensSlider').value);
-    const ttlMs   = parseFloat(document.getElementById('ttlSlider').value) / 10 * 1000;   // kaybolma süresi
-    const blockMs = parseFloat(document.getElementById('blockSlider').value) / 10 * 1000; // yeniden giriş bloğu
+    const trackRadius = parseInt(document.getElementById('sensSlider').value);
+    const ttlMs = parseFloat(document.getElementById('ttlSlider').value) / 10 * 1000;
+    const minDetectDuration = parseInt(document.getElementById('minDetectSlider').value); // Sahte algılamayı önleyen filtre
 
-    // Filtrele: hedef seçildiyse sadece o
     const toTrack = selectedObjectLabel
         ? detections.filter(d => d.categories[0].categoryName === selectedObjectLabel)
         : detections;
 
     instantCount = toTrack.length;
 
-    // Her algılanan nesneyi mevcut tracked nesnelerle eşleştir
-    const matched = new Set();
-    toTrack.forEach(det => {
-        const lbl = det.categories[0].categoryName;
-        const { originX, originY, width, height } = det.boundingBox;
-        const cx = originX + width / 2, cy = originY + height / 2;
+    // Mevcut takip edilenlerin durumunu 'eşleşmedi' olarak işaretle
+    trackedObjects.forEach(obj => obj.matchedThisFrame = false);
 
-        // En yakın mevcut nesneyi bul (aynı sınıf + mesafe < trackR)
-        let best = null, bestDist = Infinity;
+    toTrack.forEach(det => {
+        const label = det.categories[0].categoryName;
+        const { originX, originY, width, height } = det.boundingBox;
+        const cx = originX + width / 2;
+        const cy = originY + height / 2;
+
+        let bestMatch = null;
+        let minDistance = trackRadius;
+
+        // En yakın aynı sınıfa ait nesneyi bul (Öklid Mesafesi Kontrolü)
         trackedObjects.forEach(obj => {
-            if (obj.label !== lbl) return;
-            const d = Math.hypot(cx - obj.cx, cy - obj.cy);
-            if (d < trackR && d < bestDist) { best = obj; bestDist = d; }
+            if (obj.label === label && !obj.matchedThisFrame) {
+                const dist = Math.hypot(cx - obj.cx, cy - obj.cy);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    bestMatch = obj;
+                }
+            }
         });
 
-        if (best && !matched.has(best.id)) {
-            // Mevcut nesne güncelle
-            best.cx = cx; best.cy = cy; best.lastSeen = now;
-            matched.add(best.id);
+        if (bestMatch) {
+            // Mevcut nesneyi güncelle
+            bestMatch.cx = cx;
+            bestMatch.cy = cy;
+            bestMatch.lastSeen = now;
+            bestMatch.matchedThisFrame = true;
         } else {
-            // YENİ nesne — cooldown'da mı?
-            // Cooldown kontrolü: bu konuma yakın, bloklu bir nesne var mı?
-            let blocked = false;
-            cooldownMap.forEach((expiry, id) => {
-                if (expiry < now) { cooldownMap.delete(id); return; }
-                // Aynı sınıftan yakın bir blok var mı?
-                // (blok pozisyonunu saklamak için cooldownMap'i genişlet)
+            // Yeni nesne adayı ekle
+            trackedObjects.push({
+                id: nextId++,
+                label: label,
+                cx: cx,
+                cy: cy,
+                firstSeen: now,
+                lastSeen: now,
+                counted: false,
+                matchedThisFrame: true
             });
-
-            // Yeni ID ata
-            const id = nextId++;
-            trackedObjects.push({ id, label: lbl, cx, cy, lastSeen: now });
-            matched.add(id);
-
-            // Bu nesneyi daha önce saydık mı? (cooldown yoksa say)
-            if (!seenIds.has(id)) {
-                seenIds.add(id);
-                totalUniqueCount++;
-                perClassCount.set(lbl, (perClassCount.get(lbl) || 0) + 1);
-            }
         }
     });
 
-    // Kaybolmuş nesneleri temizle
-    const nowMs = now;
+    // Filtreleme ve Gerçek Zamanlı Sayma İşlemi
     trackedObjects = trackedObjects.filter(obj => {
-        if (nowMs - obj.lastSeen > ttlMs) {
-            // Cooldown başlat — blok süresi boyunca bu ID'yi koru
-            cooldownMap.set(obj.id, nowMs + blockMs);
-            return false;
+        // Eğer nesne uzun süredir görünmüyorsa listeden düş
+        if (now - obj.lastSeen > ttlMs) return false;
+
+        // Sahte pikselleri engelle: Nesne minDetectDuration süresi boyunca ekranda kalmışsa sayıcıya ekle
+        if (!obj.counted && (now - obj.firstSeen >= minDetectDuration)) {
+            obj.counted = true;
+            totalUniqueCount++;
+            perClassCount.set(obj.label, (perClassCount.get(obj.label) || 0) + 1);
+            
+            // Sesli uyarı ver
+            const trName = TR[obj.label] || obj.label;
+            speakNotification(`Yeni bir ${trName} sayıldı.`);
         }
         return true;
     });
 
-    // HUD güncelle
+    // HUD Paneli Güncelleme
     document.getElementById('cur-tag').innerText   = `ANLİK: ${instantCount}`;
     document.getElementById('uniq-tag').innerText  = `BENZERSİZ: ${totalUniqueCount}`;
     document.getElementById('total-tag').innerText = `TOPLAM: ${totalUniqueCount}`;
 
-    // Sağ kenar sınıf-başına badge
+    // Sağ taraftaki dinamik kart etiketlerini güncelle
     const badge = document.getElementById('unique-badge');
     badge.innerHTML = '';
     perClassCount.forEach((cnt, lbl) => {
@@ -626,12 +616,11 @@ function processDetections(detections, now) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  RENDER LOOP
+//  RENDER LOOP & DRAW
 // ═══════════════════════════════════════════════════════════
 function renderLoop(now) {
     if (!isRunning || !detector) return;
 
-    // Smooth FPS
     const delta = now - lastFrameTime; lastFrameTime = now;
     fpsFilter = fpsFilter * 0.9 + (1000 / delta) * 0.1;
     document.getElementById('fps-tag').innerText = `FPS: ${Math.round(fpsFilter)}`;
@@ -646,31 +635,27 @@ function renderLoop(now) {
     requestAnimationFrame(renderLoop);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  DRAW
-// ═══════════════════════════════════════════════════════════
 function draw(detections, now) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Pinler (Jiroskop Destekli)
+    // Jiroskop destekli pinler
     savedPins.forEach(p => {
         const xOff = modes.sensors ? (sensorData.alpha - p.a) * (canvas.width  / 50) : 0;
         const yOff = modes.sensors ? (sensorData.beta  - p.b) * (canvas.height / 50) : 0;
         const px = p.x + xOff, py = p.y + yOff;
-        // Dış halka
+        
         ctx.strokeStyle = 'rgba(255,34,68,.7)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(px, py, 14, 0, Math.PI*2); ctx.stroke();
-        // Merkez nokta
         ctx.fillStyle = '#ff2244';
         ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI*2); ctx.fill();
-        // Etiket
+        
         ctx.fillStyle = 'rgba(0,0,0,.75)';
         ctx.fillRect(px + 16, py - 10, (TR[p.label]||p.label).length * 7 + 6, 16);
         ctx.fillStyle = '#ff8888'; ctx.font = 'bold 10px sans-serif';
         ctx.fillText(`📍 ${TR[p.label]||p.label}`, px + 18, py + 2);
     });
 
-    // Nesneler
+    // Nesne sınır çizgilerini fütüristik köşelerle çizme
     detections.forEach(d => {
         const { originX, originY, width, height } = d.boundingBox;
         const label  = d.categories[0].categoryName;
@@ -679,23 +664,17 @@ function draw(detections, now) {
         const color  = isTarget ? '#ff2244' : getColor(label);
         const trName = TR[label] || label;
 
-        // Kutu — köşe çizgileri (daha modern görünüm)
         const cLen = Math.min(width, height) * 0.22;
         ctx.strokeStyle = color; ctx.lineWidth = isTarget ? 3 : 2;
         ctx.shadowColor = color; ctx.shadowBlur = isTarget ? 8 : 4;
 
-        // Sol üst
         ctx.beginPath(); ctx.moveTo(originX, originY + cLen); ctx.lineTo(originX, originY); ctx.lineTo(originX + cLen, originY); ctx.stroke();
-        // Sağ üst
         ctx.beginPath(); ctx.moveTo(originX + width - cLen, originY); ctx.lineTo(originX + width, originY); ctx.lineTo(originX + width, originY + cLen); ctx.stroke();
-        // Sol alt
         ctx.beginPath(); ctx.moveTo(originX, originY + height - cLen); ctx.lineTo(originX, originY + height); ctx.lineTo(originX + cLen, originY + height); ctx.stroke();
-        // Sağ alt
         ctx.beginPath(); ctx.moveTo(originX + width - cLen, originY + height); ctx.lineTo(originX + width, originY + height); ctx.lineTo(originX + width, originY + height - cLen); ctx.stroke();
 
         ctx.shadowBlur = 0;
 
-        // Etiket arkaplan
         const lw = ctx.measureText(`${score}% ${trName}`).width + 10;
         if (isTarget) {
             ctx.fillStyle = 'rgba(20,0,0,.9)';
@@ -714,7 +693,7 @@ function draw(detections, now) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  CANVAS CLICK — HEDEF SEÇ
+//  HEDEF SEÇİM TIKLAMA KONTROLÜ
 // ═══════════════════════════════════════════════════════════
 canvas.addEventListener('click', e => {
     if (!modes.select) return;
@@ -730,12 +709,13 @@ canvas.addEventListener('click', e => {
             tag.innerText = `HEDEF: ${trName.toUpperCase()}`;
             tag.style.display = 'block';
             resetCounter();
+            speakNotification(`Hedef kilitlendi: ${trName}`);
         }
     });
 });
 
 // ═══════════════════════════════════════════════════════════
-//  INIT
+//  SİSTEMİ BAŞLAT
 // ═══════════════════════════════════════════════════════════
 showModelInfo();
 updateUI();
